@@ -1,0 +1,37 @@
+nmpc_local_planner:
+  ros__parameters:
+    base_frame: base_link
+    map_frame: map
+    planning_frequency: 10.0
+    desired_path_size: 10
+    path_buffer_limit: 1000
+    robot_height: 0.35
+    obstacle_grid_size: 0.2
+    pos_tolerance: 0.50
+    min_angular_vel: 1.0
+    goal_align_angular_vel: 1.0
+    mpc.control_horizon: 0.5
+    mpc.prediction_steps: 10
+    mpc.max_linear_vel: 0.9
+    mpc.max_angular_vel: 1.4
+    mpc.smooth_v_weight: 0.8
+    mpc.smooth_omega_weight: 0.3
+    mpc.safe_distance: 0.4
+    mpc.influence_distance: 1.2
+    mpc.obstacle_weight: 10.0
+    mpc.use_time_weight: true
+    mpc.smooth_epsilon: 0.01
+    mpc.max_obstacles_consider: 10
+    mpc.obstacle_influence_range: 8.0
+    mpc.solver_enabled: true
+    mpc.fallback_tracking_enabled: true
+    mpc.fallback_max_linear_vel: 0.35
+    mpc.fallback_max_angular_vel: 0.8
+
+nmpc_controller_node:
+  ros__parameters:
+    base_frame: base_link
+    map_frame: map
+    control_frequency: 50.0
+    plan_size: 10
+    start_in_auto: false

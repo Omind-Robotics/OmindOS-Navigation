@@ -1,0 +1,22 @@
+# x, y, z, roll, pitch, yaw (degrees). /initialpose can update this at runtime.
+initialpose: [0, 0, 0, 0, 0, 0]
+
+pcd_queue_maxsize: 10
+voxelsize_coarse: 0.15
+voxelsize_fine: 0.10
+threshold_fitness: 0.50
+threshold_fitness_init: 0.50
+loc_frequence: 2.5
+save_scan: false
+maxpoints_source: 80000
+maxpoints_target: 400000
+filter_odom2map: false
+kalman_processVar2: 0.001
+kalman_estimatedMeasVar2: 0.02
+confidence_loc_th: 0.70
+dis_updatemap: 3.5
+
+kf_baselink2map:
+  x: [0.001, 0.002]
+  y: [0.001, 0.005]
+  z: [0.00001, 0.04]

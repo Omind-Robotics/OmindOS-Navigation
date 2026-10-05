@@ -1,0 +1,84 @@
+<launch>
+<!-- Launch file for Livox AVIA LiDAR -->
+
+	<arg name="rviz" default="true" />
+
+	<rosparam command="load" file="$(find galileo_lio)/config/airy_front.yaml" />
+
+	<param name="feature_extract_enable" type="bool" value="0"/>
+	<param name="point_filter_num" type="int" value="3"/>
+	<param name="max_iteration" type="int" value="3" />
+	<param name="filter_size_surf" type="double" value="0.05" />
+	<param name="filter_size_map" type="double" value="0.05" />
+	<param name="cube_side_length" type="double" value="1000" />
+	<param name="runtime_pos_log_enable" type="bool" value="0" />
+    <!-- <node pkg="fast_lio2" type="fastlio2_mapping" name="laserMapping" output="screen" />  -->
+    <!-- <node pkg="galileo_localization" type="fastlio_mapping1" name="laserMapping" output="screen" />  -->
+    <node pkg="galileo_lio" type="galileo_lio_mapping" name="laserMapping_front" output="screen">
+		<remap from="/path" to="/front/path" />
+		<remap from="/Laser_map" to="/front/Laser_map" />
+		<remap from="/Odometry" to="/front/Odometry" />
+		<remap from="/clicked_point" to="/front/clicked_point" />
+		<remap from="/cloud_effected" to="/front/cloud_effected" />
+		<remap from="/cloud_registered" to="/front/cloud_registered" />
+		<remap from="/cloud_registered_body" to="/front/cloud_registered_body" />
+		<param name="parent_id" value="front/camera_init" />
+		<param name="child_id" value="front/body" />
+		
+	</node> 
+
+	<arg name="map" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/point_cloud/scans.pcd" />
+	<!-- <arg name="map" default="/home/slam/jll_pro/files/save_pcd/fast_lio/jll.pcd" /> -->
+
+	<!-- loalization-->
+    <!-- <node pkg="galileo_localization" type="global_localization.py" name="global_localization" output="screen"> -->
+	<node pkg="galileo_lio" type="global_localization.py" name="global_localization" output="screen">
+		<remap from="/path" to="/front/path" />
+		<remap from="/Laser_map" to="/front/Laser_map" />
+		<remap from="/Odometry" to="/front/Odometry" />
+		<remap from="/clicked_point" to="/front/clicked_point" />
+		<remap from="/cloud_effected" to="/front/cloud_effected" />
+		<remap from="/cloud_registered" to="/front/cloud_registered" />
+		<remap from="/cloud_registered_body" to="/front/cloud_registered_body" />
+		<param name="parent_id" value="front/camera_init" />
+		<param name="child_id" value="front/body" />
+	</node>
+
+	<!-- transform  fusion-->
+    <!-- <node pkg="galileo_localization" type="transform_fusion.py" name="transform_fusion" output="screen"> -->
+	<node pkg="galileo_lio" type="transform_fusion.py" name="transform_fusion" output="screen">
+		<remap from="/path" to="/front/path" />
+		<remap from="/Laser_map" to="/front/Laser_map" />
+		<remap from="/Odometry" to="/front/Odometry" />
+		<remap from="/clicked_point" to="/front/clicked_point" />
+		<remap from="/cloud_effected" to="/front/cloud_effected" />
+		<remap from="/cloud_registered" to="/front/cloud_registered" />
+		<remap from="/cloud_registered_body" to="/front/cloud_registered_body" />
+		<param name="parent_id" value="front/camera_init" />
+		<param name="child_id" value="front/body" />
+	</node>
+
+	<!-- glbal map-->
+    <!-- <node pkg="pcl_ros" type="pcd_to_pointcloud" name="map_publishe" output="screen" args="$(arg map) 5 _frame_id:=map cloud_pcd:=map" /> -->
+
+	<group if="$(arg rviz)">
+	<!-- <node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz_localization_airy_front" args="-d $(find galileo_localization)/rviz_cfg/localization_front.rviz" /> -->
+	<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz_localization_airy_front" args="-d $(find galileo_lio)/rviz_cfg/localization_front.rviz" />
+	</group>
+
+	<!-- build 2d map -->
+	<!-- <include file="$(find fast_lio)/launch/Pointcloud2Map.launch">
+	</include> -->
+
+	<!-- load 2d map -->
+	<!-- <arg name="2dmap" default="jueying.yaml" /> -->
+	<!-- <node name = "map_server" pkg = "map_server" type = "map_server" args="/home/slam/jll_pro/files/save_pcd/galileo_lio/galileo_lio.yaml /map:=prior_map"/> -->
+	<!-- <node name = "map_server" pkg = "map_server" type = "map_server" args="$(find galileo_localization)/../../../../files/save_pcd/galileo_lio/galileo_lio.yaml /map:=prior_map"/> -->
+    <node pkg="pcl_ros" type="pcd_to_pointcloud" name="map_publishe" output="screen" args="$(arg map) 5 _frame_id:=map cloud_pcd:=map" />
+
+	<!-- pointscloud2 to laserscans -->
+	<!-- <include file="$(find galileo_localization)/launch/PointsCloud2toLaserscan.launch">
+	</include> -->
+
+
+</launch>

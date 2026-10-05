@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Publish the map-processing artifacts in the same frame and open RViz. -->
+
+  <arg name="frame_id" default="map" />
+  <arg name="publish_interval" default="5.0" />
+  <arg name="start_rviz" default="true" />
+
+  <arg name="raw_map_path" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/point_cloud/scans.pcd" />
+  <arg name="traversable_path" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/traversable/traversable_areas.pcd" />
+  <arg name="seed_path" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/traversable/seed_points.pcd" />
+
+  <node pkg="pcl_ros" type="pcd_to_pointcloud" name="debug_raw_map_publisher"
+        args="$(arg raw_map_path) $(arg publish_interval)" output="screen">
+    <param name="frame_id" value="$(arg frame_id)" />
+    <param name="latch" value="true" />
+    <remap from="cloud_pcd" to="/debug/raw_map" />
+  </node>
+
+  <node pkg="pcl_ros" type="pcd_to_pointcloud" name="debug_traversable_publisher"
+        args="$(arg traversable_path) $(arg publish_interval)" output="screen">
+    <param name="frame_id" value="$(arg frame_id)" />
+    <param name="latch" value="true" />
+    <remap from="cloud_pcd" to="/debug/traversable_area" />
+  </node>
+
+  <node pkg="pcl_ros" type="pcd_to_pointcloud" name="debug_seed_publisher"
+        args="$(arg seed_path) $(arg publish_interval)" output="screen">
+    <param name="frame_id" value="$(arg frame_id)" />
+    <param name="latch" value="true" />
+    <remap from="cloud_pcd" to="/debug/seed_points" />
+  </node>
+
+  <node if="$(arg start_rviz)" pkg="rviz" type="rviz" name="traversable_debug_rviz"
+        args="-d $(find nav_bringup)/rviz/traversable_debug.rviz" />
+</launch>

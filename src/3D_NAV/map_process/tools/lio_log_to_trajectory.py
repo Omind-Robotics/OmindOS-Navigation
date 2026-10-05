@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+
+import argparse
+import math
+from pathlib import Path
+
+
+def rpy_to_quaternion(roll: float, pitch: float, yaw: float):
+    cr = math.cos(roll * 0.5)
+    sr = math.sin(roll * 0.5)
+    cp = math.cos(pitch * 0.5)
+    sp = math.sin(pitch * 0.5)
+    cy = math.cos(yaw * 0.5)
+    sy = math.sin(yaw * 0.5)
+
+    qw = cr * cp * cy + sr * sp * sy
+    qx = sr * cp * cy - cr * sp * sy
+    qy = cr * sp * cy + sr * cp * sy
+    qz = cr * cp * sy - sr * sp * cy
+    return qx, qy, qz, qw
+
+
+def parse_lio_line(line: str):
+    tokens = line.strip().split()
+    if len(tokens) < 7:
+        return None
+
+    try:
+        timestamp = float(tokens[0])
+        roll = float(tokens[1])
+        pitch = float(tokens[2])
+        yaw = float(tokens[3])
+        x = float(tokens[4])
+        y = float(tokens[5])
+        z = float(tokens[6])
+    except ValueError:
+        return None
+
+    return {
+        "timestamp": timestamp,
+        "roll": roll,
+        "pitch": pitch,
+        "yaw": yaw,
+        "x": x,
+        "y": y,
+        "z": z,
+    }
+
+
+def convert_file(input_path: Path, output_path: Path, output_format: int):
+    parsed_rows = []
+    skipped = 0
+
+    with input_path.open("r", encoding="utf-8", errors="ignore") as infile:
+        for line in infile:
+            row = parse_lio_line(line)
+            if row is None:
+                skipped += 1
+                continue
+            parsed_rows.append(row)
+
+    if not parsed_rows:
+        raise RuntimeError(
+            f"No valid trajectory rows parsed from {input_path}. "
+            "If you are using mat_out.txt, make sure runtime_pos_log_enable was on."
+        )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8") as outfile:
+        for row in parsed_rows:
+            if output_format == 1:
+                qx, qy, qz, qw = rpy_to_quaternion(
+                    row["roll"], row["pitch"], row["yaw"]
+                )
+                outfile.write(
+                    f'{row["timestamp"]:.9f} '
+                    f'{row["x"]:.9f} {row["y"]:.9f} {row["z"]:.9f} '
+                    f"{qx:.9f} {qy:.9f} {qz:.9f} {qw:.9f}\n"
+                )
+            elif output_format == 2:
+                outfile.write(
+                    f'{row["x"]:.9f} {row["y"]:.9f} {row["z"]:.9f} 0 0 0\n'
+                )
+            else:
+                raise RuntimeError(f"Unsupported output format: {output_format}")
+
+    return len(parsed_rows), skipped
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=(
+            "Convert galileo_lio/FAST_LIO mat_pre.txt or mat_out.txt "
+            "to a map_process trajectory file."
+        )
+    )
+    parser.add_argument(
+        "--input",
+        required=True,
+        help="Path to mat_pre.txt or mat_out.txt",
+    )
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="Path to the generated trajectory txt",
+    )
+    parser.add_argument(
+        "--format",
+        type=int,
+        default=1,
+        choices=[1, 2],
+        help="map_process trajectory format: 1=timestamp x y z qx qy qz qw, 2=x y z 0 0 0",
+    )
+    args = parser.parse_args()
+
+    input_path = Path(args.input)
+    output_path = Path(args.output)
+
+    if not input_path.exists():
+        raise FileNotFoundError(f"Input file does not exist: {input_path}")
+
+    rows, skipped = convert_file(input_path, output_path, args.format)
+    print(f"Converted {rows} rows -> {output_path}")
+    if skipped:
+        print(f"Skipped {skipped} malformed/short lines")
+    print(f"Use trajectory_format: {args.format}")
+
+
+if __name__ == "__main__":
+    main()

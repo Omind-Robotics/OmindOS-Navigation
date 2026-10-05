@@ -1,0 +1,39 @@
+ARG BASE_IMAGE=nav3d:ros2-humble-native-20260817-82dfe36
+FROM ${BASE_IMAGE}
+
+SHELL ["/bin/bash", "-c"]
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ROS_DISTRO=humble
+ARG LIVOX_SDK2_COMMIT=08f523c930b2f0ba1e98a6afaa8d7476bf479908
+ARG UNITREE_SDK2_PY_COMMIT=65691c8a8bc53b98d3976dba4dbf9d5d20b2e7f5
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      cmake git libapr1-dev libpcl-dev pkg-config \
+      ros-${ROS_DISTRO}-ament-cmake-auto \
+      ros-${ROS_DISTRO}-nav2-map-server \
+      ros-${ROS_DISTRO}-pcl-conversions \
+      ros-${ROS_DISTRO}-pointcloud-to-laserscan \
+      ros-${ROS_DISTRO}-rclcpp-components \
+      ros-${ROS_DISTRO}-rosbag2 \
+      ros-${ROS_DISTRO}-rosidl-default-generators
+
+RUN git clone https://github.com/Livox-SDK/Livox-SDK2.git /opt/Livox-SDK2 && \
+    git -C /opt/Livox-SDK2 checkout --detach "${LIVOX_SDK2_COMMIT}" && \
+    cmake -S /opt/Livox-SDK2 -B /opt/Livox-SDK2/build \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CXX_FLAGS="-fvisibility-inlines-hidden" \
+      -DCMAKE_SHARED_LINKER_FLAGS="-Wl,-Bsymbolic" && \
+    cmake --build /opt/Livox-SDK2/build --parallel 2 && \
+    cmake --install /opt/Livox-SDK2/build && \
+    ldconfig
+
+RUN apt-get update && apt-get install -y --no-install-recommends python3-pip && \
+    python3 -m pip install --no-cache-dir --no-deps cyclonedds==0.10.2 && \
+    git clone https://github.com/unitreerobotics/unitree_sdk2_python.git \
+      /opt/unitree_sdk2_python && \
+    git -C /opt/unitree_sdk2_python checkout --detach "${UNITREE_SDK2_PY_COMMIT}" && \
+    python3 -m pip install --no-cache-dir --no-deps /opt/unitree_sdk2_python && \
+    python3 -c "from unitree_sdk2py.core.channel import ChannelSubscriber"
+
+LABEL org.nav3d.hardware.livox-sdk2-commit="${LIVOX_SDK2_COMMIT}"
+LABEL org.nav3d.hardware.unitree-sdk2-python-commit="${UNITREE_SDK2_PY_COMMIT}"

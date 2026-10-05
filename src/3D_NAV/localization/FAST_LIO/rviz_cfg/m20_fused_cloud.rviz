@@ -1,0 +1,180 @@
+Panels:
+  - Class: rviz/Displays
+    Help Height: 0
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /Global Options1
+        - /Fused PointCloud1
+      Splitter Ratio: 0.55
+    Tree Height: 720
+  - Class: rviz/Selection
+    Name: Selection
+  - Class: rviz/Views
+    Expanded:
+      - /Current View1
+    Name: Views
+    Splitter Ratio: 0.5
+Preferences:
+  PromptSaveOnExit: false
+Toolbars:
+  toolButtonStyle: 2
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.45
+      Cell Size: 1
+      Class: rviz/Grid
+      Color: 120; 120; 120
+      Enabled: true
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Lines
+      Name: Ground Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 30
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 1
+      Name: base_link Axes
+      Radius: 0.04
+      Reference Frame: base_link
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 3
+        Min Value: -1
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: AxisColor
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: Fused PointCloud
+      Position Transformer: XYZ
+      Queue Size: 3
+      Selectable: true
+      Size (Pixels): 2
+      Size (m): 0.02
+      Style: Points
+      Topic: /m20/lidar/fused
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 0.8
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 3
+        Min Value: -1
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 60; 60
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: Front PointCloud (red)
+      Position Transformer: XYZ
+      Queue Size: 3
+      Selectable: true
+      Size (Pixels): 2
+      Size (m): 0.02
+      Style: Points
+      Topic: /m20/lidar/front
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: false
+      Value: false
+    - Alpha: 0.8
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 3
+        Min Value: -1
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 70; 130; 255
+      Color Transformer: FlatColor
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: Rear PointCloud (blue)
+      Position Transformer: XYZ
+      Queue Size: 3
+      Selectable: true
+      Size (Pixels): 2
+      Size (m): 0.02
+      Style: Points
+      Topic: /m20/lidar/rear
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: false
+      Value: false
+  Enabled: true
+  Global Options:
+    Background Color: 18; 18; 18
+    Default Light: true
+    Fixed Frame: base_link
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/Interact
+      Hide Inactive Objects: true
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+    - Class: rviz/FocusCamera
+    - Class: rviz/Measure
+  Value: true
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 15
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.01
+      Pitch: 0.65
+      Target Frame: base_link
+      Value: Orbit (rviz)
+      Yaw: 0.8
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 900
+  Hide Left Dock: false
+  Hide Right Dock: true
+  Width: 1440
+  X: 60
+  Y: 40

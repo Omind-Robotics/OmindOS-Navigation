@@ -1,0 +1,34 @@
+# NMPC Controller Parameters
+
+# Frame settings
+base_frame: "motion_link"
+map_frame: "map"
+
+# Control settings
+control_frequency: 50.0
+plan_size: 10
+
+# Planning settings
+planning_frequency: 10.0
+desired_path_size: 10
+path_buffer_limit: 1000.0
+pos_tolerance: 0.50           # 位置容差，用于判断是否接近目标 (m)
+min_angular_vel: 0.1          # 最小角速度阈值，低于此值将提升到此值 (rad/s)
+
+# MPC Parameters
+mpc:
+  control_horizon: 0.5      # 控制周期 (秒)
+  prediction_steps: 10      # 预测步数
+  max_linear_vel: 0.5       # 最大线速度 (m/s)
+  max_angular_vel: 1.0      # 最大角速度 (rad/s)
+  safe_distance: 0.55       # 安全距离 (m)
+  
+  # 权重矩阵
+  state_weights:
+    x: 1.2
+    y: 1.2
+    theta: 0.8      # 增加姿态权重，使MPC更关注朝向误差
+
+  control_weights:
+    v: 0.2
+    omega: 0.10     # 降低角速度惩罚，允许更大的旋转速度

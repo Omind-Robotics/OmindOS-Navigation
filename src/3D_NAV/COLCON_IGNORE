@@ -1,0 +1,2 @@
+Legacy ROS 1 workspace retained for algorithm provenance and real-hardware reference.
+The native ROS 2 implementation is built from src/nav3d_native.

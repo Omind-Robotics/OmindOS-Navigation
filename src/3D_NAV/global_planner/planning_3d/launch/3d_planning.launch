@@ -1,0 +1,58 @@
+<launch>
+  <arg name="pcd_path" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/traversable/traversable_areas.pcd"/>
+  <arg name="map_frame" default="map"/>
+  <arg name="robot_frame" default="base_link"/>
+
+  <!-- PRM-A* 三维路径规划器 -->
+  <node pkg="planning_3d" type="planning_3d_PRM_node" name="planning_3d_PRM_node" output="screen">
+
+    <!-- 必选项：输入点云 -->
+    <param name="pcd_path" value="$(arg pcd_path)"/>
+
+    <!-- 3D EDT 距离场参数 -->
+    <param name="edt_xy_expand"    value="1.0"/>    <!-- XY方向边界扩展距离 (m)，防止边界效应 -->
+    <param name="edt_z_thickness"  value="3"/>      <!-- Z方向膨胀层数，为薄层点云（楼梯/坡道）扩展厚度 -->
+
+    <!-- 竖向空隙检查参数 -->
+    <param name="robot_height"          value="1.0"/>   <!-- 机器人高度 (m)，用于过滤楼梯下方等低矮空间 -->
+    <param name="enable_headroom_check" value="true"/>  <!-- 是否启用头顶空隙检查 -->
+
+    <!-- 安全距离参数 -->
+    <param name="safe_margin"      value="1.0"/>   <!-- 安全距离阈值 (m)，用于筛选安全体素和PRM碰撞检测 -->
+    <param name="use_soft_penalty" value="false"/>  <!-- A* 旧的温和惩罚（基于终点距离，已废弃） -->
+
+    <!-- A* clearance惩罚参数（新方案，推荐启用） -->
+    <param name="use_clearance_penalty" value="true"/>      <!-- 是否启用基于边clearance的激进惩罚 -->
+    <param name="clearance_penalty_weight" value="22750.0"/>    <!-- 惩罚权重 w -->
+    <param name="clearance_penalty_scale" value="0.3"/>     <!-- 指数衰减尺度 α -->
+
+    <!-- PRM 采样参数 -->
+    <param name="step_size"  value="1.0"/>   <!-- 连边最大步长 -->
+    <param name="max_nodes"  value="10000"/> <!-- 采样节点上限 -->
+    <param name="k_neigh"    value="50"/>    <!-- k-近邻 -->
+    <param name="max_slope_deg" value="45"/> <!-- 最大允许坡度 (度) -->
+
+    <!-- 滤波 & 体素 -->
+    <param name="voxel_leaf" value="0.4"/>   <!-- pcl::VoxelGrid 尺寸 -->
+
+    <!-- TF 坐标系 -->
+    <param name="map_frame" value="$(arg map_frame)"/>
+    <param name="robot_frame" value="$(arg robot_frame)"/>
+
+    <!-- 自动重规划参数 -->
+    <param name="auto_replan" value="true"/>         <!-- 是否启用自动重规划 -->
+    <param name="replan_frequency" value="1.0"/>     <!-- 重规划频率 (Hz) -->
+    <param name="obstacle_block_radius" value="0.0"/>
+
+    <!-- 导航完成判定容差 -->
+    <param name="pos_tolerance" value="0.50"/>       <!-- 位置容差 (m) - 进入GOAL_ALIGN阈值 -->
+    <param name="pos_tolerance_exit" value="2.00"/>  <!-- 位置容差退出阈值 (m) - 退出GOAL_ALIGN阈值（滞后机制）-->
+    <param name="yaw_tolerance" value="0.14"/>       <!-- 航向容差 (rad, 约8度) -->
+  </node>
+
+  <!-- 固定话题 remap（可选） -->
+  <!-- <remap from="start_pose" to="/move_base_simple/start"/> -->
+  <!-- <remap from="goal_pose"  to="/move_base_simple/goal"/> -->
+
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find planning_3d)/rviz/default.rviz"/>
+</launch>

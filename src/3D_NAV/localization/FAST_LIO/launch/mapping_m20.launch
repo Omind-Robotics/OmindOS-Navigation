@@ -1,0 +1,99 @@
+<launch>
+<!-- M20 board-relayed RSAIRY PointCloud2 + ROS2-bridged IMU input for FAST-LIO.
+     Mapping defaults to the synchronized front/rear fused cloud for field testing. -->
+
+	<arg name="rviz" default="true" />
+	<arg name="pcd_save_en" default="true" />
+	<arg name="pcd_save_interval" default="-1" />
+	<arg name="pcd_output_dir" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/point_cloud" />
+	<arg name="record_trajectory" default="true" />
+	<arg name="trajectory_output_file" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/trace_data/mapping_trajectory.txt" />
+	<arg name="trajectory_min_interval" default="0.1" />
+	<arg name="trajectory_min_distance" default="0.02" />
+	<arg name="config_file" default="$(find fast_lio)/config/m20.yaml" />
+	<arg name="start_lidar_fusion" default="true" />
+	<arg name="front_lidar_topic" default="/m20/lidar/front" />
+	<arg name="rear_lidar_topic" default="/m20/lidar/rear" />
+	<arg name="fused_lidar_topic" default="/m20/lidar/fused" />
+	<arg name="lidar_fusion_frame" default="base_link" />
+	<arg name="lidar_sync_tolerance" default="0.005" />
+	<arg name="lidar_topic" default="/m20/lidar/fused" />
+	<arg name="time_offset_lidar_to_imu" default="0.0" />
+	<arg name="extrinsic_est_en" default="false" />
+	<arg name="use_identity_extrinsic" default="false" />
+	<arg name="point_filter_num" default="5" />
+	<arg name="filter_size_surf" default="0.15" />
+	<arg name="filter_size_map" default="0.15" />
+	<arg name="max_iteration" default="3" />
+	<arg name="crop_box_enabled" default="false" />
+	<arg name="crop_x_min" default="-30.0" />
+	<arg name="crop_x_max" default="30.0" />
+	<arg name="crop_y_min" default="-30.0" />
+	<arg name="crop_y_max" default="30.0" />
+	<arg name="crop_z_min" default="-5.0" />
+	<arg name="crop_z_max" default="20.0" />
+
+	<!-- FAST-LIO PointCloud2 modes: 2 Velodyne(time/ring), 3 Ouster(t/ring),
+	     4 Pandar(timestamp/ring), 5 Robosense(timestamp/ring), 6 generic XYZ/I. -->
+	<arg name="lidar_type" default="5" />
+	<arg name="scan_line" default="96" />
+	<arg name="scan_rate" default="10" />
+	<arg name="timestamp_unit" default="2" />
+
+	<rosparam command="load" file="$(arg config_file)" />
+	<group if="$(arg use_identity_extrinsic)">
+		<rosparam param="mapping/extrinsic_T">[0.0, 0.0, 0.0]</rosparam>
+		<rosparam param="mapping/extrinsic_R">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]</rosparam>
+	</group>
+
+	<param name="common/lid_topic" type="string" value="$(arg lidar_topic)" />
+	<param name="common/time_offset_lidar_to_imu" type="double" value="$(arg time_offset_lidar_to_imu)" />
+	<param name="mapping/extrinsic_est_en" type="bool" value="$(arg extrinsic_est_en)" />
+	<param name="preprocess/lidar_type" type="int" value="$(arg lidar_type)" />
+	<param name="preprocess/scan_line" type="int" value="$(arg scan_line)" />
+	<param name="preprocess/scan_rate" type="int" value="$(arg scan_rate)" />
+	<param name="preprocess/timestamp_unit" type="int" value="$(arg timestamp_unit)" />
+	<param name="preprocess/crop_box_enabled" type="bool" value="$(arg crop_box_enabled)" />
+	<param name="preprocess/crop_x_min" type="double" value="$(arg crop_x_min)" />
+	<param name="preprocess/crop_x_max" type="double" value="$(arg crop_x_max)" />
+	<param name="preprocess/crop_y_min" type="double" value="$(arg crop_y_min)" />
+	<param name="preprocess/crop_y_max" type="double" value="$(arg crop_y_max)" />
+	<param name="preprocess/crop_z_min" type="double" value="$(arg crop_z_min)" />
+	<param name="preprocess/crop_z_max" type="double" value="$(arg crop_z_max)" />
+	<param name="feature_extract_enable" type="bool" value="0"/>
+	<param name="point_filter_num" type="int" value="$(arg point_filter_num)"/>
+	<param name="max_iteration" type="int" value="$(arg max_iteration)" />
+	<param name="filter_size_surf" type="double" value="$(arg filter_size_surf)" />
+	<param name="filter_size_map" type="double" value="$(arg filter_size_map)" />
+	<param name="cube_side_length" type="double" value="1000" />
+	<param name="runtime_pos_log_enable" type="bool" value="1" />
+	<param name="pcd_save/pcd_save_en" type="bool" value="$(arg pcd_save_en)" />
+	<param name="pcd_save/interval" type="int" value="$(arg pcd_save_interval)" />
+	<param name="pcd_save/output_dir" type="string" value="$(arg pcd_output_dir)" />
+	<param name="use_sim_time" value="false" />
+
+	<node if="$(arg start_lidar_fusion)" pkg="fast_lio" type="m20_lidar_fusion_node"
+	      name="m20_lidar_fusion" output="screen">
+		<param name="front_topic" value="$(arg front_lidar_topic)" />
+		<param name="rear_topic" value="$(arg rear_lidar_topic)" />
+		<param name="output_topic" value="$(arg fused_lidar_topic)" />
+		<param name="output_frame" value="$(arg lidar_fusion_frame)" />
+		<param name="max_sync_diff" value="$(arg lidar_sync_tolerance)" />
+		<param name="queue_size" value="10" />
+	</node>
+
+	<node pkg="fast_lio" type="fastlio_mapping" name="fast_lio_node" output="screen" />
+
+	<node if="$(arg record_trajectory)" pkg="fast_lio" type="mapping_trajectory_recorder.py"
+	      name="mapping_trajectory_recorder" output="screen">
+		<param name="odom_topic" value="/Odometry_loc" />
+		<param name="output_file" value="$(arg trajectory_output_file)" />
+		<param name="min_interval" value="$(arg trajectory_min_interval)" />
+		<param name="min_distance" value="$(arg trajectory_min_distance)" />
+		<param name="append" value="false" />
+	</node>
+
+	<group if="$(arg rviz)">
+		<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz" args="-d $(find fast_lio)/rviz_cfg/loam_livox.rviz" />
+	</group>
+</launch>

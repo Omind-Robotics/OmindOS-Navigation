@@ -1,0 +1,20 @@
+<launch>
+	<arg name="front_lidar_topic" default="/m20/lidar/front" />
+	<arg name="rear_lidar_topic" default="/m20/lidar/rear" />
+	<arg name="fused_lidar_topic" default="/m20/lidar/fused" />
+	<arg name="fixed_frame" default="base_link" />
+	<arg name="sync_tolerance" default="0.005" />
+
+	<node pkg="fast_lio" type="m20_lidar_fusion_node"
+	      name="m20_lidar_fusion_inspect" output="screen">
+		<param name="front_topic" value="$(arg front_lidar_topic)" />
+		<param name="rear_topic" value="$(arg rear_lidar_topic)" />
+		<param name="output_topic" value="$(arg fused_lidar_topic)" />
+		<param name="output_frame" value="$(arg fixed_frame)" />
+		<param name="max_sync_diff" value="$(arg sync_tolerance)" />
+		<param name="queue_size" value="10" />
+	</node>
+
+	<node pkg="rviz" type="rviz" name="m20_fused_cloud_rviz"
+	      args="-d $(find fast_lio)/rviz_cfg/m20_fused_cloud.rviz" output="screen" />
+</launch>

@@ -1,0 +1,95 @@
+filter_size_surf: 0.1
+filter_size_map: 0.1
+common:
+    lid_topic:  "downsampled_point_cloud"
+    # lid_topic:  "/velodyne_points"
+    # lid_topic:  "/rslidar_points"
+    # imu_topic:  "/rslidar_imu_data"
+    imu_topic:  "/rslidar_imu_data"
+    # imu_topic:  "/rear/rslidar_imu_data"
+    time_sync_en: true         # ONLY turn on when external time synchronization is really not possible
+    time_offset_lidar_to_imu: -0.0104548 # Time offset between lidar and IMU calibrated by other algorithms, e.g. LI-Init (can be found in README).
+                                  # This param will take effect no matter what time_sync_en is. So if the time offset is not known exactly, please set as 0.0
+    # CPU affinity settings
+    cpu_affinity_enable: true      # Enable CPU affinity binding
+    cpu_cores: [0,1]              # Specify CPU cores to bind, e.g., [0, 1, 2] for cores 0,1,2; empty array means use all available cores
+    cpu_isolation_enable: true     # Enable CPU core isolation (migrate other processes away from reserved cores)
+    # Performance monitoring settings
+    performance_monitor_enable: true  # Enable performance monitoring and reporting
+    report_interval_seconds: 30       # Generate performance report every N seconds
+    imu2lidarMatrix: [                                              ## y-axis 90 rotation
+        0.00353417, -0.00880108, -0.999955,   -0.00443803,
+       -0.999992,   -0.00209707, -0.00351585,  0.00424305,
+       -0.00206604,  0.999959,   -0.00880842, -0.00421033,
+        0,           0,           0,           1
+    ]
+
+    #imu2lidarMatrix: [                                              ## y-axis -90 rotation
+    #    -0.00353417, 0.00880108,  0.999955,    0.00443803,
+    #    0.999992,   -0.00209707, -0.00351585,  0.00424305,
+    #    0.00206604,  -0.999959,   0.00880842,  0.00421033,
+    #    0,           0,           0,           1
+    #]
+    #imu2lidarMatrix: [                                              ## y-axis -90 rotation, z-axis 180 rotation, 
+    #    0.00832954, -0.00213708, -0.999963, -0.0044863, 
+    #    0.999946,   -0.00621018, 0.00834267, -0.0041866, 
+    #    -0.00622765, -0.999978, 0.00208524, 0.00421568,
+    #              0,         0,          0,          1,
+    #]
+
+preprocess:
+    lidar_type: 2                # 1 for Livox serials LiDAR, 2 for Velodyne LiDAR, 3 for ouster LiDAR, 4 for RS-AIRY LiDAR
+    scan_line: 16
+    blind: 0.1
+
+mapping:
+    acc_cov: 0.1
+    gyr_cov: 0.1
+    b_acc_cov: 0.0001
+    b_gyr_cov: 0.0001
+    fov_degree:    360
+    det_range:     100.0
+    extrinsic_est_en:  true      # true: enable the online estimation of IMU-LiDAR extrinsic
+
+    extrinsic_T: [ 0.0, 0.0, 0.0]
+    # extrinsic_T: [ 0.035567, 0.049266, -0.110697]
+
+    # extrinsic_R: [0.999585,  0.020788,  0.019963,
+    #              -0.020240,  0.999423, -0.027271,
+    #              -0.020519,  0.026855,  0.999429]
+    # 水平放置
+    extrinsic_R: [1.0, 0.0, 0.0,
+                  0.0, 1.0, 0.0,
+                  0.0, 0.0, 1.0]
+    # # y轴旋转90度
+    # extrinsic_R: [0.0, 0.0, 1.0,
+    #                0.0, 1.0, 0.0,
+    #               -1.0, 0.0, 0.0]
+
+    # y轴旋转-90度 z轴旋转180度
+    #extrinsic_R: [0.0, 0.0, 1.0,
+    #              0.0, -1.0, 0.0,
+    #              1.0, 0.0, 0.0]
+
+    #    lidar-imu
+    # extrinsic_T: [ 0.035567, 0.049266, -0.110697]
+    # extrinsic_R: [ 0.999955, -0.00880108, 0.00353417,
+    #               -0.00351585, 0.00209707, 0.999992,
+    #               -0.00880842, -0.999959, 0.00206603]
+    # # 逆矩阵 imu-lidar
+    # extrinsic_R: [ 0.99995505,  -0.0035158408,  -0.0088084185
+    #               -0.0088010832,  0.0020970669,  -0.99995914
+    #               0.0035341767,  0.99999124,  0.0020660318]
+
+publish:
+    path_en:  false
+    scan_publish_en:  true       # false: close all the point cloud output
+    dense_publish_en: true       # false: low down the points number in a global-frame point clouds scan.
+    scan_bodyframe_pub_en: true  # true: output the point cloud scans in IMU-body-frame
+
+pcd_save:
+    pcd_save_en: false
+    interval: -1                 # how many LiDAR frames saved in each pcd file; 
+                                 # -1 : all frames will be saved in ONE pcd file, may lead to memory crash when having too much frames.
+    save_path: "/home/galileo/ros-workspace/test_3d_planning_ws/src/localization/galileo_lio/PCD/"
+    pcd_file_name: galileo_lio.pcd

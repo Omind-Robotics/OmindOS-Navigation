@@ -1,0 +1,61 @@
+<launch>
+<!-- M20 FAST-LIO localization for the navigation stack. -->
+
+	<arg name="rviz" default="false" />
+	<arg name="lidar_type" default="5" />
+	<arg name="scan_line" default="96" />
+	<arg name="scan_rate" default="10" />
+	<arg name="timestamp_unit" default="2" />
+	<arg name="start_lidar_fusion" default="false" />
+	<arg name="lidar_topic" default="/m20/lidar/front" />
+	<arg name="time_offset_lidar_to_imu" default="0.0" />
+	<arg name="extrinsic_est_en" default="false" />
+	<arg name="use_identity_extrinsic" default="false" />
+	<arg name="crop_box_enabled" default="false" />
+	<arg name="use_map_registration" default="true" />
+	<arg name="map_path" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/point_cloud/scans.pcd" />
+
+	<arg name="map_to_camera_init_x" default="0" />
+	<arg name="map_to_camera_init_y" default="0" />
+	<arg name="map_to_camera_init_z" default="0" />
+	<arg name="map_to_camera_init_qx" default="0" />
+	<arg name="map_to_camera_init_qy" default="0" />
+	<arg name="map_to_camera_init_qz" default="0" />
+	<arg name="map_to_camera_init_qw" default="1" />
+
+	<arg name="body_to_base_link_x" default="0" />
+	<arg name="body_to_base_link_y" default="0" />
+	<arg name="body_to_base_link_z" default="0" />
+	<arg name="body_to_base_link_qx" default="0" />
+	<arg name="body_to_base_link_qy" default="0" />
+	<arg name="body_to_base_link_qz" default="0" />
+	<arg name="body_to_base_link_qw" default="1" />
+
+	<include file="$(find fast_lio)/launch/mapping_m20.launch">
+		<arg name="rviz" value="$(arg rviz)" />
+		<arg name="pcd_save_en" value="false" />
+		<arg name="pcd_save_interval" value="-1" />
+		<arg name="record_trajectory" value="false" />
+		<arg name="lidar_type" value="$(arg lidar_type)" />
+		<arg name="scan_line" value="$(arg scan_line)" />
+		<arg name="scan_rate" value="$(arg scan_rate)" />
+		<arg name="timestamp_unit" value="$(arg timestamp_unit)" />
+		<arg name="start_lidar_fusion" value="$(arg start_lidar_fusion)" />
+		<arg name="lidar_topic" value="$(arg lidar_topic)" />
+		<arg name="time_offset_lidar_to_imu" value="$(arg time_offset_lidar_to_imu)" />
+		<arg name="extrinsic_est_en" value="$(arg extrinsic_est_en)" />
+		<arg name="use_identity_extrinsic" value="$(arg use_identity_extrinsic)" />
+		<arg name="crop_box_enabled" value="$(arg crop_box_enabled)" />
+	</include>
+
+	<include if="$(arg use_map_registration)" file="$(find open3d_loc)/launch/localization_m20.launch">
+		<arg name="map_path" value="$(arg map_path)" />
+	</include>
+
+	<!-- Explicit odometry-only mode: FAST-LIO's local origin is treated as map. -->
+	<node unless="$(arg use_map_registration)" pkg="tf2_ros" type="static_transform_publisher" name="map_to_camera_init"
+	      args="$(arg map_to_camera_init_x) $(arg map_to_camera_init_y) $(arg map_to_camera_init_z) $(arg map_to_camera_init_qx) $(arg map_to_camera_init_qy) $(arg map_to_camera_init_qz) $(arg map_to_camera_init_qw) map camera_init" />
+
+	<node unless="$(arg use_map_registration)" pkg="tf2_ros" type="static_transform_publisher" name="body_to_base_link"
+	      args="$(arg body_to_base_link_x) $(arg body_to_base_link_y) $(arg body_to_base_link_z) $(arg body_to_base_link_qx) $(arg body_to_base_link_qy) $(arg body_to_base_link_qz) $(arg body_to_base_link_qw) body base_link" />
+</launch>

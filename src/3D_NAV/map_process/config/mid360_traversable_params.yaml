@@ -1,0 +1,30 @@
+# MID360 / FAST-LIO traversable-area extraction trial parameters.
+
+trajectory_format: 1
+save_individual_regions: true
+require_seed_containment: false
+
+trajectory_sample_interval: 0.25
+seed_search_radius: 1.2
+seed_height_offset: 0.25
+
+normal_angle_threshold: 45.0
+curvature_threshold: 0.30
+height_threshold: 0.25
+search_radius: 0.30
+min_cluster_size: 20
+max_cluster_size: 1000000
+normal_search_radius: 0.35
+
+merge_distance_threshold: 0.1
+min_region_size: 200
+remove_outliers: true
+
+max_ground_normal_angle: 60.0
+enable_height_filter: false
+seed_height_diff_threshold: 0.1
+seed_xy_search_radius: 10.0
+
+enable_voxel_downsampling: true
+voxel_size: 0.05
+downsampling_threshold: 100000

@@ -1,0 +1,52 @@
+schema_version: 1
+status: ACCEPTED_FOR_STAGE2_LOW_SPEED
+runtime_allowed: true
+accepted_on: '2026-08-22'
+imported_on: '2026-08-29'
+platform: unitree_go2
+sensor: external_livox_mid360_with_builtin_imu
+convention: child-frame pose expressed in parent frame; x forward, y left, z up
+user_confirmation: physical installation matches /home/nuc/Nav_test
+
+source:
+  project: /home/nuc/Nav_test
+  manifest_sha256: c2b9445b27e9f040afd63e548183c8a13c2d1c2af5edddc0d715d5b774d9f28f
+  body_to_lidar_sha256: 27bfcf25b298c41dfeceee737afd8c9256dacf55f2fce8fc2ca5df52cb1cdd33
+  lidar_to_imu_sha256: cc5038d49aef9a9f5772e403329a790067d94b0e467de2ff657db6dd79952dee
+  runtime_validation_sha256: c49226e228f1f9f9012331fb3f20fc70a9d8dbdd050e8060f3efd3e78430844e
+
+transforms:
+  base_link_to_body:
+    parent: base_link
+    child: body
+    translation_m: [0.0, 0.0, 0.0]
+    rotation_xyzw: [0.0, 0.0, 0.0, 1.0]
+
+  body_to_lidar:
+    parent: body
+    child: livox_frame
+    translation_m: [0.2734, 0.0, 0.13228413]
+    translation_uncertainty_m: [0.01, 0.01, 0.02]
+    rotation_rpy_deg: [0.30895932, 10.90289194, 0.0]
+    rotation_xyzw: [0.00268398, 0.09500185, -0.00025614, 0.99547345]
+    rotation_uncertainty_deg_rpy: [1.0, 1.0, 2.0]
+
+  lidar_to_imu:
+    parent: livox_frame
+    child: imu_link
+    translation_m: [0.011, 0.02329, -0.04412]
+    rotation_rpy_deg: [0.0, 0.0, 0.0]
+    rotation_xyzw: [0.0, 0.0, 0.0, 1.0]
+
+validation:
+  original_runtime_status: PASS
+  original_composition_translation_error_m: 0.000000008183847
+  original_composition_rotation_error_deg: 0.0
+  original_guarded_bidirectional_linear: PASS
+  original_guarded_bidirectional_yaw: PASS_PRELIMINARY
+  original_post_reload_static_translation_30s_m: 0.00262541
+  original_post_reload_static_rotation_30s_deg: 0.03929962
+
+safety:
+  authorizes_motion: false
+  recalibrate_after_sensor_bracket_or_top_deck_movement: true

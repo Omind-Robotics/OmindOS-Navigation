@@ -1,0 +1,43 @@
+<launch>
+<!-- MID360 + FAST-LIO localization bridge for the navigation stack. -->
+
+	<arg name="start_driver" default="true" />
+	<arg name="rviz" default="false" />
+
+	<!--
+		map -> camera_init.
+		Use the quaternion printed by scripts/level_fastlio_map.py / Log/leveling_result.yaml
+		when navigating on a leveled PCD map.
+	-->
+	<arg name="map_to_camera_init_x" default="0" />
+	<arg name="map_to_camera_init_y" default="0" />
+	<arg name="map_to_camera_init_z" default="0" />
+	<arg name="map_to_camera_init_qx" default="0" />
+	<arg name="map_to_camera_init_qy" default="0" />
+	<arg name="map_to_camera_init_qz" default="0" />
+	<arg name="map_to_camera_init_qw" default="1" />
+
+	<!-- body -> base_link, identity by default. -->
+	<arg name="body_to_base_link_x" default="0" />
+	<arg name="body_to_base_link_y" default="0" />
+	<arg name="body_to_base_link_z" default="0" />
+	<arg name="body_to_base_link_qx" default="0" />
+	<arg name="body_to_base_link_qy" default="0" />
+	<arg name="body_to_base_link_qz" default="0" />
+	<arg name="body_to_base_link_qw" default="1" />
+
+	<include file="$(find fast_lio)/launch/mapping_mid360_g1.launch">
+		<arg name="start_driver" value="$(arg start_driver)" />
+		<arg name="rviz" value="$(arg rviz)" />
+		<arg name="pcd_save_en" value="false" />
+		<arg name="pcd_save_interval" value="-1" />
+		<arg name="record_trajectory" value="false" />
+	</include>
+
+	<node pkg="tf2_ros" type="static_transform_publisher" name="map_to_camera_init"
+	      args="$(arg map_to_camera_init_x) $(arg map_to_camera_init_y) $(arg map_to_camera_init_z) $(arg map_to_camera_init_qx) $(arg map_to_camera_init_qy) $(arg map_to_camera_init_qz) $(arg map_to_camera_init_qw) map camera_init" />
+
+	<node pkg="tf2_ros" type="static_transform_publisher" name="body_to_base_link"
+	      args="$(arg body_to_base_link_x) $(arg body_to_base_link_y) $(arg body_to_base_link_z) $(arg body_to_base_link_qx) $(arg body_to_base_link_qy) $(arg body_to_base_link_qz) $(arg body_to_base_link_qw) body base_link" />
+
+</launch>

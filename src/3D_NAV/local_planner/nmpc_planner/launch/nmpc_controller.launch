@@ -1,0 +1,158 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- NMPC Controller and Local Planner Launch File -->
+
+  <!-- Use the local CasADi C++ tree. libipopt.so.3 is provided in this directory
+       as a symlink to the system IPOPT runtime. -->
+  <arg name="casadi_lib_path" default="$(optenv CASADI_LIB_PATH /opt/casadi/lib)" />
+  <arg name="start_in_auto" default="false" />
+  <arg name="start_obstacle_processor" default="true" />
+  <arg name="map_frame" default="map" />
+  <arg name="robot_frame" default="base_link" />
+  <arg name="lidar_topic" default="/points" />
+  <arg name="world_map_topic" default="/map" />
+  <arg name="lidar_frame" default="lidar" />
+
+  <!-- Start obstacle processing by default so /obs_raw has a publisher.
+       Set start_obstacle_processor:=false if obstacle_processor is launched elsewhere. -->
+  <include if="$(arg start_obstacle_processor)" file="$(find obstacle_processor)/launch/obstacle_processor.launch">
+    <arg name="lidar_topic" value="$(arg lidar_topic)" />
+    <arg name="world_map_topic" value="$(arg world_map_topic)" />
+    <arg name="lidar_frame_id" value="$(arg lidar_frame)" />
+    <arg name="map_frame_id" value="$(arg map_frame)" />
+    <arg name="base_frame_id" value="$(arg robot_frame)" />
+  </include>
+  
+  <!-- ============================================= -->
+  <!--           NMPC控制器节点                      -->
+  <!-- ============================================= -->
+  <node name="nmpc_controller_node" 
+        pkg="nmpc_planner" 
+        type="nmpc_controller_node" 
+        output="screen">
+
+    <env name="CASADIPATH" value="$(arg casadi_lib_path)" />
+    <env name="LD_LIBRARY_PATH" value="$(arg casadi_lib_path):$(optenv LD_LIBRARY_PATH)" />
+    
+    <!-- 坐标系配置 -->
+    <param name="base_frame" value="$(arg robot_frame)" />
+    <param name="map_frame" value="$(arg map_frame)" />
+    
+    <!-- 控制器基础参数 -->
+    <param name="control_frequency" value="50.0" />     <!-- 控制频率 Hz -->
+    <param name="plan_size" value="10" />               <!-- 控制计划大小 -->
+    <param name="start_in_auto" value="$(arg start_in_auto)" />
+    
+    <!-- MPC控制参数（控制器节点使用） -->
+    <param name="mpc/control_horizon" value="0.5" />    <!-- 控制时域 秒 -->
+    <param name="mpc/prediction_steps" value="10" />    <!-- 预测步数 -->
+    <param name="mpc/max_linear_vel" value="0.9" />     <!-- 最大线速度 m/s（控制器较保守） -->
+    <param name="mpc/max_angular_vel" value="1.4" />    <!-- 最大角速度 rad/s -->
+    
+  </node>
+  
+  <!-- ============================================= -->
+  <!--        NMPC局部规划器节点                     -->
+  <!-- ============================================= -->
+  <node name="nmpc_local_planner" 
+        pkg="nmpc_planner" 
+        type="nmpc_local_planner_node" 
+        output="screen">
+
+    <env name="CASADIPATH" value="$(arg casadi_lib_path)" />
+    <env name="LD_LIBRARY_PATH" value="$(arg casadi_lib_path):$(optenv LD_LIBRARY_PATH)" />
+    
+    <!-- 坐标系配置 -->
+    <param name="base_frame" value="$(arg robot_frame)" />
+    <param name="map_frame" value="$(arg map_frame)" />
+    
+    <!-- 规划器基础参数 -->
+    <param name="planning_frequency" value="10.0" />    <!-- 规划频率 Hz -->
+    <param name="desired_path_size" value="10" />       <!-- 期望路径大小 -->
+    <param name="path_buffer_limit" value="1000.0" />   <!-- 路径缓冲区限制 -->
+    <param name="robot_height" value="0.35" />          <!-- 机器人高度 m -->
+
+    <!-- 导航完成判定参数 -->
+    <param name="pos_tolerance" value="0.50" />         <!-- 位置容差，判断是否接近目标 m -->
+    <param name="min_angular_vel" value="1.0" />       <!-- 最小角速度阈值 rad/s (约8.6度/秒) -->
+    
+    <!-- =========== MPC核心参数 =========== -->
+    <param name="mpc/control_horizon" value="0.5" />    <!-- 控制时域 秒 -->
+    <param name="mpc/prediction_steps" value="10" />    <!-- 预测步数 -->
+    <param name="mpc/max_linear_vel" value="0.9" />     <!-- 最大线速度 m/s（规划器可以更激进） -->
+    <param name="mpc/max_angular_vel" value="1.4" />    <!-- 最大角速度 rad/s -->
+    
+    <!-- =========== 控制平滑参数（新增） =========== -->
+    <param name="mpc/smooth_v_weight" value="0.8" />        <!-- 线速度变化率惩罚权重 -->
+    <param name="mpc/smooth_omega_weight" value="0.3" />    <!-- 角速度变化率惩罚权重（更大=更平滑转向） -->
+    
+    <!-- =========== 障碍物避障参数（改进TEB形式） =========== -->
+    <!-- TEB核心参数 -->
+    <param name="mpc/safe_distance" value="0.4" />              <!-- 安全距离：必须保持的最小距离 m -->
+    <param name="mpc/influence_distance" value="1.2" />         <!-- 影响距离：开始产生引导力的距离 m -->
+    <param name="mpc/obstacle_weight" value="10.0" />           <!-- 障碍物惩罚权重 -->
+    <param name="mpc/use_time_weight" value="true" />           <!-- 是否使用时间加权（前期步骤权重更大） -->
+
+    <!-- 平滑和优化参数 -->
+    <param name="mpc/smooth_epsilon" value="0.01" />            <!-- 平滑max函数的epsilon参数 -->
+    <param name="mpc/max_obstacles_consider" value="10" />     <!-- 最多考虑的障碍物数量 -->
+    <param name="mpc/obstacle_influence_range" value="8.0" />   <!-- 障碍物影响范围 m -->
+    <param name="obstacle_grid_size" value="0.2" />             <!-- 障碍物网格化大小 m -->
+
+    <!-- Enable MPC solver so obstacle penalties in MPCSolver::solve() are active.
+         fallback_tracking_enabled remains true as a safety fallback if solving fails. -->
+    <param name="mpc/solver_enabled" value="true" />
+    <param name="mpc/fallback_tracking_enabled" value="true" />
+    <param name="mpc/fallback_max_linear_vel" value="0.35" />
+    <param name="mpc/fallback_max_angular_vel" value="0.8" />
+    
+  </node>
+  
+  <!-- ============================================= -->
+  <!--              参数说明                         -->
+  <!-- ============================================= -->
+  <!--
+  改进TEB形式障碍物避障参数调整建议：
+
+  1. 减少左右摇摆（更平滑运动）：
+     - 增大 smooth_v_weight (如 0.5)
+     - 增大 smooth_omega_weight (如 0.8 或 1.0)
+     - 增大 max_obstacles_consider (如 15)
+     - 减小 obstacle_grid_size (如 0.2)
+
+  2. 避障更保守（安全第一）：
+     - 增大 safe_distance (如 0.6m)
+     - 增大 influence_distance (如 1.5m)
+     - 增大 obstacle_weight (如 12.0)
+     - 启用 use_time_weight = true
+
+  3. 避障更激进（适合狭窄环境）：
+     - 减小 safe_distance (如 0.3m)
+     - 减小 influence_distance (如 0.8m)
+     - 减小 obstacle_weight (如 5.0)
+     - 减小 smooth_omega_weight (如 0.3，允许快速转向)
+
+  4. 提高规划性能（降低计算负担）：
+     - 减小 max_obstacles_consider (如 5)
+     - 减小 obstacle_influence_range (如 3.0m)
+     - 增大 obstacle_grid_size (如 0.5m)
+
+  5. 提高规划质量（牺牲性能）：
+     - 增大 max_obstacles_consider (如 20)
+     - 增大 obstacle_influence_range (如 8.0m)
+     - 减小 obstacle_grid_size (如 0.15m)
+
+  TEB形式参数说明：
+  - safe_distance: 必须保持的最小安全距离，违反时产生强惩罚
+  - influence_distance: 开始产生引导力的距离，在此范围内提前规避
+  - obstacle_weight: 障碍物惩罚权重，值越大避障越强
+  - use_time_weight: 是否对近期预测步骤增加权重，确保短期安全
+  - smooth_epsilon: 平滑max函数的参数，越小越接近真实max（但梯度可能不稳定）
+
+  控制平滑参数说明：
+  - smooth_v_weight: 控制线速度的平滑程度，值越大，加减速越平缓
+  - smooth_omega_weight: 控制角速度的平滑程度，值越大，转向越平滑（减少左右摇摆）
+  - 典型值范围：0.1-1.0，建议先从0.3/0.5开始调整
+  -->
+  
+</launch>

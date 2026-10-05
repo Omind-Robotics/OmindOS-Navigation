@@ -1,0 +1,18 @@
+.git
+.agents
+graphify-out
+build
+devel
+install
+log
+logs
+docx
+src/data
+*.bag
+*.pcd
+*.gif
+*.mp4
+__pycache__
+*.pyc
+# Native ROS 2 validation outputs
+/artifacts*/

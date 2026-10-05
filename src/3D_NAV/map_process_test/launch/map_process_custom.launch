@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <!-- Arguments for customization -->
+  <arg name="point_cloud_file" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/point_cloud/scans.pcd" />
+  <arg name="trajectory_file" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/trace_data/mapping_trajectory.txt" />
+  <arg name="output_file" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/traversable/test_traversable_areas.pcd" />
+  <arg name="config_file" default="$(find map_process_test)/config/default_params.yaml" />
+  <arg name="trajectory_format" default="1" />
+
+  <!-- Map Process Node -->
+  <node name="map_process_test_node" pkg="map_process_test" type="map_process_test_node" output="screen">
+    
+    <!-- Load parameters from specified YAML file -->
+    <rosparam file="$(arg config_file)" command="load" />
+    
+    <!-- Override file paths with arguments -->
+    <param name="point_cloud_file" value="$(arg point_cloud_file)" />
+    <param name="trajectory_file" value="$(arg trajectory_file)" />
+    <param name="output_file" value="$(arg output_file)" />
+    <param name="trajectory_format" value="$(arg trajectory_format)" />
+    
+  </node>
+  
+</launch>

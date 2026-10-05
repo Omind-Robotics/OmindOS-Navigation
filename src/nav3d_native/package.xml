@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>nav3d_native</name>
+  <version>2.0.0</version>
+  <description>Native ROS 2 mapping, scan matching localization, A* planning, smoothing and path tracking.</description>
+  <maintainer email="chenlvping@example.com">Chen Lvping</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <test_depend>ament_pytest</test_depend>
+  <test_depend>python3-pytest</test_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>

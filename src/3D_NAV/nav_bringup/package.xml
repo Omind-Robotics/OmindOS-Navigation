@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>nav_bringup</name>
+  <version>0.0.1</version>
+  <description>One-command bringup launch files for the 3D navigation stack.</description>
+
+  <maintainer email="user@example.com">arts-inpector</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>fast_lio</exec_depend>
+  <exec_depend>map_process</exec_depend>
+  <exec_depend>map_process_test</exec_depend>
+  <exec_depend>planning_3d</exec_depend>
+  <exec_depend>bezier_path_optimizer</exec_depend>
+  <exec_depend>nmpc_planner</exec_depend>
+  <exec_depend>obstacle_processor</exec_depend>
+  <exec_depend>map_publisher</exec_depend>
+  <exec_depend>pcl_ros</exec_depend>
+  <exec_depend>rviz</exec_depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>rospy</exec_depend>
+
+  <export />
+</package>

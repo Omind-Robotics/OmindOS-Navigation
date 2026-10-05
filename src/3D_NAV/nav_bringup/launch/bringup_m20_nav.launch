@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- M20 localization + global/local planning. Dynamic obstacle processing is excluded. -->
+
+  <arg name="start_localization" default="true" />
+  <arg name="start_map_publisher" default="false" />
+  <arg name="start_planner" default="true" />
+  <arg name="start_bezier" default="true" />
+  <arg name="start_nmpc" default="true" />
+  <arg name="start_rviz" default="true" />
+
+  <arg name="map_frame" default="map" />
+  <arg name="robot_frame" default="base_link" />
+  <arg name="pcd_path" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/traversable/traversable_areas.pcd" />
+  <arg name="static_map_path" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/point_cloud/scans.pcd" />
+  <arg name="map_path" default="$(optenv NAV3D_DATA_ROOT /tmp/nav3d_data)/point_cloud/scans.pcd" />
+  <arg name="use_map_registration" default="true" />
+
+  <arg name="m20_lidar_type" default="5" />
+  <arg name="m20_scan_line" default="96" />
+  <arg name="m20_scan_rate" default="10" />
+  <arg name="m20_timestamp_unit" default="2" />
+  <arg name="m20_start_lidar_fusion" default="false" />
+  <arg name="m20_lidar_topic" default="/m20/lidar/front" />
+  <arg name="m20_time_offset_lidar_to_imu" default="0.0" />
+  <arg name="m20_extrinsic_est_en" default="false" />
+  <arg name="m20_use_identity_extrinsic" default="false" />
+  <arg name="m20_crop_box_enabled" default="false" />
+  <arg name="fast_lio_rviz" default="false" />
+
+  <arg name="safe_margin" default="0.10" />
+  <arg name="voxel_leaf" default="0.20" />
+  <arg name="robot_height" default="1.0" />
+  <arg name="enable_headroom_check" default="false" />
+  <arg name="edt_xy_expand" default="1.0" />
+  <arg name="edt_z_thickness" default="3" />
+  <arg name="step_size" default="0.5" />
+  <arg name="max_nodes" default="8000" />
+  <arg name="k_neigh" default="30" />
+  <arg name="max_slope_deg" default="45" />
+  <arg name="use_clearance_penalty" default="true" />
+  <arg name="clearance_penalty_weight" default="22750.0" />
+  <arg name="clearance_penalty_scale" default="0.3" />
+
+  <arg name="start_in_auto" default="false" />
+  <arg name="casadi_lib_path" default="$(optenv CASADI_LIB_PATH /opt/casadi/lib)" />
+
+  <include if="$(arg start_localization)" file="$(find fast_lio)/launch/localization_m20_nav.launch">
+    <arg name="rviz" value="$(arg fast_lio_rviz)" />
+    <arg name="lidar_type" value="$(arg m20_lidar_type)" />
+    <arg name="scan_line" value="$(arg m20_scan_line)" />
+    <arg name="scan_rate" value="$(arg m20_scan_rate)" />
+    <arg name="timestamp_unit" value="$(arg m20_timestamp_unit)" />
+    <arg name="start_lidar_fusion" value="$(arg m20_start_lidar_fusion)" />
+    <arg name="lidar_topic" value="$(arg m20_lidar_topic)" />
+    <arg name="time_offset_lidar_to_imu" value="$(arg m20_time_offset_lidar_to_imu)" />
+    <arg name="extrinsic_est_en" value="$(arg m20_extrinsic_est_en)" />
+    <arg name="use_identity_extrinsic" value="$(arg m20_use_identity_extrinsic)" />
+    <arg name="crop_box_enabled" value="$(arg m20_crop_box_enabled)" />
+    <arg name="use_map_registration" value="$(arg use_map_registration)" />
+    <arg name="map_path" value="$(arg map_path)" />
+  </include>
+
+  <include if="$(arg start_map_publisher)" file="$(find map_publisher)/launch/map_publisher.launch">
+    <arg name="map_path" value="$(arg static_map_path)" />
+    <arg name="map_frame_id" value="$(arg map_frame)" />
+  </include>
+
+  <node if="$(arg start_planner)" pkg="planning_3d" type="planning_3d_PRM_node"
+        name="planning_3d_PRM_node" output="screen">
+    <param name="pcd_path" value="$(arg pcd_path)" />
+    <param name="edt_xy_expand" value="$(arg edt_xy_expand)" />
+    <param name="edt_z_thickness" value="$(arg edt_z_thickness)" />
+    <param name="robot_height" value="$(arg robot_height)" />
+    <param name="enable_headroom_check" value="$(arg enable_headroom_check)" />
+    <param name="safe_margin" value="$(arg safe_margin)" />
+    <param name="use_soft_penalty" value="false" />
+    <param name="use_clearance_penalty" value="$(arg use_clearance_penalty)" />
+    <param name="clearance_penalty_weight" value="$(arg clearance_penalty_weight)" />
+    <param name="clearance_penalty_scale" value="$(arg clearance_penalty_scale)" />
+    <param name="step_size" value="$(arg step_size)" />
+    <param name="max_nodes" value="$(arg max_nodes)" />
+    <param name="k_neigh" value="$(arg k_neigh)" />
+    <param name="max_slope_deg" value="$(arg max_slope_deg)" />
+    <param name="voxel_leaf" value="$(arg voxel_leaf)" />
+    <param name="map_frame" value="$(arg map_frame)" />
+    <param name="robot_frame" value="$(arg robot_frame)" />
+    <param name="auto_replan" value="true" />
+    <param name="replan_frequency" value="1.0" />
+    <param name="obstacle_block_radius" value="0.0" />
+    <param name="pos_tolerance" value="0.50" />
+    <param name="pos_tolerance_exit" value="2.00" />
+    <param name="yaw_tolerance" value="0.14" />
+  </node>
+
+  <include if="$(arg start_bezier)" file="$(find bezier_path_optimizer)/launch/bezier_path_optimizer.launch" />
+
+  <include if="$(arg start_nmpc)" file="$(find nmpc_planner)/launch/nmpc_controller.launch">
+    <arg name="casadi_lib_path" value="$(arg casadi_lib_path)" />
+    <arg name="start_in_auto" value="$(arg start_in_auto)" />
+    <!-- The nested NMPC launch defaults to starting obstacle_processor; keep it disabled. -->
+    <arg name="start_obstacle_processor" value="false" />
+    <arg name="map_frame" value="$(arg map_frame)" />
+    <arg name="robot_frame" value="$(arg robot_frame)" />
+  </include>
+
+  <node if="$(arg start_rviz)" pkg="rviz" type="rviz" name="rviz"
+        args="-d $(find planning_3d)/rviz/default.rviz" />
+</launch>

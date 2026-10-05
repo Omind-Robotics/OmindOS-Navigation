@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Map Process Node -->
+  <node name="map_process_node" pkg="map_process" type="map_process_node" output="screen">
+    
+    <!-- Load parameters from YAML file -->
+    <rosparam file="$(find map_process)/config/default_params.yaml" command="load" />
+    
+    <!-- Override parameters if needed -->
+    <!-- 
+    <param name="point_cloud_file" value="$(find map_process)/data/scans.pcd" />
+    <param name="trajectory_file" value="$(find map_process)/data/fe_lio_pose.txt" />
+    <param name="output_file" value="$(find map_process)/output/traversable_areas.pcd" />
+    -->
+    
+  </node>
+  
+</launch>

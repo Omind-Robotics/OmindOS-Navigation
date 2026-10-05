@@ -1,0 +1,14 @@
+services:
+  nav3d:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        ROS_DISTRO: ${ROS_DISTRO:-humble}
+    image: nav3d:ros2-native
+    network_mode: host
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+    volumes:
+      - ./artifacts:/artifacts
+    command: ["bash", "-lc", "./scripts/validate_native.sh /artifacts"]

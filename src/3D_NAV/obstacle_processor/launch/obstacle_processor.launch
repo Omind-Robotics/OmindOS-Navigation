@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="lidar_topic" default="/points_e1r_front" />
+  <arg name="world_map_topic" default="/map" />
+  <arg name="lidar_frame_id" default="e1r_front" />
+  <arg name="map_frame_id" default="map" />
+  <arg name="base_frame_id" default="base_link" />
+
+  <!-- Obstacle Processor Node -->
+  <node name="obstacle_processor" pkg="obstacle_processor" type="obstacle_processor_node" output="screen">
+    <remap from="/points_e1r_front" to="$(arg lidar_topic)" />
+    <remap from="/map" to="$(arg world_map_topic)" />
+
+    <!-- Map Configuration Parameters -->
+    <param name="map/map_frame_id" value="$(arg map_frame_id)" />
+    <!-- <param name="map/lidar_frame_id" value="body" /> -->
+    <param name="map/lidar_frame_id" value="$(arg lidar_frame_id)" />
+    <!-- <param name="map/base_frame_id" value="motion_link" /> -->
+    <param name="map/base_frame_id" value="$(arg base_frame_id)" />
+
+    <param name="map/resolution" value="0.3" />
+    
+    <!-- Processing Parameters -->
+    <param name="map/expansionCoefficient" value="1.0" />
+    <param name="map/leaf_size" value="0.2" />
+    
+    <!-- Local Processing Bounds -->
+    <param name="map/local_x_l" value="0.1" />
+    <param name="map/local_x_u" value="8.0" />
+    <param name="map/local_y_l" value="-8.0" />
+    <param name="map/local_y_u" value="8.0" />
+    <param name="map/local_z_l" value="-3.0" />
+    <param name="map/local_z_u" value="3.0" />
+    
+    <!-- Local Map Parameters -->
+    <param name="map/localMapSize_x" value="16.0" />
+    <param name="map/localMapSize_y" value="16.0" />
+    <param name="map/localMapSize_z_l" value="-3.0" />
+    <param name="map/localMapSize_z_u" value="3.0" />
+    <param name="map/cacheThreshold" value="1.0" />
+
+    <!-- Multi-layer Obstacle Detection Parameters -->
+    <param name="map/layer_gap_threshold" value="0.4" />
+    <param name="map/layer_merge_min_points" value="3" />
+    <param name="map/layer_height_tolerance" value="0.15" />
+
+    <!-- Z-axis Compensation (height offset between base_link and lidar) -->
+    <param name="map/z_compensation" value="0.0" />
+    
+    <!-- Obstacle Detection Thresholds (meters) -->
+    <!-- height_threshold_grid: Height threshold for grid-based obstacle detection -->
+    <param name="map/height_threshold_grid" value="0.4" />
+    <!-- height_threshold_fallback: Height threshold for fallback obstacle detection -->
+    <param name="map/height_threshold_fallback" value="0.3" />
+    
+    <!-- Processing Frequency -->
+    <!-- publish_rate: Rate at which the obstacle processor publishes results (Hz) -->
+    <param name="map/publish_rate" value="2.0" />
+    
+  </node>
+  
+</launch>

@@ -1,0 +1,35 @@
+<launch>
+<!-- Launch file for Livox MID360 LiDAR -->
+
+	<arg name="rviz" default="false" />
+	
+
+	<rosparam command="load" file="$(find galileo_lio)/config/airy_front.yaml" />
+
+	<param name="feature_extract_enable" type="bool" value="0"/>
+	<param name="point_filter_num" type="int" value="5"/>
+	<param name="max_iteration" type="int" value="4" />
+	<!-- <param name="filter_size_surf" type="double" value="0.5" /> -->
+	<!-- <param name="filter_size_map" type="double" value="0.5" /> -->
+	<param name="cube_side_length" type="double" value="1000" />
+	<param name="runtime_pos_log_enable" type="bool" value="0" />
+    <node pkg="galileo_lio" type="galileo_lio_mapping" name="laserMapping_front" output="screen">
+		<!-- <remap from="/path" to="/front/path" />
+		<remap from="/Laser_map" to="/front/Laser_map" />
+		<remap from="/Odometry" to="/front/Odometry" />
+		<remap from="/clicked_point" to="/front/clicked_point" />
+		<remap from="/cloud_effected" to="/front/cloud_effected" />
+		<remap from="/cloud_registered" to="/front/cloud_registered" />
+		<remap from="/cloud_registered_body" to="/front/cloud_registered_body" /> -->
+		<!-- <param name="parent_id" value="front/camera_init" />
+		<param name="child_id" value="front/body" /> -->
+		<param name="parent_id" value="camera_init" />
+		<param name="child_id" value="body" />
+
+	</node>
+
+	<group if="$(arg rviz)">
+	<node launch-prefix="nice" pkg="rviz" type="rviz" name="rviz_front" args="-d $(find galileo_lio)/rviz_cfg/loam_livox_front.rviz" />
+	</group>
+
+</launch>

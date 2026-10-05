@@ -1,0 +1,8 @@
+<library path="rviz_3d_nav_goal_tool_ros2">
+  <class
+    name="nav3d_rviz_plugins/Goal3DTool"
+    type="nav3d_rviz_plugins::Goal3DTool"
+    base_class_type="rviz_common::Tool">
+    <description>Publish a 3D navigation goal with XYZ position and yaw.</description>
+  </class>
+</library>

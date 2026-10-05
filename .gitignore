@@ -1,0 +1,74 @@
+# Catkin workspace build products
+/build/
+/devel/
+/install/
+/log/
+/logs/
+log/
+logs/
+Log/
+output/
+/.catkin_tools/
+/.cmake_tools/
+.catkin_workspace
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+/.local/
+
+# CMake and compiler outputs
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.o
+*.so
+*.a
+*.d
+
+# ROS runtime outputs
+*.bag
+*.bag.active
+*.db3
+*.mcap
+.ros/
+
+# Runtime maps and generated point-cloud products. Keep these in external
+# storage and point NAV3D_DATA_ROOT at that directory.
+*.pcd
+src/data/**
+!src/data/README.md
+!src/data/**/
+!src/data/**/.gitkeep
+
+# Local analysis/agent state and vendor manuals are not release artifacts
+/graphify-out/
+/.agents/
+/docx/
+
+# Large upstream demo media; source code and text documentation remain tracked
+src/3D_NAV/localization/**/doc/**/*.gif
+src/3D_NAV/localization/**/doc/**/*.mp4
+
+# Logs and temporary files
+*.log
+*.out
+*.tmp
+*.backup
+*.swp
+*~
+.xdp_*
+.xdp*
+
+# Editor and OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+# Native ROS 2 validation outputs
+/artifacts*/

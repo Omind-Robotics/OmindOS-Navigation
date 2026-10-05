@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="pcd_down_sample" type="pcd_down_sample_rotate" name="pcd_down_sample_rotate" output="screen">
+        <rosparam command="load" file="$(find pcd_down_sample)/config/pcd_down_sample.yaml" />
+    </node>
+</launch>

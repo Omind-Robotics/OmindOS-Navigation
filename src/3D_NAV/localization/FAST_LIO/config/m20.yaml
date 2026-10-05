@@ -1,0 +1,55 @@
+common:
+    # mapping_m20.launch starts the synchronized front/rear fusion node.
+    lid_topic:  "/m20/lidar/front"
+    imu_topic:  "/IMU"
+    time_sync_en: false
+    time_offset_lidar_to_imu: 0.0
+    # M20 /IMU is already axis-aligned to base_link by the AOS driver.
+    imu2lidarMatrix: [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    ]
+
+preprocess:
+    # The NUC rslidar driver publishes XYZIRT for the M20 RSAIRY.
+    lidar_type: 5
+    scan_line: 96
+    scan_rate: 10
+    timestamp_unit: 2
+    blind: 0.2
+    crop_box_enabled: false
+    crop_x_min: -30.0
+    crop_x_max: 30.0
+    crop_y_min: -30.0
+    crop_y_max: 30.0
+    crop_z_min: -5.0
+    crop_z_max: 20.0
+
+mapping:
+    # Match the M20 board's native LIO noise model for the first A/B baseline.
+    acc_cov: 0.5
+    gyr_cov: 0.5
+    b_acc_cov: 0.001
+    b_gyr_cov: 0.001
+    fov_degree:    360
+    det_range:     100.0
+    extrinsic_est_en:  false
+    # Physical-offset A profile. Set use_identity_extrinsic:=true in the launch
+    # for the native identity B profile; neither profile replaces calibration.
+    # FAST-LIO expects p_imu = R_LI * p_lidar + T_LI.
+    extrinsic_T: [ -0.0632, 0.0268, 0.0435 ]
+    extrinsic_R: [ 1, 0, 0,
+                   0, 1, 0,
+                   0, 0, 1]
+
+publish:
+    path_en:  false
+    scan_publish_en:  true
+    dense_publish_en: true
+    scan_bodyframe_pub_en: true
+
+pcd_save:
+    pcd_save_en: false
+    interval: -1
