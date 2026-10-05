@@ -1,0 +1,11 @@
+services:
+  navigation:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.runtime
+    image: omindos/navigation:0.1
+    network_mode: host
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+    volumes:
+      - ${OMINDOS_DATA_ROOT:-./data}:/data
