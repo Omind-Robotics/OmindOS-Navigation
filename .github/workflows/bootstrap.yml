@@ -1,89 +1,23 @@
 name: Bootstrap OmindOS Navigation v0.1
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: write
-
 jobs:
   bootstrap:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - name: Import navigation source
+        shell: bash
         run: |
           git clone --depth 1 https://github.com/fushenger/nav_3d2.git /tmp/nav3d
           rsync -a --delete --exclude='.git' --exclude='.github/workflows/bootstrap.yml' /tmp/nav3d/ ./
           mkdir -p .github/workflows docs
-          cat > README.md <<'EOF'
-# OmindOS Navigation
-
-**OmindOS Navigation v0.1** is the ROS 2 Humble navigation stack maintained for the OmindOS robotics platform.
-
-## v0.1 scope
-
-The v0.1 baseline preserves the complete reusable navigation chain:
-
-- Livox / LiDAR sensor integration
-- FAST-LIO ROS 2 localization and mapping
-- 3D PRM planning and EDT-based environment representation
-- Bézier path optimization
-- NMPC local planning and control, with the existing fallback tracker
-- RViz2 3D navigation goal tools
-- ROS 2 native validation stack
-
-## Platform boundary
-
-The navigation core is platform-independent. Robot-specific bridges belong in platform adapters.
-
-The existing Go2-specific files under `nav3d_hardware_bringup` and legacy `3D_NAV` are retained for compatibility and reference, but they are **not part of the OmindOS generic navigation core** and are not the default platform target.
-
-OmindOS integrations should expose standard ROS 2 interfaces for localization, goals, paths, odometry and motion commands, with robot-specific conversion isolated in adapters.
-
-## Main ROS 2 packages
-
-- `nav3d_native` — deterministic ROS 2 baseline and validation
-- `FAST_LIO_ROS2` — LiDAR-inertial odometry
-- `livox_ros_driver2` — Livox sensor interface
-- `planning_3d_ros2` — 3D PRM planning and Bézier optimization
-- `nmpc_planner_ros2` — local planning and control
-- `rviz_3d_nav_goal_tool_ros2` — RViz2 3D goal tools
-- `nav3d_hardware_bringup` — legacy/platform integration layer
-
-See `docs/OMINDOS_V0_1.md` for the v0.1 boundary.
-EOF
-          cat > docs/OMINDOS_V0_1.md <<'EOF'
-# OmindOS Navigation v0.1
-
-## Purpose
-
-This release freezes the current ROS 2 Humble Nav_3d-derived stack as the first OmindOS Navigation baseline.
-
-## Preserved capabilities
-
-v0.1 intentionally retains FAST-LIO, Livox integration, 3D planning, Bézier optimization, NMPC, RViz2 3D goal tooling, and the native ROS 2 validation path.
-
-## Platform separation
-
-Go2-specific controllers, odometry bridges, command gates, safety supervision, launch files, and extrinsics are treated as legacy/platform adapter material. They are retained to avoid damaging validated hardware and localization paths, but OmindOS Navigation core must not depend on Go2.
-
-Future robot support should be implemented through platform adapters behind stable ROS 2 interfaces.
-
-## Validation boundary
-
-The inherited 2026-09-08 codebase includes offline ROS 2 validation and hardware-bringup tests. The historical validation showed the 3D offline loop reaching COMPLETED, while the CasADi QRSQP NMPC solver could fall back to the existing tracker in some cycles. Go2 real-motion validation was not claimed by that record.
-
-## Next v0.1 work
-
-1. Formalize OmindOS ROS 2 interface contracts.
-2. Move robot-specific integrations into explicit adapters.
-3. Add multi-goal inspection mission management.
-4. Add whole-robot collision checking.
-5. Run acceptance tests on the intended OmindOS hardware platform.
-EOF
+          echo 'IyBPbWluZE9TIE5hdmlnYXRpb24KCioqT21pbmRPUyBOYXZpZ2F0aW9uIHYwLjEqKiBpcyB0aGUgUk9TIDIgSHVtYmxlIG5hdmlnYXRpb24gc3RhY2sgbWFpbnRhaW5lZCBmb3IgdGhlIE9taW5kT1Mgcm9ib3RpY3MgcGxhdGZvcm0uCgojIyB2MC4xIHNjb3BlCi0gTGl2b3ggLyBMaURBUiBzZW5zb3IgaW50ZWdyYXRpb24KLSBGQVNULUxJTyBST1MgMiBsb2NhbGl6YXRpb24gYW5kIG1hcHBpbmcKLSAzRCBQUk0gcGxhbm5pbmcgYW5kIEVEVCBlbnZpcm9ubWVudCByZXByZXNlbnRhdGlvbgotIEJlemllciBwYXRoIG9wdGltaXphdGlvbgotIE5NUEMgbG9jYWwgcGxhbm5pbmcvY29udHJvbCB3aXRoIHRoZSBleGlzdGluZyBmYWxsYmFjayB0cmFja2VyCi0gUlZpejIgM0QgbmF2aWdhdGlvbiBnb2FsIHRvb2xzCi0gUk9TIDIgbmF0aXZlIHZhbGlkYXRpb24gc3RhY2sKCiMjIFBsYXRmb3JtIGJvdW5kYXJ5ClRoZSBuYXZpZ2F0aW9uIGNvcmUgaXMgcGxhdGZvcm0taW5kZXBlbmRlbnQuIEV4aXN0aW5nIEdvMi1zcGVjaWZpYyBmaWxlcyBhcmUgcmV0YWluZWQgb25seSBhcyBsZWdhY3kvcGxhdGZvcm0tYWRhcHRlciBtYXRlcmlhbCBhbmQgYXJlIG5vdCB0aGUgZGVmYXVsdCBPbWluZE9TIHRhcmdldC4KCiMjIE1haW4gUk9TIDIgcGFja2FnZXMKLSBuYXYzZF9uYXRpdmUKLSBGQVNUX0xJT19ST1MyCi0gbGl2b3hfcm9zX2RyaXZlcjIKLSBwbGFubmluZ18zZF9yb3MyCi0gbm1wY19wbGFubmVyX3JvczIKLSBydml6XzNkX25hdl9nb2FsX3Rvb2xfcm9zMgotIG5hdjNkX2hhcmR3YXJlX2JyaW5ndXAgKGxlZ2FjeS9wbGF0Zm9ybSBpbnRlZ3JhdGlvbikKClNlZSBkb2NzL09NSU5ET1NfVjBfMS5tZC4K' | base64 -d > README.md
+          echo 'IyBPbWluZE9TIE5hdmlnYXRpb24gdjAuMQoKVGhpcyByZWxlYXNlIGZyZWV6ZXMgdGhlIGN1cnJlbnQgUk9TIDIgSHVtYmxlIE5hdl8zZC1kZXJpdmVkIHN0YWNrIGFzIHRoZSBmaXJzdCBPbWluZE9TIE5hdmlnYXRpb24gYmFzZWxpbmUuCgojIyBQcmVzZXJ2ZWQgY2FwYWJpbGl0aWVzCkZBU1QtTElPLCBMaXZveCBpbnRlZ3JhdGlvbiwgM0QgcGxhbm5pbmcsIEJlemllciBvcHRpbWl6YXRpb24sIE5NUEMsIFJWaXoyIDNEIGdvYWwgdG9vbGluZywgYW5kIHRoZSBuYXRpdmUgUk9TIDIgdmFsaWRhdGlvbiBwYXRoIGFyZSByZXRhaW5lZC4KCiMjIFBsYXRmb3JtIHNlcGFyYXRpb24KR28yLXNwZWNpZmljIGNvbnRyb2xsZXJzLCBvZG9tZXRyeSBicmlkZ2VzLCBjb21tYW5kIGdhdGVzLCBzYWZldHkgc3VwZXJ2aXNpb24sIGxhdW5jaCBmaWxlcywgYW5kIGV4dHJpbnNpY3MgYXJlIGxlZ2FjeS9wbGF0Zm9ybS1hZGFwdGVyIG1hdGVyaWFsLiBPbWluZE9TIE5hdmlnYXRpb24gY29yZSBtdXN0IG5vdCBkZXBlbmQgb24gR28yLgoKIyMgVmFsaWRhdGlvbiBib3VuZGFyeQpUaGUgaW5oZXJpdGVkIDIwMjYtMDktMDggY29kZWJhc2UgaW5jbHVkZXMgb2ZmbGluZSBST1MgMiB2YWxpZGF0aW9uIGFuZCBoYXJkd2FyZS1icmluZ3VwIHRlc3RzLiBIaXN0b3JpY2FsIHZhbGlkYXRpb24gc2hvd2VkIHRoZSAzRCBvZmZsaW5lIGxvb3AgcmVhY2hpbmcgQ09NUExFVEVEOyBDYXNBRGkgUVJTUVAgY291bGQgZmFsbCBiYWNrIHRvIHRoZSBleGlzdGluZyB0cmFja2VyIGluIHNvbWUgY3ljbGVzLiBHbzIgcmVhbC1tb3Rpb24gdmFsaWRhdGlvbiB3YXMgbm90IGNsYWltZWQuCgojIyBOZXh0IHdvcmsKMS4gRm9ybWFsaXplIE9taW5kT1MgUk9TIDIgaW50ZXJmYWNlIGNvbnRyYWN0cy4KMi4gTW92ZSByb2JvdC1zcGVjaWZpYyBpbnRlZ3JhdGlvbnMgaW50byBleHBsaWNpdCBhZGFwdGVycy4KMy4gQWRkIG11bHRpLWdvYWwgaW5zcGVjdGlvbiBtaXNzaW9uIG1hbmFnZW1lbnQuCjQuIEFkZCB3aG9sZS1yb2JvdCBjb2xsaXNpb24gY2hlY2tpbmcuCjUuIFJ1biBhY2NlcHRhbmNlIHRlc3RzIG9uIHRoZSBpbnRlbmRlZCBPbWluZE9TIGhhcmR3YXJlIHBsYXRmb3JtLgo=' | base64 -d > docs/OMINDOS_V0_1.md
           git config user.name "OmindOS Automation"
           git config user.email "actions@users.noreply.github.com"
           git add -A
