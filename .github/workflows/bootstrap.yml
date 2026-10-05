@@ -3,7 +3,6 @@ name: Bootstrap OmindOS Navigation v0.1
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/bootstrap.yml']
   workflow_dispatch:
 
 permissions:
