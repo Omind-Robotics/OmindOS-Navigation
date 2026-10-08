@@ -1,0 +1,29 @@
+#!/bin/sh
+set -eu
+cd "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+[ "$(uname -s)" = Linux ] && [ "$(uname -m)" = aarch64 ] || {
+    echo 'This candidate requires Linux ARM64 (aarch64).' >&2; exit 2;
+}
+command -v docker >/dev/null 2>&1 || { echo 'Install Docker Engine first.' >&2; exit 2; }
+image='omindos/control-arm64:candidate'
+image_known() {
+    actual=$(docker image inspect --format '{{.Id}}' "$image" 2>/dev/null || true)
+    [ -n "$actual" ] && grep -Fqx -- "$actual" IMAGE_ID.txt
+}
+if ! image_known; then
+    sha256sum -c SHA256SUMS-image.txt
+    docker load -i omindos-control-linux-arm64.image.tar.gz
+fi
+image_known || { echo 'Image identity mismatch.' >&2; exit 2; }
+[ "$(docker image inspect --format '{{.Architecture}}' "$image")" = arm64 ] || exit 2
+mkdir -p data
+if [ "$#" -eq 0 ]; then set -- workbench; fi
+case "$1" in
+    workbench|parameter-api) set -- "$@" --store /data/profiles ;;
+    quadruped|quadruped-ros) set -- "$@" --token-file /data/quadruped.token ;;
+    validate-dynamics) set -- "$@" --source /opt/omindos/reference --output /data/dynamics.json ;;
+esac
+exec docker run --rm --init --platform linux/arm64 --network host \
+    --user "$(id -u):$(id -g)" --cap-drop ALL --security-opt no-new-privileges \
+    -e HOME=/tmp -e ROS_LOCALHOST_ONLY=1 -e ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-42}" \
+    -v "$(pwd)/data:/data" "$image" "$@"

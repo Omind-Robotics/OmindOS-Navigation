@@ -1,0 +1,30 @@
+# Private builder sources remain only in an unexported build stage.
+FROM ros:humble-ros-base-jammy AS runtime-deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-venv libgl1 libegl1 libglfw3 && rm -rf /var/lib/apt/lists/*
+
+FROM runtime-deps AS builder
+RUN test "$(uname -m)" = aarch64
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ python3-dev git binutils && rm -rf /var/lib/apt/lists/*
+RUN mkdir /build && python3 -m venv --system-site-packages /opt/omindos-runtime
+# PyPI aarch64 torch wheel; no Jetson CUDA/JetPack claim.
+RUN /opt/omindos-runtime/bin/python -m pip install --no-cache-dir \
+    Cython==3.1.6 setuptools==79.0.1 wheel==0.45.1 \
+    torch==2.5.1 numpy==1.26.4 mujoco==3.3.7 && /opt/omindos-runtime/bin/python -m pip check
+COPY scripts /build/source/scripts
+COPY config /build/source/config
+COPY LICENSES /build/source/LICENSES
+COPY web/robot-workbench /build/source/web/robot-workbench
+COPY release/control-preview /build/source/release/control-preview
+RUN /opt/omindos-runtime/bin/python /build/source/release/control-preview/prepare_reference.py
+RUN /opt/omindos-runtime/bin/python /build/source/release/control-preview/compile_native.py
+
+FROM runtime-deps
+COPY --from=builder /opt/omindos-runtime /opt/omindos-runtime
+COPY --from=builder /build/native-app /opt/omindos
+COPY release/control-preview/omindos-runtime /usr/local/bin/omindos-runtime
+RUN chmod 755 /usr/local/bin/omindos-runtime
+ENV PYTHONDONTWRITEBYTECODE=1
+ENTRYPOINT ["/ros_entrypoint.sh", "/usr/local/bin/omindos-runtime"]
+CMD ["--help"]

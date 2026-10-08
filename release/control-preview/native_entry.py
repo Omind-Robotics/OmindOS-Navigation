@@ -2,6 +2,7 @@
 import argparse
 import importlib
 import os
+import platform
 from pathlib import Path
 import signal
 import subprocess
@@ -20,7 +21,7 @@ def main():
         print(VERSION)
         return 0
     if len(sys.argv)<2 or sys.argv[1] in ('-h','--help'):
-        print('OmindOS control preview '+VERSION+' (Linux x86_64, simulation only)')
+        print('OmindOS control preview '+VERSION+' (Linux '+platform.machine()+', simulation only)')
         print('Modes: '+', '.join(MODES)+', ros-preview')
         return 0
     mode=sys.argv.pop(1)
@@ -64,3 +65,4 @@ def main():
 
 if __name__=='__main__':
     raise SystemExit(main())
+
