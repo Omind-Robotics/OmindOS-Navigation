@@ -67,7 +67,8 @@ def feedback(packet):
         return {'kind':kind, 'motor_id':motor, 'position':p*2*POSITION/65535-POSITION,
                 'velocity':v*2*VELOCITY/65535-VELOCITY, 'torque':t*2*TORQUE/65535-TORQUE,
                 'temperature':temperature/10, 'fault':(ident >> 16) & 63,
-                'mode':(ident >> 22) & 3}
+                'mode':(ident >> 22) & 3, 'position_saturated':p in (0,65535),
+                'velocity_saturated':v in (0,65535)}
     if kind == 21:
         return {'kind':kind, 'motor_id':motor, 'fault':int.from_bytes(packet.data[:4], 'little'),
                 'warning':int.from_bytes(packet.data[4:], 'little')}
@@ -217,6 +218,8 @@ class MotorSession:
                 raise RuntimeError('motor_fault_or_warning_frame')
         else:
             joint = self.addresses[key]
+            if value['position_saturated'] or value['velocity_saturated']:
+                raise RuntimeError('motor_feedback_encoding_saturated')
             if value['fault'] or value['temperature'] > joint['temperature_limit_c']:
                 raise RuntimeError('motor_fault_or_temperature_limit')
             if self.active and value['mode'] != 2:

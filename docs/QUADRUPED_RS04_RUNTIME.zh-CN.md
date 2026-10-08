@@ -1,5 +1,7 @@
 # 四足运动控制与 RS04 驱动开发预览
 
+2026-10-08 更新：默认运行链路改为 [通用关节目标角度接口](JOINT_POSITION_INTERFACE.zh-CN.md)，上位机输出角度，仿真关节执行闭环。板卡型号未绑定，实际角度通信适配器待接入。本文的主机 PD / SocketCAN 扭矩路径保留为显式 `--control-mode host-effort-test` 对照测试；下表的 57 项测试、4 个动力学场景、15 项 ROS 2 检查属于此前基线，新增证据见 [通用接口验收记录](validation/joint-position-20261008.md)。
+
 本增量接续 ROS 2 关节预览，加入使用真实姿态/关节反馈的 MEVIUS2 策略控制、浮动基座接触动力学、ROS 2 指令接口和 ROBSTRIDE04 SocketCAN 驱动代码。代码与仿真可供开发验收；尚未执行真实电机或整机验收，尚未包含在公开的 `v0.2.0-preview.2` 下载包中。
 
 ## 已实现与适用范围
@@ -21,7 +23,8 @@
 
 - `scripts/quadruped_controller.py`：无 I/O 的传感器校验、策略输入/输出及控制状态机。
 - `scripts/robstride04_driver.py`：RS04 编解码、Linux SocketCAN、标定和电机会话。
-- `scripts/quadruped_backends.py`：MuJoCo 与 RS04 的共同传感器/扭矩接口。
+- `scripts/joint_interface.py`：独立于厂家与关节数量的角度指令、反馈和接收校验。
+- `scripts/quadruped_backends.py`：默认关节角度闭环仿真，以及原 MuJoCo / RS04 扭矩后端。
 - `scripts/quadruped_worker.py`：控制进程，默认仅仿真；监听 `127.0.0.1`，独立随机令牌鉴权。
 - `scripts/quadruped_ros2.py`：ROS 2 接口；启动保持 DISARMED。
 - `config/robot_profiles/robstride04.calibration-template.json`：本机标定模板。
@@ -60,7 +63,7 @@ ROS 输入校验来源时间戳、递增顺序、base_link 坐标及有限数值
 
 显式 arm 时先停止所有已配置电机并收齐反馈；设置并回读 `0x7028 canTimeout=2000`（手册规定 20000 对应 1 秒，即本配置 100 ms），再设置并回读运行模式 0。使能前重新核验位置、IMU 和截止时间，逐个使能后立即发送零增益/零目标扭矩报文。该协议量化的零扭矩存在小于 0.004 N·m 的误差。
 
-运行中由主机按实际关节反馈计算 PD 扭矩、逐关节限幅，再通过类型 1 的前馈扭矩字段发送，电机 Kp/Kd 固定为 0，避免只限制前馈而放过电机内部 PD 输出。每周期发送前完整校验整批命令；反馈/发送超过 50 ms、故障位、温度、机械限位或总线错误会停止所有电机并锁存。操作系统接收时间戳用于识别积压旧帧。进程崩溃时依赖已回读的电机端通信超时，而非 Python 退出回调。
+在显式 `host-effort-test` 对照路径中，主机按实际关节反馈计算 PD 扭矩、逐关节限幅，再通过类型 1 的前馈扭矩字段发送，电机 Kp/Kd 固定为 0，避免只限制前馈而放过电机内部 PD 输出。每周期发送前完整校验整批命令；反馈/发送超过 50 ms、编码位置/速度触及饱和端点、故障位、温度、机械限位或总线错误会停止所有电机并锁存。操作系统接收时间戳用于识别积压旧帧。进程崩溃时依赖已回读的电机端通信超时，而非 Python 退出回调。此路径不作为通用角度适配器使用。
 
 本实现是 Python 开发预览，尚无真实 CAN 延迟、固件兼容性、长期温升或硬实时保证。没有修改电机 ID、机械零点、持久化参数或自动清除故障的接口。对未连接或已经失效的总线，软件发出停止报文不能证明机械装置已经停下。
 
@@ -95,7 +98,7 @@ python3 scripts/check_quadruped_ros2.py --output /tmp/quadruped-ros2.json
 python3 -m unittest discover -s tests -v
 ```
 
-实机入口另须指定 `--backend robstride04 --allow-hardware --calibration <本机标定文件>`。随附空模板会在打开 CAN 之前失败。本次没有运行该实机入口，没有连接任何用户电机，也没有远程发出真实使能命令。
+旧扭矩台架入口另须指定 `--control-mode host-effort-test --backend robstride04 --allow-hardware --calibration <本机标定文件>`。随附空模板会在打开 CAN 之前失败。默认角度模式尚不提供真实板卡适配器。本次没有运行实机入口，没有连接任何用户电机，也没有远程发出真实使能命令。
 
 ## 验证与来源
 

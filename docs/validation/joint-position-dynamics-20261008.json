@@ -1,0 +1,338 @@
+{
+  "status": "PASS",
+  "hardware_tested": false,
+  "customer_RS04_dynamics_tested": false,
+  "upstream_commit": "4f09680bb575574377b903bbc971bdb2695d507b",
+  "policy_sha256": "392b4d3f30e856caedcb0ec25f125201e97b28795bc9342ee2fc1d8125656510",
+  "physics_hz": 200,
+  "policy_hz": 50,
+  "control_mode": "joint-position",
+  "joint_loop": "simulated_position_pd",
+  "versions": {
+    "torch": "2.14.1+cpu",
+    "mujoco": "3.14.0",
+    "numpy": "2.5.3"
+  },
+  "scenarios": [
+    {
+      "name": "forward",
+      "checks": {
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "policy_executed": true,
+        "forward_progress": true
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "minimum_height_m": 0.029942177598589883,
+          "minimum_upright": 0.9999999982828578,
+          "max_effort_nm": 1.5112684340852822,
+          "displacement": [
+            -0.00006944067114324523,
+            1.5782790695840082e-7,
+            -0.00005782240141011599
+          ],
+          "yaw_change_rad": 0.0000011565635587372602,
+          "final_second_mean_speed": 0.00006990689305596658
+        },
+        {
+          "phase": "standup",
+          "minimum_height_m": 0.02993789460399007,
+          "minimum_upright": 0.9938210836768757,
+          "max_effort_nm": 40.215168771022896,
+          "displacement": [
+            -0.08609860171418729,
+            -0.001067888828158614,
+            0.36535638291380484
+          ],
+          "yaw_change_rad": 0.0010120113787336793,
+          "final_second_mean_speed": 0.033457918033702724
+        },
+        {
+          "phase": "hold",
+          "minimum_height_m": 0.39771944159209327,
+          "minimum_upright": 0.9949769283232163,
+          "max_effort_nm": 31.158886806320783,
+          "displacement": [
+            0.11880948823654755,
+            0.0018801230493337394,
+            0.04628284931975479
+          ],
+          "yaw_change_rad": -0.007078702023675112,
+          "final_second_mean_speed": 0.05991398463734789
+        },
+        {
+          "phase": "move",
+          "minimum_height_m": 0.40934993960547883,
+          "minimum_upright": 0.9863634930638283,
+          "max_effort_nm": 28.41768596392867,
+          "displacement": [
+            0.9517645679081347,
+            -0.10332785951281127,
+            -0.031975006734489386
+          ],
+          "yaw_change_rad": -0.20258135373188438,
+          "final_second_mean_speed": 0.07576069784128665
+        },
+        {
+          "phase": "stop",
+          "minimum_height_m": 0.4074948623986484,
+          "minimum_upright": 0.9959588303315141,
+          "max_effort_nm": 24.912793107245587,
+          "displacement": [
+            -0.0018852622230906002,
+            -0.007758707897760148,
+            0.02818372303517147
+          ],
+          "yaw_change_rad": 0.06190187962202857,
+          "final_second_mean_speed": 0.0025338895556886627
+        }
+      ],
+      "position_commands": 3620,
+      "push_force_n": 0,
+      "push_duration_s": 0
+    },
+    {
+      "name": "lateral",
+      "checks": {
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "policy_executed": true,
+        "lateral_progress": true
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "minimum_height_m": 0.029942177598589883,
+          "minimum_upright": 0.9999999982828578,
+          "max_effort_nm": 1.5112684340852822,
+          "displacement": [
+            -0.00006944067114324523,
+            1.5782790695840082e-7,
+            -0.00005782240141011599
+          ],
+          "yaw_change_rad": 0.0000011565635587372602,
+          "final_second_mean_speed": 0.00006990689305596658
+        },
+        {
+          "phase": "standup",
+          "minimum_height_m": 0.02993789460399007,
+          "minimum_upright": 0.9938210836768757,
+          "max_effort_nm": 40.215168771022896,
+          "displacement": [
+            -0.08609860171418729,
+            -0.001067888828158614,
+            0.36535638291380484
+          ],
+          "yaw_change_rad": 0.0010120113787336793,
+          "final_second_mean_speed": 0.033457918033702724
+        },
+        {
+          "phase": "hold",
+          "minimum_height_m": 0.39771944159209327,
+          "minimum_upright": 0.9949769283232163,
+          "max_effort_nm": 31.158886806320783,
+          "displacement": [
+            0.11880948823654755,
+            0.0018801230493337394,
+            0.04628284931975479
+          ],
+          "yaw_change_rad": -0.007078702023675112,
+          "final_second_mean_speed": 0.05991398463734789
+        },
+        {
+          "phase": "move",
+          "minimum_height_m": 0.41612451322083094,
+          "minimum_upright": 0.9977492687757192,
+          "max_effort_nm": 23.516829159551666,
+          "displacement": [
+            -0.042274065772392164,
+            0.3664939733643877,
+            -0.022068193069147757
+          ],
+          "yaw_change_rad": -0.12306375632940869,
+          "final_second_mean_speed": 0.06253403458460434
+        },
+        {
+          "phase": "stop",
+          "minimum_height_m": 0.4195666009615161,
+          "minimum_upright": 0.9987577608561561,
+          "max_effort_nm": 16.783994323285103,
+          "displacement": [
+            0.03939160223806271,
+            -0.018658309298022424,
+            0.023026513520270686
+          ],
+          "yaw_change_rad": 0.01818680061768232,
+          "final_second_mean_speed": 0.0010190637596050468
+        }
+      ],
+      "position_commands": 3620,
+      "push_force_n": 0,
+      "push_duration_s": 0
+    },
+    {
+      "name": "turn",
+      "checks": {
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "policy_executed": true,
+        "turn_progress": true
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "minimum_height_m": 0.029942177598589883,
+          "minimum_upright": 0.9999999982828578,
+          "max_effort_nm": 1.5112684340852822,
+          "displacement": [
+            -0.00006944067114324523,
+            1.5782790695840082e-7,
+            -0.00005782240141011599
+          ],
+          "yaw_change_rad": 0.0000011565635587372602,
+          "final_second_mean_speed": 0.00006990689305596658
+        },
+        {
+          "phase": "standup",
+          "minimum_height_m": 0.02993789460399007,
+          "minimum_upright": 0.9938210836768757,
+          "max_effort_nm": 40.215168771022896,
+          "displacement": [
+            -0.08609860171418729,
+            -0.001067888828158614,
+            0.36535638291380484
+          ],
+          "yaw_change_rad": 0.0010120113787336793,
+          "final_second_mean_speed": 0.033457918033702724
+        },
+        {
+          "phase": "hold",
+          "minimum_height_m": 0.39771944159209327,
+          "minimum_upright": 0.9949769283232163,
+          "max_effort_nm": 31.158886806320783,
+          "displacement": [
+            0.11880948823654755,
+            0.0018801230493337394,
+            0.04628284931975479
+          ],
+          "yaw_change_rad": -0.007078702023675112,
+          "final_second_mean_speed": 0.05991398463734789
+        },
+        {
+          "phase": "move",
+          "minimum_height_m": 0.4125303532252318,
+          "minimum_upright": 0.9974084643104454,
+          "max_effort_nm": 22.518272480837062,
+          "displacement": [
+            0.034519544152662354,
+            -0.14468146601392212,
+            -0.02839448804876099
+          ],
+          "yaw_change_rad": 1.5288162758883,
+          "final_second_mean_speed": 0.045209965512641566
+        },
+        {
+          "phase": "stop",
+          "minimum_height_m": 0.41274576327869905,
+          "minimum_upright": 0.9984045194194922,
+          "max_effort_nm": 18.707130248823578,
+          "displacement": [
+            0.024020141633331812,
+            0.007814544279205443,
+            0.028325105142870233
+          ],
+          "yaw_change_rad": 0.0013383521941183751,
+          "final_second_mean_speed": 0.0008778946643943848
+        }
+      ],
+      "position_commands": 3620,
+      "push_force_n": 0,
+      "push_duration_s": 0
+    },
+    {
+      "name": "standing_push",
+      "checks": {
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "policy_executed": true
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "minimum_height_m": 0.029942177598589883,
+          "minimum_upright": 0.9999999982828578,
+          "max_effort_nm": 1.5112684340852822,
+          "displacement": [
+            -0.00006944067114324523,
+            1.5782790695840082e-7,
+            -0.00005782240141011599
+          ],
+          "yaw_change_rad": 0.0000011565635587372602,
+          "final_second_mean_speed": 0.00006990689305596658
+        },
+        {
+          "phase": "standup",
+          "minimum_height_m": 0.02993789460399007,
+          "minimum_upright": 0.9938210836768757,
+          "max_effort_nm": 40.215168771022896,
+          "displacement": [
+            -0.08609860171418729,
+            -0.001067888828158614,
+            0.36535638291380484
+          ],
+          "yaw_change_rad": 0.0010120113787336793,
+          "final_second_mean_speed": 0.033457918033702724
+        },
+        {
+          "phase": "hold",
+          "minimum_height_m": 0.39771944159209327,
+          "minimum_upright": 0.9949769283232163,
+          "max_effort_nm": 31.158886806320783,
+          "displacement": [
+            0.11880948823654755,
+            0.0018801230493337394,
+            0.04628284931975479
+          ],
+          "yaw_change_rad": -0.007078702023675112,
+          "final_second_mean_speed": 0.05991398463734789
+        },
+        {
+          "phase": "move",
+          "minimum_height_m": 0.441586651900871,
+          "minimum_upright": 0.9992154000924912,
+          "max_effort_nm": 13.899119237750671,
+          "displacement": [
+            0.000609699312088624,
+            0.0037906896193782165,
+            0.001258965818640212
+          ],
+          "yaw_change_rad": 0.008365697373014182,
+          "final_second_mean_speed": 0.00233559601575752
+        },
+        {
+          "phase": "stop",
+          "minimum_height_m": 0.44284067230015767,
+          "minimum_upright": 0.9999961936908943,
+          "max_effort_nm": 8.591806355505257,
+          "displacement": [
+            -0.002106197548064251,
+            0.0007391834852800636,
+            0.00022237286342652318
+          ],
+          "yaw_change_rad": 0.0017594280066005495,
+          "final_second_mean_speed": 0.0004244699907908253
+        }
+      ],
+      "position_commands": 3620,
+      "push_force_n": 40,
+      "push_duration_s": 0.2
+    }
+  ],
+  "report_detail": "phase statistics retained; sampled traces omitted from repository summary"
+}

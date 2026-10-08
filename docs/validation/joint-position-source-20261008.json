@@ -1,0 +1,35 @@
+{
+  "recorded_at": "2026-10-08T07:27:53.197Z",
+  "hardware_tested": false,
+  "full_python_suite": {
+    "passed": true,
+    "tests": 88,
+    "source": "isolated candidate built from PR4 head plus this change"
+  },
+  "remote_control_subset": {
+    "passed": true,
+    "tests": 58,
+    "included_in_full_suite": true
+  },
+  "remote_matches_candidate": true,
+  "verified_files_sha256": {
+    "scripts/joint_interface.py": "f5e4ce5ec6875b74418e5dbb524647b2083371374e32a0d490c8025289650a6f",
+    "scripts/quadruped_controller.py": "c03f3439b3c9bb6c529dae7eaf2f27b94b698738678f9bb20554987bf2a7c9f5",
+    "scripts/quadruped_backends.py": "8137a6515d4ad6801a7a547e1a9f0cb7d21ac78f60e23531ce4c0967ae95c5dd",
+    "scripts/quadruped_worker.py": "48c30258365f7af54578f02045a50b67c4ae6e940bb1ed7ca58aac74a40fd33c",
+    "scripts/quadruped_ros2.py": "a1adacdf2560b84b2ffc3eff4ff4ea66e518264c20260322080c33eb2cbe7f80",
+    "scripts/validate_quadruped_dynamics.py": "f6f348d90f54dd1d992d5dd7e2f2091e97c68a4965533bd12492464143355151",
+    "scripts/check_quadruped_ros2.py": "ef842fa3b3f63ab5d0b95acd34eae2343825c78ca7fbada80f61b3ab6eb39169",
+    "scripts/robstride04_driver.py": "f52d40e3f4a011d220df6b473fa95b217c1703d24848010ca56656f254798370",
+    "scripts/rs04_simulated_bus.py": "3c4eca3a5bd157d8aaf645af1762e02cb49f6db02988679d96333fae2d91897c",
+    "scripts/check_rs04_driver_dynamics.py": "e42cfe1c81cf29de32db9a652f0ba31dd5e6eac8d65a22526865ce9ed2b0e93e",
+    "scripts/check_rs04_hardware.py": "9ddc4e75968d3b80f70308f109d6999a63510c0c53031f07a1882bbdf8939650",
+    "tests/test_joint_interface.py": "647861d65b38cdacd8d4b1a40931f9bc340099938254461e16f1b36e51b99eb0",
+    "tests/test_rs04_assessment.py": "850cfa14b23a77d3a6e7c050e7e87e123c2bc779824f54dfaa029bfb3fa3bab7",
+    "config/robot_profiles/rs04-simulation-control.json": "8d1f562e8deb9c2194ce716510e52e649a20d9c0669f9ec41bfa546e1ab965e5",
+    "tests/test_quadruped_control.py": "e5e1f1c0133782b093d6301b0453dc08e72155f45db04b917b64dbaaede43046",
+    "config/robot_profiles/robstride04.calibration-template.json": "68c1501ecbfda78690800393693a7b0e0654f194dd102b601b822f956786bae1"
+  },
+  "default_dynamics_report": "joint-position-dynamics-20261008.json",
+  "ros2_report": "joint-position-ros2-20261008.json"
+}

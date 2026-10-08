@@ -19,16 +19,34 @@ def main():
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
     rclpy.init(); node=Node('check_quadruped_ros2')
-    status={}; counts={'status':0,'joint_state':0,'imu':0}; checks={}
+    status={}; counts={'status':0,'joint_state':0,'imu':0,'joint_targets':0}; checks={}
+    target_sequences=[]; target_session=None; invalid_targets=[]
     def received(message):
         status.clear(); status.update(json.loads(message.data)); counts['status']+=1
     def joints(message):
         if len(message.name)==12 and len(message.position)==12: counts['joint_state']+=1
     def imu(message):
         if message.header.frame_id=='base_link': counts['imu']+=1
+    def targets(message):
+        nonlocal target_session
+        try:
+            packet=json.loads(message.data)
+            if packet['schema']!='omindos.joint_position.v1' or packet['unit']!='rad':
+                raise ValueError('schema/unit')
+            if packet['joint_names']!=status.get('joint_names') or len(packet['position'])!=12:
+                raise ValueError('joint names/count')
+            if not all(math.isfinite(x) for x in packet['position']): raise ValueError('nonfinite')
+            if target_session is None: target_session=packet['session_id']
+            if packet['session_id']!=target_session: raise ValueError('session changed')
+            if target_sequences and packet['sequence']<=target_sequences[-1]: raise ValueError('replay')
+            if time.monotonic()-packet['issued_monotonic_s']>.1: raise ValueError('old target')
+            target_sequences.append(packet['sequence']); counts['joint_targets']+=1
+        except Exception as error:
+            invalid_targets.append(str(error))
     subscriptions=[node.create_subscription(String,'/omindos_quadruped/status',received,10),
                    node.create_subscription(JointState,'/omindos_quadruped/joint_states',joints,10),
-                   node.create_subscription(Imu,'/omindos_quadruped/imu',imu,10)]
+                   node.create_subscription(Imu,'/omindos_quadruped/imu',imu,10),
+                   node.create_subscription(String,'/omindos_quadruped/joint_targets',targets,10)]
     publisher=node.create_publisher(TwistStamped,'/omindos_quadruped/cmd_vel',10)
     def spin(seconds):
         end=time.monotonic()+seconds
@@ -59,6 +77,8 @@ def main():
         check('simulation_only_disarmed',status['backend']=='mujoco' and status['state']=='DISARMED'
               and status['hardware_active'] is False)
         check('walk_before_arm_rejected',not action('walk').success)
+        check('default_joint_position_interface',status.get('control_mode')=='joint_position'
+              and status.get('joint_command') is None and counts['joint_targets']==0)
         check('explicit_arm',action('arm').success)
         check('explicit_stand',action('stand').success)
         wait(lambda:status.get('state')=='HOLD',6)
@@ -88,10 +108,20 @@ def main():
         check('estop',action('estop').success)
         wait(lambda:status.get('state')=='FAULT')
         check('fault_latched',not action('arm').success)
+        spin(.2); stopped_count=counts['joint_targets']; spin(.2)
+        check('no_target_stream_after_estop',counts['joint_targets']==stopped_count and status.get('joint_command') is None)
+        check('named_angle_stream_without_replay',not invalid_targets and len(target_sequences)>100)
         check('real_DDS_sensor_streams',min(counts.values())>100)
         report={'status':'PASS','checks':checks,'counts':counts,
                 'forward_displacement_m':displacement,'minimum_upright_while_walking':min_upright,
                 'hardware_tested':False,'customer_RS04_dynamics_tested':False,
+                'model':status.get('model'),'mass_sensitivity':status.get('mass_sensitivity'),
+                'control_mode':status.get('control_mode'),'joint_interface':status.get('joint_interface'),
+                'target_sequence_first':target_sequences[0] if target_sequences else None,
+                'target_sequence_last':target_sequences[-1] if target_sequences else None,
+                'invalid_targets':invalid_targets,
+                'control_profile_sha256':status.get('control_profile_sha256'),
+                'transport':status.get('transport'),'simulated_CAN_tx_frames':status.get('simulated_CAN_tx_frames'),
                 'scope':'ROS2_Humble_DDS_loopback_worker_pinned_MEVIUS2_MuJoCo'}
     except Exception as error:
         report={'status':'FAIL','checks':checks,'counts':counts,'error':str(error),'last_status':status}

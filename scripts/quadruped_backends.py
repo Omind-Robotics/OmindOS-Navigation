@@ -1,9 +1,106 @@
-"""Physics and real CAN backends for the same sensor/effort controller."""
+"""Generic joint-position simulation plus the legacy effort/CAN test backend."""
 import hashlib
 import json
 import time
+import secrets
 
 from quadruped_controller import COMMIT, NAMES, Sensors, vector
+from joint_interface import JointFeedback, PositionCommandGuard, finite_vector, SCHEMA
+
+
+class SimulatedPositionBackend:
+    """Emulates position loops inside the joints, not inside the host policy.
+
+    Gains/effort limiting are a mathematical simulation, not vendor firmware.
+    Real adapters must implement this position contract with their own codec,
+    feedback, enable/stop behavior and independently enforced watchdog/limits.
+    """
+    hardware = False
+    command_mode = 'joint_position'
+
+    def __init__(self, physics, names, limits, kp, kd, clock=time.monotonic):
+        if physics.hardware:
+            raise ValueError('position_loop_emulator_is_simulation_only')
+        self.physics, self.clock = physics, clock
+        self.names = tuple(names)
+        self.guard = PositionCommandGuard(names, limits)
+        self.kp = finite_vector(kp, len(names))
+        self.kd = finite_vector(kd, len(names))
+        self.effort_limits = finite_vector(physics.effort_limits, len(names))
+        if any(k <= 0 for k in self.kp) or any(k <= 0 for k in self.kd) or any(e <= 0 for e in self.effort_limits):
+            raise ValueError('invalid_simulated_joint_gains_or_limits')
+        self.last_command = None
+        self.target = None
+        self.last_effort = [0.]*len(names)
+
+    @property
+    def command_session(self):
+        return self.guard.session_id
+
+    def arm(self, deadline=None):
+        now = self.clock()
+        if deadline is not None and now > deadline:
+            raise ValueError('arm_deadline_expired')
+        self.guard.arm(secrets.token_hex(16), now)
+        try:
+            self.physics.arm(deadline)
+            self.sensors(now)
+        except Exception as error:
+            self.guard.fault = str(error)
+            self.disarm()
+            raise
+
+    def sensors(self, now):
+        sensors = self.physics.sensors(now)
+        feedback = JointFeedback(self.names, tuple(sensors.q), tuple(sensors.dq),
+                                 (0,)*len(self.names), sensors.motor_time)
+        q, dq = feedback.ordered(self.names, now)
+        return Sensors(list(q), list(dq), sensors.quaternion_xyzw,
+                       sensors.gyro_body, sensors.motor_time, sensors.imu_time)
+
+    def apply_positions(self, command, now):
+        try:
+            self.target = self.guard.accept(command, now)
+            self.last_command = command
+            self.advance(now)
+        except Exception as error:
+            self.guard.fault = str(error)
+            self.disarm()
+            raise
+
+    def advance(self, now):
+        """Advance joint control even without a new host packet, for watchdog tests."""
+        try:
+            self.guard.watchdog(now)
+            effort = [0.]*len(self.names)
+            if self.guard.active and self.target is not None:
+                s = self.sensors(now)
+                effort = [max(-lim, min(lim, kp*(q-p)-kd*v))
+                          for q,p,v,kp,kd,lim in zip(self.target, s.q, s.dq, self.kp,self.kd,self.effort_limits)]
+            self.last_effort = effort
+            self.physics.apply(effort)
+        except Exception as error:
+            self.guard.fault = str(error)
+            self.disarm()
+            raise
+
+    def disarm(self):
+        self.guard.disarm()
+        self.last_command = self.target = None
+        self.last_effort = [0.]*len(self.names)
+        self.physics.disarm()
+
+    def telemetry(self):
+        return {**self.physics.telemetry(), 'joint_interface':SCHEMA,
+                'control_mode':self.command_mode, 'joint_loop':'simulated_position_pd',
+                'joint_kp':list(self.kp), 'joint_kd':list(self.kd),
+                'joint_adapter_active':self.guard.active, 'joint_adapter_fault':self.guard.fault,
+                'joint_command':self.last_command.to_dict() if self.guard.active and self.last_command else None,
+                'joint_position_hardware_adapter_available':False}
+
+    def close(self):
+        self.disarm()
+        self.physics.close()
 
 
 class MujocoBackend:
@@ -23,6 +120,7 @@ class MujocoBackend:
         self.base_id = self.model.body('base_link').id
         self.effort_limits = [60.]*12
         self.calibration_id = None
+        self.sensitivity = None
         if abs(self.model.opt.timestep-.005) > 1e-10:
             raise ValueError('expected 200 Hz reference physics')
 
@@ -47,7 +145,9 @@ class MujocoBackend:
         body = self.data.body('base_link')
         return {'base_xyz':body.xpos.tolist(), 'upright':float(body.xmat[8]),
                 'body_velocity':self.data.sensor('body_vel_sensor').data.tolist(),
-                'physics_time':float(self.data.time), 'model':'pinned_MEVIUS2_RS03_reference',
+                'physics_time':float(self.data.time),
+                'model':'MEVIUS2_mass_sensitivity' if self.sensitivity else 'pinned_MEVIUS2_RS03_reference',
+                'mass_sensitivity':self.sensitivity,
                 'customer_RS04_dynamics_validated':False}
 
     def close(self):

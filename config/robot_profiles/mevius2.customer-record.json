@@ -2,7 +2,7 @@
   "schema_version": 1,
   "record_type": "customer_robot_configuration_record",
   "robot_id": null,
-  "profile_revision": 1,
+  "profile_revision": 2,
   "reference": {
     "repository": "https://github.com/haraduka/mevius2",
     "commit": "4f09680bb575574377b903bbc971bdb2695d507b",
@@ -17,8 +17,8 @@
   },
   "motors": {
     "model": "ROBSTRIDE04",
-    "transport": "SocketCAN",
-    "gear_ratio_definition": "motor_angle / joint_angle; confirm driver output units",
+    "transport": null,
+    "gear_ratio_definition": "integrated actuator output angle / joint angle; external transmission only",
     "gear_ratio": null,
     "reference_model": "RobStride03 (unchanged upstream dynamics)"
   },
@@ -27,84 +27,84 @@
       "name": "BL_collar_joint",
       "can_device": "can0",
       "can_id": 10,
-      "direction": 1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "BL_hip_joint",
       "can_device": "can0",
       "can_id": 11,
-      "direction": -1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "BL_knee_joint",
       "can_device": "can0",
       "can_id": 12,
-      "direction": -1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "BR_collar_joint",
       "can_device": "can0",
       "can_id": 7,
-      "direction": 1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "BR_hip_joint",
       "can_device": "can0",
       "can_id": 8,
-      "direction": 1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "BR_knee_joint",
       "can_device": "can0",
       "can_id": 9,
-      "direction": 1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FL_collar_joint",
       "can_device": "can1",
       "can_id": 4,
-      "direction": -1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FL_hip_joint",
       "can_device": "can1",
       "can_id": 5,
-      "direction": -1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FL_knee_joint",
       "can_device": "can1",
       "can_id": 6,
-      "direction": -1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FR_collar_joint",
       "can_device": "can1",
       "can_id": 1,
-      "direction": -1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FR_hip_joint",
       "can_device": "can1",
       "can_id": 2,
-      "direction": 1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FR_knee_joint",
       "can_device": "can1",
       "can_id": 3,
-      "direction": 1,
+      "direction": null,
       "calibrated_motor_offset_rad": null
     }
   ],
@@ -177,11 +177,33 @@
       "main_motor_target": "ROBSTRIDE04",
       "cart_quantity": 13,
       "note": "12 single units plus one adapter bundle; joint assignment/calibration not established. Two EDULITE 05 entries unassigned."
+    },
+    {
+      "date": "2026-10-08",
+      "source": "user instruction: continue with generic joint angle interface",
+      "note": "Host sends joint position targets; actuator closes loop. Board transport remains unconfirmed. Prior reference directions removed from customer calibration fields."
     }
   ],
   "validation": {
     "model_and_config_version": null,
     "simulation_record": null,
     "hardware_record": null
+  },
+  "control_interface": {
+    "schema": "omindos.joint_position.v1",
+    "command": "joint_position",
+    "unit": "rad",
+    "feedback": [
+      "joint_position",
+      "joint_velocity",
+      "joint_fault",
+      "base_link_imu"
+    ],
+    "board_vendor_hint": "DAMIAO",
+    "board_model": null,
+    "host_board_protocol": null,
+    "motor_protocol": null,
+    "hardware_adapter_ready": false,
+    "address_mapping_status": "proposal_only_not_calibrated"
   }
 }

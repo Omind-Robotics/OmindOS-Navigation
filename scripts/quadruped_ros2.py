@@ -54,10 +54,14 @@ def main():
             super().__init__('omindos_quadruped')
             self.last_velocity_stamp=-1.; self.last_imu_stamp=-1.
             self.rejects=0; self.last_error=''
+            self.last_target_key=None
             self.velocity_lock=threading.Lock(); self.imu_lock=threading.Lock()
             self.services_group=MutuallyExclusiveCallbackGroup()
             self.inputs_group=ReentrantCallbackGroup()
             self.status_pub=self.create_publisher(String,'/omindos_quadruped/status',10)
+            # Read-only diagnostic copy. Preserve source time/session/sequence.
+            # This 50 Hz topic is not a hardware command transport.
+            self.targets=self.create_publisher(String,'/omindos_quadruped/joint_targets',10)
             self.joints=self.create_publisher(JointState,'/omindos_quadruped/joint_states',10)
             self.imu_pub=(self.create_publisher(Imu,'/omindos_quadruped/imu',10)
                           if initial['backend']=='mujoco' else None)
@@ -121,6 +125,12 @@ def main():
                 if time.monotonic()-status['monotonic_time']>.15:
                     raise RuntimeError('worker_status_stale')
                 stamp=self.get_clock().now().to_msg()
+                command=status.get('joint_command')
+                key=(command['session_id'],command['sequence']) if command else None
+                if command and key!=self.last_target_key and 0 <= time.monotonic()-command['issued_monotonic_s'] <= command['valid_for_s']:
+                    target_message=String(); target_message.data=json.dumps(command,allow_nan=False)
+                    self.targets.publish(target_message)
+                    self.last_target_key=key
                 if len(status['q'])==12 and status.get('sensor_age_s',1.) <= .1:
                     joints=JointState(); joints.header.stamp=stamp
                     joints.name=status['joint_names']; joints.position=status['q']; joints.velocity=status['dq']

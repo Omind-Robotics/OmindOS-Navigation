@@ -17,18 +17,21 @@ import signal
 import threading
 import time
 
-from quadruped_controller import Controller, PinnedPolicy, NAMES
-from quadruped_backends import MujocoBackend, RobStrideBackend
+from quadruped_controller import Controller, PinnedPolicy, NAMES, LIMITS, simulation_control_profile
+from quadruped_backends import MujocoBackend, RobStrideBackend, SimulatedPositionBackend
+from joint_interface import PositionCommand
 
 
 class Worker:
-    def __init__(self, backend, controller):
+    def __init__(self, backend, controller, control_profile_id=None):
         self.backend, self.controller = backend, controller
+        self.control_profile_id = control_profile_id
         self.commands = queue.Queue(maxsize=16)
         self.boot_id = secrets.token_hex(16)
         self.snapshot = {'boot_id':self.boot_id,'state':'STARTING','hardware_active':False}
         self.last_sensors = None
         self.closed = False
+        self.position_sequence = 0
 
     def submit(self, body):
         if body.get('boot_id') != self.boot_id:
@@ -108,11 +111,22 @@ class Worker:
             if not self.backend.hardware or self.controller.state not in ('DISARMED','FAULT'):
                 sensors = self.backend.sensors(now)
                 self.last_sensors = sensors
-                effort = self.controller.tick(sensors,now)
-                if self.controller.state == 'FAULT' and self.backend.hardware:
-                    self.backend.disarm()
-                elif self.backend.hardware or not self.closed:
-                    self.backend.apply(effort)
+                if getattr(self.backend, 'command_mode', None) == 'joint_position':
+                    positions = self.controller.tick_targets(sensors,now)
+                    if positions is None:
+                        self.backend.disarm()
+                        if self.controller.state != 'FAULT': self.backend.advance(now)
+                    elif not self.closed:
+                        command = PositionCommand(self.backend.command_session, self.position_sequence,
+                                                  now, .05, tuple(NAMES), tuple(positions))
+                        self.backend.apply_positions(command,now)
+                        self.position_sequence += 1
+                else:
+                    effort = self.controller.tick(sensors,now)
+                    if self.controller.state == 'FAULT':
+                        self.backend.disarm()
+                    elif self.backend.hardware or not self.closed:
+                        self.backend.apply(effort)
         except Exception as error:
             self.controller.fault(error)
             self.backend.disarm()
@@ -121,6 +135,8 @@ class Worker:
             'boot_id':self.boot_id, 'joint_names':NAMES,
             'hardware_active':self.backend.hardware and self.controller.state not in ('DISARMED','FAULT'),
             'backend':'robstride04' if self.backend.hardware else 'mujoco',
+            'control_mode':getattr(self.backend,'command_mode','host_effort_test'),
+            'control_profile_sha256':self.control_profile_id,
             'sensor_age_s':max(0.,now-min(s.motor_time,s.imu_time)) if s else None,
             'monotonic_time':now, 'q':s.q if s else [], 'dq':s.dq if s else [],
             'quaternion_xyzw':s.quaternion_xyzw if s else [], 'gyro_body':s.gyro_body if s else []}
@@ -165,15 +181,39 @@ def main():
     parser.add_argument('--backend',choices=['mujoco','robstride04'],default='mujoco')
     parser.add_argument('--calibration',type=Path)
     parser.add_argument('--allow-hardware',action='store_true')
+    parser.add_argument('--control-mode',choices=['joint-position','host-effort-test'],default='joint-position')
+    parser.add_argument('--control-profile',type=Path)
+    parser.add_argument('--mass-sensitivity-case',choices=['nominal_proximal','high_mass_proximal','distal_stress'])
+    parser.add_argument('--simulate-rs04-frames',action='store_true')
     parser.add_argument('--port',type=int,default=18097)
     parser.add_argument('--token-file',type=Path,required=True)
     args=parser.parse_args()
+    if args.control_mode=='joint-position' and (args.backend!='mujoco' or args.simulate_rs04_frames):
+        parser.error('generic joint-position currently has a simulation adapter only; '
+                     'the existing RS04 torque driver requires explicit --control-mode host-effort-test')
+    if args.backend!='mujoco' and (args.control_profile or args.mass_sensitivity_case or args.simulate_rs04_frames):
+        parser.error('candidate control profiles and mass sensitivity are simulation-only')
+    gains=simulation_control_profile(args.control_profile) if args.control_profile else {}
     policy=PinnedPolicy(args.source)
     if args.backend == 'robstride04' and args.calibration is None:
         parser.error('--calibration required')
     backend=(MujocoBackend(policy.source) if args.backend=='mujoco' else
              RobStrideBackend(args.calibration,args.allow_hardware))
-    worker=Worker(backend,Controller(policy,backend.effort_limits))
+    if args.mass_sensitivity_case:
+        from rs04_simulated_bus import modify_mass_sensitivity
+        cases={'nominal_proximal':(.54,'proximal',1.),'high_mass_proximal':(.58,'proximal',2.),
+               'distal_stress':(.58,'distal_stress',2.)}
+        backend.sensitivity=modify_mass_sensitivity(backend,*cases[args.mass_sensitivity_case])
+    if args.simulate_rs04_frames:
+        from rs04_simulated_bus import RS04SimulationBackend
+        backend=RS04SimulationBackend(backend)
+    if args.control_mode=='joint-position':
+        # The reference model has compliant mechanical stops; allow its existing
+        # 0.08 rad sensor tolerance when capturing the folded pose during arm.
+        backend=SimulatedPositionBackend(backend,NAMES,[(lo-.08,hi+.08) for lo,hi in LIMITS],
+                                         gains.get('kp',[50.]*12),gains.get('kd',[2.]*12))
+    worker=Worker(backend,Controller(policy,backend.effort_limits,kp=gains.get('kp'),kd=gains.get('kd')),
+                  control_profile_id=gains.get('sha256'))
     token=secrets.token_hex(32)
     fd=os.open(args.token_file,os.O_WRONLY|os.O_CREAT|os.O_TRUNC,0o600)
     with os.fdopen(fd,'w') as stream: stream.write(token)

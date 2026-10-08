@@ -4,6 +4,7 @@ Observation layout: haraduka/mevius2, Copyright (c) 2025 Kento Kawaharazuka,
 MIT (LICENSES/MEVIUS2-MIT.txt). Model/weights must come from the pinned checkout.
 """
 import hashlib
+import json
 import math
 import subprocess
 from dataclasses import dataclass
@@ -16,6 +17,16 @@ NAMES = [f'{leg}_{joint}_joint' for leg in ('BL', 'BR', 'FL', 'FR')
 DEFAULT = [0., .7, -1.2] * 4
 SYMMETRY = [1, 1, 1, -1, 1, 1, 1, 1, 1, -1, 1, 1]
 LIMITS = [(-.7854, .7854), (-1.0472, 2.618), (-2.8508, -.7812)] * 4
+
+
+def simulation_control_profile(path):
+    raw=Path(path).read_bytes(); data=json.loads(raw)
+    if data.get('scope')!='simulation_only' or data.get('reference_commit')!=COMMIT or data.get('policy_sha256')!=POLICY_SHA256:
+        raise ValueError('simulation control profile identity mismatch')
+    kp,kd=vector(data['kp'],12),vector(data['kd'],12)
+    if any(not 0<x<=500 for x in kp) or any(not 0<x<=20 for x in kd):
+        raise ValueError('invalid simulation PD gains')
+    return {'kp':kp,'kd':kd,'sha256':hashlib.sha256(raw).hexdigest()}
 
 
 def vector(values, length):
@@ -89,11 +100,15 @@ class Controller:
     Fault/disarm removes torque; this is NOT a controlled landing maneuver.
     Faults never auto-resume. Recreate the controller after investigating a fault.
     """
-    def __init__(self, policy, effort_limits=None):
+    def __init__(self, policy, effort_limits=None, kp=None, kd=None):
         self.policy = policy
         self.effort = vector(effort_limits or [60.]*12, 12)
         if any(not 0 < x <= 120 for x in self.effort):
             raise ValueError('invalid joint effort limit')
+        self.kp=vector([50.]*12 if kp is None else kp,12)
+        self.kd=vector([2.]*12 if kd is None else kd,12)
+        if any(not 0 < x <= 500 for x in self.kp) or any(not 0 < x <= 20 for x in self.kd):
+            raise ValueError('invalid host PD gains')
         self.state, self.reason = 'DISARMED', 'startup'
         self.target = DEFAULT.copy()
         self.command = [0., 0., 0.]
@@ -143,9 +158,14 @@ class Controller:
             raise ValueError('invalid_command_time')
         self.command, self.last_command = command, now
 
-    def tick(self, sensors, now):
+    def tick_targets(self, sensors, now):
+        """Advance the policy/state machine and return joint angles, or None.
+
+        None means disabled/faulted, never a request to drive every joint to 0.
+        No torque or actuator protocol is calculated in this path.
+        """
         if self.state in ('DISARMED', 'FAULT'):
-            return [0.]*12
+            return None
         try:
             if not math.isfinite(now) or self.last_tick is None or not 0 <= now-self.last_tick <= .1:
                 raise ValueError('control_deadline_missed')
@@ -169,13 +189,21 @@ class Controller:
                                    for a,s,d,(lo,hi) in zip(actions, SYMMETRY, DEFAULT, LIMITS)]
                     self.last_policy = now
                     self.inferences += 1
-            return [max(-limit, min(limit, 50*(target-q)-2*dq)) for target,q,dq,limit in
-                    zip(self.target, sensors.q, sensors.dq, self.effort)]
+            return self.target.copy()
         except Exception as error:
             self.fault(error)
+            return None
+
+    def tick(self, sensors, now):
+        """Legacy host-PD path for torque-driver baseline tests."""
+        target = self.tick_targets(sensors, now)
+        if target is None:
             return [0.]*12
+        return [max(-limit, min(limit, kp*(t-q)-kd*dq)) for t,q,dq,limit,kp,kd in
+                zip(target, sensors.q, sensors.dq, self.effort,self.kp,self.kd)]
 
     def status(self):
         return {'state':self.state, 'reason':self.reason, 'command':self.command,
                 'target':self.target, 'policy_inferences':self.inferences,
+                'baseline_host_kp':self.kp,'baseline_host_kd':self.kd,
                 'hardware_validated':False}

@@ -1,0 +1,1872 @@
+{
+  "status": "PASS",
+  "hardware_tested": false,
+  "customer_model_validated": false,
+  "transport": "in_process_RS04_CAN_frame_emulator",
+  "upstream_commit": "4f09680bb575574377b903bbc971bdb2695d507b",
+  "policy_sha256": "392b4d3f30e856caedcb0ec25f125201e97b28795bc9342ee2fc1d8125656510",
+  "candidate_control_profile_sha256": "8d1f562e8deb9c2194ce716510e52e649a20d9c0669f9ec41bfa546e1ab965e5",
+  "mass_sources_kg": {
+    "RS03": 0.88,
+    "RS04": 1.42,
+    "each_tolerance": 0.02
+  },
+  "not_modeled": [
+    "actual_RS04_CAD_inertia",
+    "mounting_changes",
+    "motor_thermal_dynamics",
+    "USB_or_CAN_latency",
+    "torque_speed_curve",
+    "independent_hardware_emergency_stop"
+  ],
+  "total_simulation_seconds": 289.60000000001094,
+  "scenarios": [
+    {
+      "case": "reference",
+      "movement": "forward",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 2,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "forward_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 22.906528,
+        "added_mass_kg": 0,
+        "distribution": "proximal",
+        "armature_factor": 1,
+        "allocations_kg": {
+          "base_link": 0,
+          "BL_scapula_link": 0,
+          "BL_thigh_link": 0,
+          "BR_scapula_link": 0,
+          "BR_thigh_link": 0,
+          "FL_scapula_link": 0,
+          "FL_thigh_link": 0,
+          "FR_scapula_link": 0,
+          "FR_thigh_link": 0
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00006999978994151611,
+            4.803391032134769e-7,
+            -0.000057963465937213576
+          ],
+          "yaw_change_rad": -0.000008744299461366879,
+          "minimum_height_m": 0.029942036534062785,
+          "minimum_upright": 0.9999999982962833,
+          "maximum_command_effort_nm": 1.4992904554818232,
+          "maximum_joint_RMS_command_effort_nm": 1.418691727557276,
+          "final_second_mean_speed_m_s": 0.00007140199177269927
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.08625833127540543,
+            -0.0009498590892734316,
+            0.3665417250389463
+          ],
+          "yaw_change_rad": 0.0007428599851321042,
+          "minimum_height_m": 0.029937704479736264,
+          "minimum_upright": 0.9937578643793744,
+          "maximum_command_effort_nm": 40.21949187457088,
+          "maximum_joint_RMS_command_effort_nm": 18.11579578117262,
+          "final_second_mean_speed_m_s": 0.033419443603889154
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.11346729569279124,
+            0.003524015653973431,
+            0.045626919353501216
+          ],
+          "yaw_change_rad": -0.017098536409735673,
+          "minimum_height_m": 0.39894240010008825,
+          "minimum_upright": 0.9950703087476701,
+          "maximum_command_effort_nm": 31.48623483634698,
+          "maximum_joint_RMS_command_effort_nm": 12.289151795863436,
+          "final_second_mean_speed_m_s": 0.07140180717008934
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            0.9791393961892225,
+            -0.10995319100234527,
+            -0.012982122026849341
+          ],
+          "yaw_change_rad": -0.20496549101527878,
+          "minimum_height_m": 0.41037723176773405,
+          "minimum_upright": 0.9847209743301205,
+          "maximum_command_effort_nm": 32.57365923018445,
+          "maximum_joint_RMS_command_effort_nm": 13.673569852608216,
+          "final_second_mean_speed_m_s": 0.11601981017523738
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            0.08231322129660867,
+            -0.04357658723335084,
+            0.020352029791398496
+          ],
+          "yaw_change_rad": 0.0711961330624305,
+          "minimum_height_m": 0.4129549090096114,
+          "minimum_upright": 0.9881500081856035,
+          "maximum_command_effort_nm": 25.77338336496882,
+          "maximum_joint_RMS_command_effort_nm": 13.608862332154983,
+          "final_second_mean_speed_m_s": 0.0034788184265887633
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 13.61335506672221,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "reference",
+      "movement": "lateral",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 2,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "lateral_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 22.906528,
+        "added_mass_kg": 0,
+        "distribution": "proximal",
+        "armature_factor": 1,
+        "allocations_kg": {
+          "base_link": 0,
+          "BL_scapula_link": 0,
+          "BL_thigh_link": 0,
+          "BR_scapula_link": 0,
+          "BR_thigh_link": 0,
+          "FL_scapula_link": 0,
+          "FL_thigh_link": 0,
+          "FR_scapula_link": 0,
+          "FR_thigh_link": 0
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00006999978994151611,
+            4.803391032134769e-7,
+            -0.000057963465937213576
+          ],
+          "yaw_change_rad": -0.000008744299461366879,
+          "minimum_height_m": 0.029942036534062785,
+          "minimum_upright": 0.9999999982962833,
+          "maximum_command_effort_nm": 1.4992904554818232,
+          "maximum_joint_RMS_command_effort_nm": 1.418691727557276,
+          "final_second_mean_speed_m_s": 0.00007140199177269927
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.08625833127540543,
+            -0.0009498590892734316,
+            0.3665417250389463
+          ],
+          "yaw_change_rad": 0.0007428599851321042,
+          "minimum_height_m": 0.029937704479736264,
+          "minimum_upright": 0.9937578643793744,
+          "maximum_command_effort_nm": 40.21949187457088,
+          "maximum_joint_RMS_command_effort_nm": 18.11579578117262,
+          "final_second_mean_speed_m_s": 0.033419443603889154
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.11346729569279124,
+            0.003524015653973431,
+            0.045626919353501216
+          ],
+          "yaw_change_rad": -0.017098536409735673,
+          "minimum_height_m": 0.39894240010008825,
+          "minimum_upright": 0.9950703087476701,
+          "maximum_command_effort_nm": 31.48623483634698,
+          "maximum_joint_RMS_command_effort_nm": 12.289151795863436,
+          "final_second_mean_speed_m_s": 0.07140180717008934
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            -0.04184105378975325,
+            0.319026564289547,
+            -0.01994009411497233
+          ],
+          "yaw_change_rad": -0.10082055546589443,
+          "minimum_height_m": 0.41587736745888154,
+          "minimum_upright": 0.9976326149811925,
+          "maximum_command_effort_nm": 23.76985918281007,
+          "maximum_joint_RMS_command_effort_nm": 14.37874031498687,
+          "final_second_mean_speed_m_s": 0.07062289510133792
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            0.02294326547686535,
+            -0.015161438979056141,
+            0.02071878002813038
+          ],
+          "yaw_change_rad": 0.030536793854194638,
+          "minimum_height_m": 0.42240623079218126,
+          "minimum_upright": 0.9994177538354007,
+          "maximum_command_effort_nm": 16.658160272379078,
+          "maximum_joint_RMS_command_effort_nm": 12.459742027207609,
+          "final_second_mean_speed_m_s": 0.0014630269096489732
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 7.115637505162436,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "reference",
+      "movement": "turn",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 2,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "turn_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 22.906528,
+        "added_mass_kg": 0,
+        "distribution": "proximal",
+        "armature_factor": 1,
+        "allocations_kg": {
+          "base_link": 0,
+          "BL_scapula_link": 0,
+          "BL_thigh_link": 0,
+          "BR_scapula_link": 0,
+          "BR_thigh_link": 0,
+          "FL_scapula_link": 0,
+          "FL_thigh_link": 0,
+          "FR_scapula_link": 0,
+          "FR_thigh_link": 0
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00006999978994151611,
+            4.803391032134769e-7,
+            -0.000057963465937213576
+          ],
+          "yaw_change_rad": -0.000008744299461366879,
+          "minimum_height_m": 0.029942036534062785,
+          "minimum_upright": 0.9999999982962833,
+          "maximum_command_effort_nm": 1.4992904554818232,
+          "maximum_joint_RMS_command_effort_nm": 1.418691727557276,
+          "final_second_mean_speed_m_s": 0.00007140199177269927
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.08625833127540543,
+            -0.0009498590892734316,
+            0.3665417250389463
+          ],
+          "yaw_change_rad": 0.0007428599851321042,
+          "minimum_height_m": 0.029937704479736264,
+          "minimum_upright": 0.9937578643793744,
+          "maximum_command_effort_nm": 40.21949187457088,
+          "maximum_joint_RMS_command_effort_nm": 18.11579578117262,
+          "final_second_mean_speed_m_s": 0.033419443603889154
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.11346729569279124,
+            0.003524015653973431,
+            0.045626919353501216
+          ],
+          "yaw_change_rad": -0.017098536409735673,
+          "minimum_height_m": 0.39894240010008825,
+          "minimum_upright": 0.9950703087476701,
+          "maximum_command_effort_nm": 31.48623483634698,
+          "maximum_joint_RMS_command_effort_nm": 12.289151795863436,
+          "final_second_mean_speed_m_s": 0.07140180717008934
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            0.03306564132555278,
+            -0.10415778291087052,
+            -0.028273696753160937
+          ],
+          "yaw_change_rad": 1.5753759790406927,
+          "minimum_height_m": 0.4120501202228274,
+          "minimum_upright": 0.9972870801329198,
+          "maximum_command_effort_nm": 22.404272188510532,
+          "maximum_joint_RMS_command_effort_nm": 14.274332138183961,
+          "final_second_mean_speed_m_s": 0.044784887817590074
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            0.018244716417719936,
+            0.015258704747363919,
+            0.028377369184741597
+          ],
+          "yaw_change_rad": 0.01612671253134601,
+          "minimum_height_m": 0.41403427734786935,
+          "minimum_upright": 0.9990684809789027,
+          "maximum_command_effort_nm": 15.448650165631738,
+          "maximum_joint_RMS_command_effort_nm": 12.11986638491437,
+          "final_second_mean_speed_m_s": 0.0011328412579262787
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 6.548448399650652,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "reference",
+      "movement": "push",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 2,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 22.906528,
+        "added_mass_kg": 0,
+        "distribution": "proximal",
+        "armature_factor": 1,
+        "allocations_kg": {
+          "base_link": 0,
+          "BL_scapula_link": 0,
+          "BL_thigh_link": 0,
+          "BR_scapula_link": 0,
+          "BR_thigh_link": 0,
+          "FL_scapula_link": 0,
+          "FL_thigh_link": 0,
+          "FR_scapula_link": 0,
+          "FR_thigh_link": 0
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00006999978994151611,
+            4.803391032134769e-7,
+            -0.000057963465937213576
+          ],
+          "yaw_change_rad": -0.000008744299461366879,
+          "minimum_height_m": 0.029942036534062785,
+          "minimum_upright": 0.9999999982962833,
+          "maximum_command_effort_nm": 1.4992904554818232,
+          "maximum_joint_RMS_command_effort_nm": 1.418691727557276,
+          "final_second_mean_speed_m_s": 0.00007140199177269927
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.08625833127540543,
+            -0.0009498590892734316,
+            0.3665417250389463
+          ],
+          "yaw_change_rad": 0.0007428599851321042,
+          "minimum_height_m": 0.029937704479736264,
+          "minimum_upright": 0.9937578643793744,
+          "maximum_command_effort_nm": 40.21949187457088,
+          "maximum_joint_RMS_command_effort_nm": 18.11579578117262,
+          "final_second_mean_speed_m_s": 0.033419443603889154
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.11346729569279124,
+            0.003524015653973431,
+            0.045626919353501216
+          ],
+          "yaw_change_rad": -0.017098536409735673,
+          "minimum_height_m": 0.39894240010008825,
+          "minimum_upright": 0.9950703087476701,
+          "maximum_command_effort_nm": 31.48623483634698,
+          "maximum_joint_RMS_command_effort_nm": 12.289151795863436,
+          "final_second_mean_speed_m_s": 0.07140180717008934
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            0.00194014943306587,
+            0.003743533565863262,
+            0.0010847035857851628
+          ],
+          "yaw_change_rad": 0.010882898479670586,
+          "minimum_height_m": 0.44211644551062956,
+          "minimum_upright": 0.9990933194450825,
+          "maximum_command_effort_nm": 14.588657642191233,
+          "maximum_joint_RMS_command_effort_nm": 8.274230431499593,
+          "final_second_mean_speed_m_s": 0.003890091725817246
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            -0.0024604880430959264,
+            0.0005402800864282393,
+            0.00012094507510107544
+          ],
+          "yaw_change_rad": 0.0026330011481680068,
+          "minimum_height_m": 0.4431851889502499,
+          "minimum_upright": 0.9999945997451914,
+          "maximum_command_effort_nm": 8.459232910314029,
+          "maximum_joint_RMS_command_effort_nm": 8.252801759106228,
+          "final_second_mean_speed_m_s": 0.0005771586889761936
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 2.8914183846212733,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_nominal_proximal",
+      "movement": "forward",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "forward_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.386528,
+        "added_mass_kg": 6.48,
+        "distribution": "proximal",
+        "armature_factor": 1,
+        "allocations_kg": {
+          "base_link": 2.16,
+          "BL_scapula_link": 0.54,
+          "BL_thigh_link": 0.54,
+          "BR_scapula_link": 0.54,
+          "BR_thigh_link": 0.54,
+          "FL_scapula_link": 0.54,
+          "FL_thigh_link": 0.54,
+          "FR_scapula_link": 0.54,
+          "FR_thigh_link": 0.54
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00006092176071702434,
+            2.266821517131405e-7,
+            -0.0000663196801885188
+          ],
+          "yaw_change_rad": 0.00000862531408579533,
+          "minimum_height_m": 0.02993368031981148,
+          "minimum_upright": 0.9999999980277173,
+          "maximum_command_effort_nm": 1.4625314717326354,
+          "maximum_joint_RMS_command_effort_nm": 1.3765558570368184,
+          "final_second_mean_speed_m_s": 0.00006249031336447484
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.1954368905040569,
+            -0.002185176986428018,
+            0.290023507997081
+          ],
+          "yaw_change_rad": 0.0028840980126856332,
+          "minimum_height_m": 0.029930957461519147,
+          "minimum_upright": 0.9573770901391805,
+          "maximum_command_effort_nm": 58.05296627541487,
+          "maximum_joint_RMS_command_effort_nm": 22.705197761734528,
+          "final_second_mean_speed_m_s": 0.1070625887770822
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.15988654520532425,
+            0.009744221072219452,
+            0.10961631076160705
+          ],
+          "yaw_change_rad": 0.018349696552568368,
+          "minimum_height_m": 0.32218012293390136,
+          "minimum_upright": 0.9457321298884197,
+          "maximum_command_effort_nm": 53.25643396658272,
+          "maximum_joint_RMS_command_effort_nm": 17.672622054916864,
+          "final_second_mean_speed_m_s": 0.07362000827478946
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            0.678059175263517,
+            -0.2300856939117525,
+            -0.09998150649785886
+          ],
+          "yaw_change_rad": -0.2832909640063622,
+          "minimum_height_m": 0.3243428397357815,
+          "minimum_upright": 0.9877174318340605,
+          "maximum_command_effort_nm": 41.72288025311184,
+          "maximum_joint_RMS_command_effort_nm": 19.99070506106213,
+          "final_second_mean_speed_m_s": 0.13976372810977142
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            0.03246258802378499,
+            0.021137846776693697,
+            0.09711637106489301
+          ],
+          "yaw_change_rad": 0.08298120079251128,
+          "minimum_height_m": 0.3171773106161188,
+          "minimum_upright": 0.9823379725409849,
+          "maximum_command_effort_nm": 38.98211011949902,
+          "maximum_joint_RMS_command_effort_nm": 17.03479512192205,
+          "final_second_mean_speed_m_s": 0.002431378699782619
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 14.15918943408867,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_nominal_proximal",
+      "movement": "lateral",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "lateral_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.386528,
+        "added_mass_kg": 6.48,
+        "distribution": "proximal",
+        "armature_factor": 1,
+        "allocations_kg": {
+          "base_link": 2.16,
+          "BL_scapula_link": 0.54,
+          "BL_thigh_link": 0.54,
+          "BR_scapula_link": 0.54,
+          "BR_thigh_link": 0.54,
+          "FL_scapula_link": 0.54,
+          "FL_thigh_link": 0.54,
+          "FR_scapula_link": 0.54,
+          "FR_thigh_link": 0.54
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00006092176071702434,
+            2.266821517131405e-7,
+            -0.0000663196801885188
+          ],
+          "yaw_change_rad": 0.00000862531408579533,
+          "minimum_height_m": 0.02993368031981148,
+          "minimum_upright": 0.9999999980277173,
+          "maximum_command_effort_nm": 1.4625314717326354,
+          "maximum_joint_RMS_command_effort_nm": 1.3765558570368184,
+          "final_second_mean_speed_m_s": 0.00006249031336447484
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.1954368905040569,
+            -0.002185176986428018,
+            0.290023507997081
+          ],
+          "yaw_change_rad": 0.0028840980126856332,
+          "minimum_height_m": 0.029930957461519147,
+          "minimum_upright": 0.9573770901391805,
+          "maximum_command_effort_nm": 58.05296627541487,
+          "maximum_joint_RMS_command_effort_nm": 22.705197761734528,
+          "final_second_mean_speed_m_s": 0.1070625887770822
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.15988654520532425,
+            0.009744221072219452,
+            0.10961631076160705
+          ],
+          "yaw_change_rad": 0.018349696552568368,
+          "minimum_height_m": 0.32218012293390136,
+          "minimum_upright": 0.9457321298884197,
+          "maximum_command_effort_nm": 53.25643396658272,
+          "maximum_joint_RMS_command_effort_nm": 17.672622054916864,
+          "final_second_mean_speed_m_s": 0.07362000827478946
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            -0.11106672835929077,
+            0.18376114837595547,
+            -0.0327338377638563
+          ],
+          "yaw_change_rad": -0.028657348384954227,
+          "minimum_height_m": 0.36998528143015136,
+          "minimum_upright": 0.9905337249042665,
+          "maximum_command_effort_nm": 31.158337794170976,
+          "maximum_joint_RMS_command_effort_nm": 18.768348085038756,
+          "final_second_mean_speed_m_s": 0.04481957767967756
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            -0.008193975117269686,
+            -0.033054559471604655,
+            0.004452107207782163
+          ],
+          "yaw_change_rad": 0.0097740920293823,
+          "minimum_height_m": 0.3839594348865195,
+          "minimum_upright": 0.9917369515072069,
+          "maximum_command_effort_nm": 24.488275555435855,
+          "maximum_joint_RMS_command_effort_nm": 17.5363174191488,
+          "final_second_mean_speed_m_s": 0.0011026661520179605
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 6.439589555115314,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_nominal_proximal",
+      "movement": "turn",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "turn_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.386528,
+        "added_mass_kg": 6.48,
+        "distribution": "proximal",
+        "armature_factor": 1,
+        "allocations_kg": {
+          "base_link": 2.16,
+          "BL_scapula_link": 0.54,
+          "BL_thigh_link": 0.54,
+          "BR_scapula_link": 0.54,
+          "BR_thigh_link": 0.54,
+          "FL_scapula_link": 0.54,
+          "FL_thigh_link": 0.54,
+          "FR_scapula_link": 0.54,
+          "FR_thigh_link": 0.54
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00006092176071702434,
+            2.266821517131405e-7,
+            -0.0000663196801885188
+          ],
+          "yaw_change_rad": 0.00000862531408579533,
+          "minimum_height_m": 0.02993368031981148,
+          "minimum_upright": 0.9999999980277173,
+          "maximum_command_effort_nm": 1.4625314717326354,
+          "maximum_joint_RMS_command_effort_nm": 1.3765558570368184,
+          "final_second_mean_speed_m_s": 0.00006249031336447484
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.1954368905040569,
+            -0.002185176986428018,
+            0.290023507997081
+          ],
+          "yaw_change_rad": 0.0028840980126856332,
+          "minimum_height_m": 0.029930957461519147,
+          "minimum_upright": 0.9573770901391805,
+          "maximum_command_effort_nm": 58.05296627541487,
+          "maximum_joint_RMS_command_effort_nm": 22.705197761734528,
+          "final_second_mean_speed_m_s": 0.1070625887770822
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.15988654520532425,
+            0.009744221072219452,
+            0.10961631076160705
+          ],
+          "yaw_change_rad": 0.018349696552568368,
+          "minimum_height_m": 0.32218012293390136,
+          "minimum_upright": 0.9457321298884197,
+          "maximum_command_effort_nm": 53.25643396658272,
+          "maximum_joint_RMS_command_effort_nm": 17.672622054916864,
+          "final_second_mean_speed_m_s": 0.07362000827478946
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            0.05401546915224022,
+            -0.19676780034786945,
+            -0.0423814987138218
+          ],
+          "yaw_change_rad": 1.6450758868240698,
+          "minimum_height_m": 0.3533912012518587,
+          "minimum_upright": 0.9953434344993434,
+          "maximum_command_effort_nm": 36.40969466649038,
+          "maximum_joint_RMS_command_effort_nm": 18.86338207351264,
+          "final_second_mean_speed_m_s": 0.056115597269964075
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            0.030662978322441203,
+            0.035840930621533235,
+            0.03935142308785855
+          ],
+          "yaw_change_rad": -0.1551105798299517,
+          "minimum_height_m": 0.38726838415687787,
+          "minimum_upright": 0.9939643286493183,
+          "maximum_command_effort_nm": 25.887184474849633,
+          "maximum_joint_RMS_command_effort_nm": 16.73150021404234,
+          "final_second_mean_speed_m_s": 0.004457383868715261
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 7.9886622131754725,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_nominal_proximal",
+      "movement": "push",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.386528,
+        "added_mass_kg": 6.48,
+        "distribution": "proximal",
+        "armature_factor": 1,
+        "allocations_kg": {
+          "base_link": 2.16,
+          "BL_scapula_link": 0.54,
+          "BL_thigh_link": 0.54,
+          "BR_scapula_link": 0.54,
+          "BR_thigh_link": 0.54,
+          "FL_scapula_link": 0.54,
+          "FL_thigh_link": 0.54,
+          "FR_scapula_link": 0.54,
+          "FR_thigh_link": 0.54
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00006092176071702434,
+            2.266821517131405e-7,
+            -0.0000663196801885188
+          ],
+          "yaw_change_rad": 0.00000862531408579533,
+          "minimum_height_m": 0.02993368031981148,
+          "minimum_upright": 0.9999999980277173,
+          "maximum_command_effort_nm": 1.4625314717326354,
+          "maximum_joint_RMS_command_effort_nm": 1.3765558570368184,
+          "final_second_mean_speed_m_s": 0.00006249031336447484
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.1954368905040569,
+            -0.002185176986428018,
+            0.290023507997081
+          ],
+          "yaw_change_rad": 0.0028840980126856332,
+          "minimum_height_m": 0.029930957461519147,
+          "minimum_upright": 0.9573770901391805,
+          "maximum_command_effort_nm": 58.05296627541487,
+          "maximum_joint_RMS_command_effort_nm": 22.705197761734528,
+          "final_second_mean_speed_m_s": 0.1070625887770822
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.15988654520532425,
+            0.009744221072219452,
+            0.10961631076160705
+          ],
+          "yaw_change_rad": 0.018349696552568368,
+          "minimum_height_m": 0.32218012293390136,
+          "minimum_upright": 0.9457321298884197,
+          "maximum_command_effort_nm": 53.25643396658272,
+          "maximum_joint_RMS_command_effort_nm": 17.672622054916864,
+          "final_second_mean_speed_m_s": 0.07362000827478946
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            -0.003056211852011319,
+            0.002359024840210968,
+            0.0019533594733162074
+          ],
+          "yaw_change_rad": 0.013071027657098406,
+          "minimum_height_m": 0.4288678180690517,
+          "minimum_upright": 0.9989052209999525,
+          "maximum_command_effort_nm": 20.711915692292067,
+          "maximum_joint_RMS_command_effort_nm": 12.678009372267539,
+          "final_second_mean_speed_m_s": 0.0074672463592727846
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            -0.0032256973079041115,
+            0.0006512565457747182,
+            0.0007801312990223241
+          ],
+          "yaw_change_rad": 0.005785409743992629,
+          "minimum_height_m": 0.43152839650910485,
+          "minimum_upright": 0.9998591327167401,
+          "maximum_command_effort_nm": 11.734049287402257,
+          "maximum_joint_RMS_command_effort_nm": 10.974688075368856,
+          "final_second_mean_speed_m_s": 0.0004948567521548996
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 3.9327187441090774,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_high_mass_proximal",
+      "movement": "forward",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "forward_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.866528000000002,
+        "added_mass_kg": 6.959999999999999,
+        "distribution": "proximal",
+        "armature_factor": 2,
+        "allocations_kg": {
+          "base_link": 2.32,
+          "BL_scapula_link": 0.58,
+          "BL_thigh_link": 0.58,
+          "BR_scapula_link": 0.58,
+          "BR_thigh_link": 0.58,
+          "FL_scapula_link": 0.58,
+          "FL_thigh_link": 0.58,
+          "FR_scapula_link": 0.58,
+          "FR_thigh_link": 0.58
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00007491680841220048,
+            3.50786435489213e-7,
+            -0.00006199753917031717
+          ],
+          "yaw_change_rad": 2.5699211361505155e-7,
+          "minimum_height_m": 0.02993800246082968,
+          "minimum_upright": 0.9999999983936675,
+          "maximum_command_effort_nm": 1.7872281986724303,
+          "maximum_joint_RMS_command_effort_nm": 1.7223600047619623,
+          "final_second_mean_speed_m_s": 0.00007529030901746821
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.1960847386444373,
+            -0.002364513347159497,
+            0.2873200467632288
+          ],
+          "yaw_change_rad": 0.00045751513489033553,
+          "minimum_height_m": 0.029931686332135086,
+          "minimum_upright": 0.959237496436589,
+          "maximum_command_effort_nm": 56.60291848958675,
+          "maximum_joint_RMS_command_effort_nm": 22.83204479622432,
+          "final_second_mean_speed_m_s": 0.10525789918196704
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.15686078261623568,
+            0.010579065547643839,
+            0.11139576057643263
+          ],
+          "yaw_change_rad": 0.026385954672457537,
+          "minimum_height_m": 0.31938063430046293,
+          "minimum_upright": 0.9440878619674334,
+          "maximum_command_effort_nm": 53.40758983749144,
+          "maximum_joint_RMS_command_effort_nm": 18.373290596358178,
+          "final_second_mean_speed_m_s": 0.07617815556953597
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            0.9136823952839371,
+            -0.32397999978618397,
+            -0.07938841803873731
+          ],
+          "yaw_change_rad": -0.40793107018750135,
+          "minimum_height_m": 0.31281502306214404,
+          "minimum_upright": 0.9786599162474187,
+          "maximum_command_effort_nm": 46.07526048827047,
+          "maximum_joint_RMS_command_effort_nm": 23.618439077733356,
+          "final_second_mean_speed_m_s": 0.1675287914202195
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            -0.04582336886576455,
+            0.016451933900427596,
+            0.06054359351930383
+          ],
+          "yaw_change_rad": 0.06947070239219,
+          "minimum_height_m": 0.3497320702786737,
+          "minimum_upright": 0.9810952820698073,
+          "maximum_command_effort_nm": 29.59265915972873,
+          "maximum_joint_RMS_command_effort_nm": 18.56276118901378,
+          "final_second_mean_speed_m_s": 0.006396592170278568
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 12.07644108032639,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_high_mass_proximal",
+      "movement": "lateral",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "lateral_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.866528000000002,
+        "added_mass_kg": 6.959999999999999,
+        "distribution": "proximal",
+        "armature_factor": 2,
+        "allocations_kg": {
+          "base_link": 2.32,
+          "BL_scapula_link": 0.58,
+          "BL_thigh_link": 0.58,
+          "BR_scapula_link": 0.58,
+          "BR_thigh_link": 0.58,
+          "FL_scapula_link": 0.58,
+          "FL_thigh_link": 0.58,
+          "FR_scapula_link": 0.58,
+          "FR_thigh_link": 0.58
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00007491680841220048,
+            3.50786435489213e-7,
+            -0.00006199753917031717
+          ],
+          "yaw_change_rad": 2.5699211361505155e-7,
+          "minimum_height_m": 0.02993800246082968,
+          "minimum_upright": 0.9999999983936675,
+          "maximum_command_effort_nm": 1.7872281986724303,
+          "maximum_joint_RMS_command_effort_nm": 1.7223600047619623,
+          "final_second_mean_speed_m_s": 0.00007529030901746821
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.1960847386444373,
+            -0.002364513347159497,
+            0.2873200467632288
+          ],
+          "yaw_change_rad": 0.00045751513489033553,
+          "minimum_height_m": 0.029931686332135086,
+          "minimum_upright": 0.959237496436589,
+          "maximum_command_effort_nm": 56.60291848958675,
+          "maximum_joint_RMS_command_effort_nm": 22.83204479622432,
+          "final_second_mean_speed_m_s": 0.10525789918196704
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.15686078261623568,
+            0.010579065547643839,
+            0.11139576057643263
+          ],
+          "yaw_change_rad": 0.026385954672457537,
+          "minimum_height_m": 0.31938063430046293,
+          "minimum_upright": 0.9440878619674334,
+          "maximum_command_effort_nm": 53.40758983749144,
+          "maximum_joint_RMS_command_effort_nm": 18.373290596358178,
+          "final_second_mean_speed_m_s": 0.07617815556953597
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            -0.10031891788547229,
+            0.21971727215500214,
+            -0.045252497353912735
+          ],
+          "yaw_change_rad": -0.04346935207626866,
+          "minimum_height_m": 0.3579277424024653,
+          "minimum_upright": 0.9901453753172645,
+          "maximum_command_effort_nm": 31.44933671455798,
+          "maximum_joint_RMS_command_effort_nm": 19.869620147767158,
+          "final_second_mean_speed_m_s": 0.013874171213980921
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            0.008038381138466055,
+            -0.06968337120406987,
+            0.033736350993558595
+          ],
+          "yaw_change_rad": 0.018657184108982497,
+          "minimum_height_m": 0.3755024238058954,
+          "minimum_upright": 0.9864688499507059,
+          "maximum_command_effort_nm": 25.891645715039708,
+          "maximum_joint_RMS_command_effort_nm": 17.248878418914902,
+          "final_second_mean_speed_m_s": 0.004343848574537871
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 5.572951340396982,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_high_mass_proximal",
+      "movement": "turn",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "turn_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.866528000000002,
+        "added_mass_kg": 6.959999999999999,
+        "distribution": "proximal",
+        "armature_factor": 2,
+        "allocations_kg": {
+          "base_link": 2.32,
+          "BL_scapula_link": 0.58,
+          "BL_thigh_link": 0.58,
+          "BR_scapula_link": 0.58,
+          "BR_thigh_link": 0.58,
+          "FL_scapula_link": 0.58,
+          "FL_thigh_link": 0.58,
+          "FR_scapula_link": 0.58,
+          "FR_thigh_link": 0.58
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00007491680841220048,
+            3.50786435489213e-7,
+            -0.00006199753917031717
+          ],
+          "yaw_change_rad": 2.5699211361505155e-7,
+          "minimum_height_m": 0.02993800246082968,
+          "minimum_upright": 0.9999999983936675,
+          "maximum_command_effort_nm": 1.7872281986724303,
+          "maximum_joint_RMS_command_effort_nm": 1.7223600047619623,
+          "final_second_mean_speed_m_s": 0.00007529030901746821
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.1960847386444373,
+            -0.002364513347159497,
+            0.2873200467632288
+          ],
+          "yaw_change_rad": 0.00045751513489033553,
+          "minimum_height_m": 0.029931686332135086,
+          "minimum_upright": 0.959237496436589,
+          "maximum_command_effort_nm": 56.60291848958675,
+          "maximum_joint_RMS_command_effort_nm": 22.83204479622432,
+          "final_second_mean_speed_m_s": 0.10525789918196704
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.15686078261623568,
+            0.010579065547643839,
+            0.11139576057643263
+          ],
+          "yaw_change_rad": 0.026385954672457537,
+          "minimum_height_m": 0.31938063430046293,
+          "minimum_upright": 0.9440878619674334,
+          "maximum_command_effort_nm": 53.40758983749144,
+          "maximum_joint_RMS_command_effort_nm": 18.373290596358178,
+          "final_second_mean_speed_m_s": 0.07617815556953597
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            0.137899120016313,
+            -0.13395783503246453,
+            -0.05250530038863832
+          ],
+          "yaw_change_rad": 1.4887226640406321,
+          "minimum_height_m": 0.33522000459165774,
+          "minimum_upright": 0.9931326573647655,
+          "maximum_command_effort_nm": 32.41809048853463,
+          "maximum_joint_RMS_command_effort_nm": 19.50100794737007,
+          "final_second_mean_speed_m_s": 0.03593283945489449
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            0.02225906637367761,
+            0.020328431920051626,
+            0.04965292243071545
+          ],
+          "yaw_change_rad": -0.12314934591021309,
+          "minimum_height_m": 0.3762468749883033,
+          "minimum_upright": 0.994528070199223,
+          "maximum_command_effort_nm": 23.488375647710896,
+          "maximum_joint_RMS_command_effort_nm": 16.528613123993985,
+          "final_second_mean_speed_m_s": 0.0045902395975067215
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 6.75956505819845,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_high_mass_proximal",
+      "movement": "push",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.866528000000002,
+        "added_mass_kg": 6.959999999999999,
+        "distribution": "proximal",
+        "armature_factor": 2,
+        "allocations_kg": {
+          "base_link": 2.32,
+          "BL_scapula_link": 0.58,
+          "BL_thigh_link": 0.58,
+          "BR_scapula_link": 0.58,
+          "BR_thigh_link": 0.58,
+          "FL_scapula_link": 0.58,
+          "FL_thigh_link": 0.58,
+          "FR_scapula_link": 0.58,
+          "FR_thigh_link": 0.58
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.00007491680841220048,
+            3.50786435489213e-7,
+            -0.00006199753917031717
+          ],
+          "yaw_change_rad": 2.5699211361505155e-7,
+          "minimum_height_m": 0.02993800246082968,
+          "minimum_upright": 0.9999999983936675,
+          "maximum_command_effort_nm": 1.7872281986724303,
+          "maximum_joint_RMS_command_effort_nm": 1.7223600047619623,
+          "final_second_mean_speed_m_s": 0.00007529030901746821
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.1960847386444373,
+            -0.002364513347159497,
+            0.2873200467632288
+          ],
+          "yaw_change_rad": 0.00045751513489033553,
+          "minimum_height_m": 0.029931686332135086,
+          "minimum_upright": 0.959237496436589,
+          "maximum_command_effort_nm": 56.60291848958675,
+          "maximum_joint_RMS_command_effort_nm": 22.83204479622432,
+          "final_second_mean_speed_m_s": 0.10525789918196704
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.15686078261623568,
+            0.010579065547643839,
+            0.11139576057643263
+          ],
+          "yaw_change_rad": 0.026385954672457537,
+          "minimum_height_m": 0.31938063430046293,
+          "minimum_upright": 0.9440878619674334,
+          "maximum_command_effort_nm": 53.40758983749144,
+          "maximum_joint_RMS_command_effort_nm": 18.373290596358178,
+          "final_second_mean_speed_m_s": 0.07617815556953597
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            0.001841162615326096,
+            0.0024286722934036883,
+            0.0018363889573174141
+          ],
+          "yaw_change_rad": 0.012080408668830828,
+          "minimum_height_m": 0.4276099219010081,
+          "minimum_upright": 0.9989189114922474,
+          "maximum_command_effort_nm": 21.160882929354287,
+          "maximum_joint_RMS_command_effort_nm": 13.052753192635839,
+          "final_second_mean_speed_m_s": 0.008401008726702056
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            -0.002170893454545318,
+            0.0008115360180415178,
+            0.0008037123546933422
+          ],
+          "yaw_change_rad": 0.005066528501955228,
+          "minimum_height_m": 0.4304927118739309,
+          "minimum_upright": 0.9998166723541451,
+          "maximum_command_effort_nm": 12.097754844278889,
+          "maximum_joint_RMS_command_effort_nm": 11.318237741044612,
+          "final_second_mean_speed_m_s": 0.0005332031828983702
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 4.290997733985943,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_distal_stress",
+      "movement": "forward",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "forward_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.866528000000002,
+        "added_mass_kg": 6.959999999999999,
+        "distribution": "distal_stress",
+        "armature_factor": 2,
+        "allocations_kg": {
+          "BL_scapula_link": 0.58,
+          "BL_thigh_link": 0.58,
+          "BL_calf_link": 0.58,
+          "BR_scapula_link": 0.58,
+          "BR_thigh_link": 0.58,
+          "BR_calf_link": 0.58,
+          "FL_scapula_link": 0.58,
+          "FL_thigh_link": 0.58,
+          "FL_calf_link": 0.58,
+          "FR_scapula_link": 0.58,
+          "FR_thigh_link": 0.58,
+          "FR_calf_link": 0.58
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.0007275948737950624,
+            -0.000002801692757211082,
+            -0.00005385200825973671
+          ],
+          "yaw_change_rad": 0.000003736663369440333,
+          "minimum_height_m": 0.029946147991740262,
+          "minimum_upright": 0.999999791097208,
+          "maximum_command_effort_nm": 1.8831311512931492,
+          "maximum_joint_RMS_command_effort_nm": 1.7891423252504,
+          "final_second_mean_speed_m_s": 0.0007280061719816065
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.19572662029851395,
+            -0.003114288881227765,
+            0.2906390985225847
+          ],
+          "yaw_change_rad": -0.0020041882025155053,
+          "minimum_height_m": 0.02994066014083447,
+          "minimum_upright": 0.9568320931749905,
+          "maximum_command_effort_nm": 56.32344458434429,
+          "maximum_joint_RMS_command_effort_nm": 22.469400989461956,
+          "final_second_mean_speed_m_s": 0.10341987791415513
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.14971290847139118,
+            0.0068514424547623885,
+            0.1097159549755361
+          ],
+          "yaw_change_rad": 0.012152429035472858,
+          "minimum_height_m": 0.3227793047256042,
+          "minimum_upright": 0.9418276370239025,
+          "maximum_command_effort_nm": 52.86311741817351,
+          "maximum_joint_RMS_command_effort_nm": 19.181049958717978,
+          "final_second_mean_speed_m_s": 0.05663684508386299
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            0.5249642582351867,
+            -0.18364131468529352,
+            -0.02403130312437951
+          ],
+          "yaw_change_rad": -0.3054546067716376,
+          "minimum_height_m": 0.36023686672469635,
+          "minimum_upright": 0.9858198410730642,
+          "maximum_command_effort_nm": 38.50726092893655,
+          "maximum_joint_RMS_command_effort_nm": 17.569878789352636,
+          "final_second_mean_speed_m_s": 0.10823274005900445
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            0.0006657379115692086,
+            -0.008386398720976546,
+            0.02733632673535291
+          ],
+          "yaw_change_rad": 0.011951843173102439,
+          "minimum_height_m": 0.40602464405430205,
+          "minimum_upright": 0.9991438943462297,
+          "maximum_command_effort_nm": 22.425882157452136,
+          "maximum_joint_RMS_command_effort_nm": 15.941702236109467,
+          "final_second_mean_speed_m_s": 0.0011568043330757477
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 10.321734948879644,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_distal_stress",
+      "movement": "lateral",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "lateral_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.866528000000002,
+        "added_mass_kg": 6.959999999999999,
+        "distribution": "distal_stress",
+        "armature_factor": 2,
+        "allocations_kg": {
+          "BL_scapula_link": 0.58,
+          "BL_thigh_link": 0.58,
+          "BL_calf_link": 0.58,
+          "BR_scapula_link": 0.58,
+          "BR_thigh_link": 0.58,
+          "BR_calf_link": 0.58,
+          "FL_scapula_link": 0.58,
+          "FL_thigh_link": 0.58,
+          "FL_calf_link": 0.58,
+          "FR_scapula_link": 0.58,
+          "FR_thigh_link": 0.58,
+          "FR_calf_link": 0.58
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.0007275948737950624,
+            -0.000002801692757211082,
+            -0.00005385200825973671
+          ],
+          "yaw_change_rad": 0.000003736663369440333,
+          "minimum_height_m": 0.029946147991740262,
+          "minimum_upright": 0.999999791097208,
+          "maximum_command_effort_nm": 1.8831311512931492,
+          "maximum_joint_RMS_command_effort_nm": 1.7891423252504,
+          "final_second_mean_speed_m_s": 0.0007280061719816065
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.19572662029851395,
+            -0.003114288881227765,
+            0.2906390985225847
+          ],
+          "yaw_change_rad": -0.0020041882025155053,
+          "minimum_height_m": 0.02994066014083447,
+          "minimum_upright": 0.9568320931749905,
+          "maximum_command_effort_nm": 56.32344458434429,
+          "maximum_joint_RMS_command_effort_nm": 22.469400989461956,
+          "final_second_mean_speed_m_s": 0.10341987791415513
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.14971290847139118,
+            0.0068514424547623885,
+            0.1097159549755361
+          ],
+          "yaw_change_rad": 0.012152429035472858,
+          "minimum_height_m": 0.3227793047256042,
+          "minimum_upright": 0.9418276370239025,
+          "maximum_command_effort_nm": 52.86311741817351,
+          "maximum_joint_RMS_command_effort_nm": 19.181049958717978,
+          "final_second_mean_speed_m_s": 0.05663684508386299
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            -0.09862760151783338,
+            0.11864186826192852,
+            -0.021833811747048237
+          ],
+          "yaw_change_rad": 0.06431652584491013,
+          "minimum_height_m": 0.37754536610561457,
+          "minimum_upright": 0.9962282919811996,
+          "maximum_command_effort_nm": 29.299952505174485,
+          "maximum_joint_RMS_command_effort_nm": 17.13780782176201,
+          "final_second_mean_speed_m_s": 0.044704742497942866
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            0.048914126346149084,
+            -0.032029587845738575,
+            0.022606611235173324
+          ],
+          "yaw_change_rad": -0.006903212565879238,
+          "minimum_height_m": 0.4085163317125442,
+          "minimum_upright": 0.9979666216619554,
+          "maximum_command_effort_nm": 18.813068828279395,
+          "maximum_joint_RMS_command_effort_nm": 15.277809374921164,
+          "final_second_mean_speed_m_s": 0.00018791358551362814
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 4.972331617099405,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_distal_stress",
+      "movement": "turn",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "turn_progress": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.866528000000002,
+        "added_mass_kg": 6.959999999999999,
+        "distribution": "distal_stress",
+        "armature_factor": 2,
+        "allocations_kg": {
+          "BL_scapula_link": 0.58,
+          "BL_thigh_link": 0.58,
+          "BL_calf_link": 0.58,
+          "BR_scapula_link": 0.58,
+          "BR_thigh_link": 0.58,
+          "BR_calf_link": 0.58,
+          "FL_scapula_link": 0.58,
+          "FL_thigh_link": 0.58,
+          "FL_calf_link": 0.58,
+          "FR_scapula_link": 0.58,
+          "FR_thigh_link": 0.58,
+          "FR_calf_link": 0.58
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.0007275948737950624,
+            -0.000002801692757211082,
+            -0.00005385200825973671
+          ],
+          "yaw_change_rad": 0.000003736663369440333,
+          "minimum_height_m": 0.029946147991740262,
+          "minimum_upright": 0.999999791097208,
+          "maximum_command_effort_nm": 1.8831311512931492,
+          "maximum_joint_RMS_command_effort_nm": 1.7891423252504,
+          "final_second_mean_speed_m_s": 0.0007280061719816065
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.19572662029851395,
+            -0.003114288881227765,
+            0.2906390985225847
+          ],
+          "yaw_change_rad": -0.0020041882025155053,
+          "minimum_height_m": 0.02994066014083447,
+          "minimum_upright": 0.9568320931749905,
+          "maximum_command_effort_nm": 56.32344458434429,
+          "maximum_joint_RMS_command_effort_nm": 22.469400989461956,
+          "final_second_mean_speed_m_s": 0.10341987791415513
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.14971290847139118,
+            0.0068514424547623885,
+            0.1097159549755361
+          ],
+          "yaw_change_rad": 0.012152429035472858,
+          "minimum_height_m": 0.3227793047256042,
+          "minimum_upright": 0.9418276370239025,
+          "maximum_command_effort_nm": 52.86311741817351,
+          "maximum_joint_RMS_command_effort_nm": 19.181049958717978,
+          "final_second_mean_speed_m_s": 0.05663684508386299
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            -0.0977040525131417,
+            -0.20826075579283257,
+            -0.015577939780651251
+          ],
+          "yaw_change_rad": 1.655645372939521,
+          "minimum_height_m": 0.37129992750679086,
+          "minimum_upright": 0.9965108796333518,
+          "maximum_command_effort_nm": 30.848720927706704,
+          "maximum_joint_RMS_command_effort_nm": 18.48065878183826,
+          "final_second_mean_speed_m_s": 0.07785044010092207
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            0.013841304682300604,
+            0.0495083088546375,
+            0.018925869740765655
+          ],
+          "yaw_change_rad": -0.2321353407374054,
+          "minimum_height_m": 0.4138753485414657,
+          "minimum_upright": 0.9992290461085416,
+          "maximum_command_effort_nm": 20.185975463430253,
+          "maximum_joint_RMS_command_effort_nm": 14.965428598562765,
+          "final_second_mean_speed_m_s": 0.0007792761184326776
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 6.5014593753565695,
+      "simulation_seconds": 18.100000000000684
+    },
+    {
+      "case": "rs04_distal_stress",
+      "movement": "push",
+      "status": "PASS",
+      "host_kp": 50,
+      "host_kd": 3,
+      "checks": {
+        "completed_without_driver_or_controller_fault": true,
+        "velocity_within_RS04_encoding_range": true,
+        "all_motors_stopped_at_end": true,
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true
+      },
+      "error": null,
+      "assumptions": {
+        "base_mass_kg": 22.906528,
+        "modified_mass_kg": 29.866528000000002,
+        "added_mass_kg": 6.959999999999999,
+        "distribution": "distal_stress",
+        "armature_factor": 2,
+        "allocations_kg": {
+          "BL_scapula_link": 0.58,
+          "BL_thigh_link": 0.58,
+          "BL_calf_link": 0.58,
+          "BR_scapula_link": 0.58,
+          "BR_thigh_link": 0.58,
+          "BR_calf_link": 0.58,
+          "FL_scapula_link": 0.58,
+          "FL_thigh_link": 0.58,
+          "FL_calf_link": 0.58,
+          "FR_scapula_link": 0.58,
+          "FR_thigh_link": 0.58,
+          "FR_calf_link": 0.58
+        },
+        "customer_model": false,
+        "inertia_method": "scale_existing_body_inertia_at_unchanged_COM"
+      },
+      "phases": [
+        {
+          "phase": "standby",
+          "displacement_m": [
+            -0.0007275948737950624,
+            -0.000002801692757211082,
+            -0.00005385200825973671
+          ],
+          "yaw_change_rad": 0.000003736663369440333,
+          "minimum_height_m": 0.029946147991740262,
+          "minimum_upright": 0.999999791097208,
+          "maximum_command_effort_nm": 1.8831311512931492,
+          "maximum_joint_RMS_command_effort_nm": 1.7891423252504,
+          "final_second_mean_speed_m_s": 0.0007280061719816065
+        },
+        {
+          "phase": "standup",
+          "displacement_m": [
+            -0.19572662029851395,
+            -0.003114288881227765,
+            0.2906390985225847
+          ],
+          "yaw_change_rad": -0.0020041882025155053,
+          "minimum_height_m": 0.02994066014083447,
+          "minimum_upright": 0.9568320931749905,
+          "maximum_command_effort_nm": 56.32344458434429,
+          "maximum_joint_RMS_command_effort_nm": 22.469400989461956,
+          "final_second_mean_speed_m_s": 0.10341987791415513
+        },
+        {
+          "phase": "hold",
+          "displacement_m": [
+            0.14971290847139118,
+            0.0068514424547623885,
+            0.1097159549755361
+          ],
+          "yaw_change_rad": 0.012152429035472858,
+          "minimum_height_m": 0.3227793047256042,
+          "minimum_upright": 0.9418276370239025,
+          "maximum_command_effort_nm": 52.86311741817351,
+          "maximum_joint_RMS_command_effort_nm": 19.181049958717978,
+          "final_second_mean_speed_m_s": 0.05663684508386299
+        },
+        {
+          "phase": "move",
+          "displacement_m": [
+            0.0005514685776130887,
+            0.0031857046865888523,
+            0.0030122039393516986
+          ],
+          "yaw_change_rad": 0.015010572554923432,
+          "minimum_height_m": 0.4302426963154859,
+          "minimum_upright": 0.9974450208792973,
+          "maximum_command_effort_nm": 24.543314765765167,
+          "maximum_joint_RMS_command_effort_nm": 15.384716958832541,
+          "final_second_mean_speed_m_s": 0.008260701846859637
+        },
+        {
+          "phase": "stop",
+          "displacement_m": [
+            0.004029682649263559,
+            -0.0004610662782378464,
+            0.0011625724799962933
+          ],
+          "yaw_change_rad": 0.005123859532822666,
+          "minimum_height_m": 0.43331370406375613,
+          "minimum_upright": 0.9990452094056382,
+          "maximum_command_effort_nm": 13.721314798451452,
+          "maximum_joint_RMS_command_effort_nm": 13.198442164962069,
+          "final_second_mean_speed_m_s": 0.0007312313402243583
+        }
+      ],
+      "command_frames": 43548,
+      "feedback_frames": 43524,
+      "maximum_unquantized_motor_velocity_rad_s": 3.8584603461426825,
+      "simulation_seconds": 18.100000000000684
+    }
+  ],
+  "fault_tests": [
+    {
+      "case": "feedback_loss",
+      "passed": true,
+      "reason": "motor_feedback_timeout",
+      "simulated_elapsed_s": 0.05499999999999999,
+      "firmware_watchdog_trips": 0
+    },
+    {
+      "case": "uncalibrated_fault",
+      "passed": true,
+      "reason": "motor_fault_or_temperature_limit",
+      "simulated_elapsed_s": 0.005,
+      "firmware_watchdog_trips": 0
+    },
+    {
+      "case": "host_freeze_watchdog",
+      "passed": true,
+      "reason": null,
+      "simulated_elapsed_s": 0.12500000000000003,
+      "firmware_watchdog_trips": 12
+    },
+    {
+      "case": "one_bus_stop_failure",
+      "passed": true,
+      "reason": null,
+      "simulated_elapsed_s": 0.12500000000000003,
+      "firmware_watchdog_trips": 1
+    }
+  ],
+  "report_detail": "phase statistics retained; sampled traces omitted from repository summary"
+}
