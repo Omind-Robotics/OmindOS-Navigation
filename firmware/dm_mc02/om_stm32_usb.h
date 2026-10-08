@@ -11,4 +11,7 @@ void om_stm32_usb_receive(const uint8_t *, size_t);
 void om_stm32_usb_complete(const uint8_t *, size_t);
 void om_stm32_usb_disconnect(void);
 int om_stm32_usb_faulted(void); /* main-loop owner only */
+/* Same task as poll; install once before USB starts. */
+int om_stm32_usb_status_provider(om_status_provider, void *);
+void om_stm32_usb_observation_fault(void);
 #endif
