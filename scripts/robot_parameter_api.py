@@ -230,7 +230,7 @@ def make_handler(store_dir):
     return Handler
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--store", type=Path, required=True)
     parser.add_argument("--port", type=int, default=8085)
@@ -243,3 +243,7 @@ if __name__ == "__main__":
         pass
     finally:
         server.server_close()
+
+
+if __name__ == "__main__":
+    main()

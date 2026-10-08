@@ -46,7 +46,7 @@ def main():
     package = output / ('omindos-workbench-' + VERSION + '-' + target)
     shutil.copytree(build / 'workbench_desktop.dist', package)
     paths = ['web/robot-workbench/index.html', 'web/robot-workbench/workbench.css',
-             'web/robot-workbench/robot-scene.js', 'config/robot_profiles/workbench-demo.json',
+             'web/robot-workbench/robot-scene.js', 'web/robot-workbench/runtime.js', 'config/robot_profiles/workbench-demo.json',
              'LICENSES/Three-MIT.txt', 'LICENSES/OpenSSL-3-Apache-2.0.txt',
              'LICENSES/Workbench-Runtime-NOTICE.txt', 'LICENSES/bzip2-LICENSE.txt',
              'LICENSES/XZ-COPYING.txt', 'config/robot_models/realman_rm75/LICENSE',

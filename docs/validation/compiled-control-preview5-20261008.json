@@ -1,0 +1,67 @@
+{
+  "status": "PASS",
+  "version": "0.2.0-preview.5",
+  "source_commit": "df829a312dd571e19a3f0d65dcdc2b576f6d4a6d",
+  "image_id": "sha256:5fb43c0a3be2960f41cb06f22d8efa3db4a86b06b014f6eb60ec0f7f68b13fbb",
+  "compiled_python_regression_tests": 110,
+  "ros_profile_checks": 9,
+  "ros_workbench_browser_checks": 10,
+  "dynamics_scenarios": 4,
+  "quadruped_ros_checks": 18,
+  "joint_target_messages": 702,
+  "model": "original_MEVIUS2",
+  "hardware_tested": false,
+  "customer_RS04_dynamics_tested": false,
+  "native_audit": {
+    "status": "PASS",
+    "checks": [
+      "19_native_modules",
+      "no_backend_source_or_generated_C",
+      "private_customer_records_excluded",
+      "tampered_model_manifest_rejected",
+      "tampered_model_asset_rejected"
+    ],
+    "native_modules": 19,
+    "backend_source_included": false,
+    "versions": {
+      "python": "3.10.12",
+      "torch": "2.5.1+cpu",
+      "mujoco": "3.3.7",
+      "numpy": "1.26.4"
+    }
+  },
+  "profile": {
+    "status": "PASS",
+    "checks": [
+      "restart_requires_explicit_profile_load",
+      "profile_loaded_into_real_ros2_node_and_joint_state_published",
+      "late_subscriber_receives_transient_local_robot_description",
+      "named_joint_trajectory_reaches_ros_topic_and_active_reload_rejected",
+      "stop_command_holds_last_ros_joint_position",
+      "lost_client_stops_preview_without_automatic_resume",
+      "stale_session_cannot_control_new_loaded_version",
+      "no_hardware_command_topics_created",
+      "process_restart_does_not_restore_activation"
+    ],
+    "ros_distro": "humble",
+    "runtime_target": "ros2_joint_preview",
+    "hardware_tested": false
+  },
+  "browser": {
+    "status": "PASS",
+    "browser": "155.0.8059.39",
+    "checks": [
+      "current_parameters_saved_and_loaded_into_ros2",
+      "ros2_state_drives_visible_robot_pose",
+      "stop_reaches_runtime_and_no_hardware_activation",
+      "local_preview_remains_independent_of_ros_status_polling",
+      "edited_parameters_require_explicit_runtime_reload",
+      "reload_uses_new_version_and_old_version_remains_readable",
+      "mobile_runtime_controls_and_no_horizontal_overflow",
+      "software_stop_reaches_ros_preview_and_blocks_http_restart",
+      "software_stop_reset_does_not_resume_ros_preview",
+      "no_browser_script_errors"
+    ]
+  },
+  "startup_warmup": "TorchScript execution plans initialized before backend construction; watchdog thresholds unchanged"
+}
