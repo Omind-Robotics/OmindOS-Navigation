@@ -1,0 +1,3 @@
+#!/bin/sh
+export PYTHONPATH="/opt/omindos/scripts${PYTHONPATH:+:$PYTHONPATH}"
+exec /opt/omindos-runtime/bin/python -c 'import native_entry; raise SystemExit(native_entry.main())' "$@"

@@ -72,11 +72,21 @@ def observation(s, command):
 class PinnedPolicy:
     def __init__(self, source):
         self.source = Path(source).resolve()
-        head = subprocess.check_output(['git', '-C', str(self.source), 'rev-parse', 'HEAD'], text=True).strip()
-        if head != COMMIT:
-            raise ValueError('reference commit mismatch')
-        subprocess.run(['git', '-C', str(self.source), 'diff', '--exit-code', 'HEAD', '--'], check=True,
-                       stdout=subprocess.DEVNULL)
+        if (self.source/'REFERENCE.json').is_file():
+            raw = (self.source/'REFERENCE.json').read_bytes()
+            if hashlib.sha256(raw).hexdigest() != '4f222335e987683f8fb46fc8e1966c1d7b6b85e1d7ebc98ecfe1c29e7617fd3e':
+                raise ValueError('packaged reference manifest mismatch')
+            reference = json.loads(raw)
+            for name, digest in reference['files'].items():
+                path = self.source/name
+                if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
+                    raise ValueError('packaged reference asset mismatch: '+name)
+        else:
+            head = subprocess.check_output(['git', '-C', str(self.source), 'rev-parse', 'HEAD'], text=True).strip()
+            if head != COMMIT:
+                raise ValueError('reference commit mismatch')
+            subprocess.run(['git', '-C', str(self.source), 'diff', '--exit-code', 'HEAD', '--'], check=True,
+                           stdout=subprocess.DEVNULL)
         path = self.source/'models/policy.pt'
         if hashlib.sha256(path.read_bytes()).hexdigest() != POLICY_SHA256:
             raise ValueError('policy hash mismatch')
