@@ -16,6 +16,7 @@ def patch(source: bytes) -> bytes:
     changes = [
         ('#include "usbd_cdc_if.h"', '#include "usbd_cdc_if.h"\n#include "om_stm32_usb.h"'),
         ('/* USER CODE BEGIN 9 */', '/* USER CODE BEGIN 9 */\n  om_stm32_usb_disconnect();'),
+        ('/* USER CODE BEGIN 10 */', '/* USER CODE BEGIN 10 */\n  UNUSED(pbuf);\n  UNUSED(length);'),
         ('/* USER CODE BEGIN 11 */', '/* USER CODE BEGIN 11 */\n  om_stm32_usb_receive(Buf, *Len);'),
         ('/* USER CODE BEGIN 14 */', '/* USER CODE BEGIN 14 */\n  om_stm32_usb_complete(Buf, *Len);'),
     ]
