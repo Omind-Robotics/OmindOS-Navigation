@@ -94,6 +94,12 @@ class PinnedPolicy:
         self.torch = torch
         torch.set_num_threads(1)
         self.policy = torch.jit.load(str(path), map_location='cpu').eval()
+        # TorchScript's first calls may compile execution plans. Finish that
+        # work before constructing a backend or starting the timed control loop.
+        warmup = observation(Sensors(DEFAULT.copy(), [0.]*12, [0.,0.,0.,1.],
+                                     [0.]*3, 0., 0.), [0.]*3)
+        for _ in range(16):
+            self(warmup)
 
     def __call__(self, obs):
         torch = self.torch
