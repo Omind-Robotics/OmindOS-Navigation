@@ -2,6 +2,8 @@
 #include "usb_device.h"
 #include "usbd_cdc.h"
 #include <string.h>
+/* The pinned usb_device.h declares init only, not the generated handle. */
+extern USBD_HandleTypeDef hUsbDeviceHS;
 
 static om_cdc transport;
 static uint8_t attempted, ready, was_configured;
