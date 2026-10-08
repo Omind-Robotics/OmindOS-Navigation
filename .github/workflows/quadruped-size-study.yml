@@ -1,0 +1,59 @@
+name: Quadruped lightweight size study
+on:
+  push:
+    branches: [codex/quadruped-size-study]
+    paths:
+      - '.github/workflows/quadruped-size-study.yml'
+      - 'release/workbench/**'
+      - 'scripts/workbench_desktop.py'
+      - 'web/robot-workbench/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: linux-x64
+          - os: windows-2022
+            target: windows-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Linux build dependency
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y patchelf
+      - name: Install compiler and frontend packer
+        shell: bash
+        run: |
+          python -m pip install Nuitka==4.2.2 ordered-set==4.1.0 zstandard==0.25.0
+          npm ci --prefix web/robot-workbench
+      - name: Verify shared workbench source
+        run: python -m unittest discover -s tests -p 'test_robot*.py' -v
+      - name: Compile and verify quadruped archive
+        run: python release/workbench/package_binary.py --output build/quadruped --variant quadruped --version 0.2.0-size-candidate.1
+      - name: Preserve compiled candidates only
+        uses: actions/upload-artifact@v4
+        with:
+          name: quadruped-workbench-${{ matrix.target }}
+          path: |
+            build/quadruped/omindos-quadruped-workbench-*.zip
+            build/quadruped/omindos-quadruped-workbench-*.tar.gz
+            build/quadruped/*.sha256
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,440 @@
+{
+  "baseline": {
+    "image_id": "sha256:5fb43c0a3be2960f41cb06f22d8efa3db4a86b06b014f6eb60ec0f7f68b13fbb",
+    "docker_inspect_size_bytes": 3137851788,
+    "versions": {
+      "torch": "2.5.1+cpu",
+      "numpy": "1.26.4",
+      "mujoco": "3.3.7"
+    },
+    "paths": {
+      "/opt/ros": {
+        "logical_file_bytes": 76094909,
+        "allocated_file_bytes": 106844160,
+        "files": 11481
+      },
+      "/opt/omindos": {
+        "logical_file_bytes": 69834759,
+        "allocated_file_bytes": 69984256,
+        "files": 71
+      },
+      "/opt/omindos/scripts": {
+        "logical_file_bytes": 3527352,
+        "allocated_file_bytes": 3567616,
+        "files": 19
+      },
+      "/opt/omindos/reference": {
+        "logical_file_bytes": 65635311,
+        "allocated_file_bytes": 65691648,
+        "files": 34
+      },
+      "/opt/omindos-runtime": {
+        "logical_file_bytes": 814964775,
+        "allocated_file_bytes": 863690752,
+        "files": 18806
+      },
+      "/usr/lib/python3.10": {
+        "logical_file_bytes": 41856837,
+        "allocated_file_bytes": 44896256,
+        "files": 1366
+      },
+      "/usr/lib/python3/dist-packages": {
+        "logical_file_bytes": 73860789,
+        "allocated_file_bytes": 86777856,
+        "files": 5576
+      },
+      "/usr/lib/gcc": {
+        "logical_file_bytes": 101585711,
+        "allocated_file_bytes": 101928960,
+        "files": 166
+      },
+      "/root/.cache/pip": {
+        "logical_file_bytes": 217742666,
+        "allocated_file_bytes": 217829376,
+        "files": 38
+      },
+      "/var/lib/apt/lists": {
+        "logical_file_bytes": 87202370,
+        "allocated_file_bytes": 87252992,
+        "files": 22
+      }
+    },
+    "ros_deb_count": 191,
+    "ros_deb_installed_kib": 86168
+  },
+  "candidate": {
+    "image_id": "sha256:094e974a408dbc17c6e3ef1440c6308dcd6c0fb4c3a29bc53862dabf67dd1dc1",
+    "docker_inspect_size_bytes": 2520904935,
+    "versions": {
+      "torch": "2.5.1+cpu",
+      "numpy": "1.26.4",
+      "mujoco": "3.3.7"
+    },
+    "paths": {
+      "/opt/ros": {
+        "logical_file_bytes": 76094909,
+        "allocated_file_bytes": 106844160,
+        "files": 11481
+      },
+      "/opt/omindos": {
+        "logical_file_bytes": 69834759,
+        "allocated_file_bytes": 69984256,
+        "files": 71
+      },
+      "/opt/omindos/scripts": {
+        "logical_file_bytes": 3527352,
+        "allocated_file_bytes": 3567616,
+        "files": 19
+      },
+      "/opt/omindos/reference": {
+        "logical_file_bytes": 65635311,
+        "allocated_file_bytes": 65691648,
+        "files": 34
+      },
+      "/opt/omindos-runtime": {
+        "logical_file_bytes": 804192444,
+        "allocated_file_bytes": 852054016,
+        "files": 18430
+      },
+      "/usr/lib/python3.10": {
+        "logical_file_bytes": 41856837,
+        "allocated_file_bytes": 44896256,
+        "files": 1366
+      },
+      "/usr/lib/python3/dist-packages": {
+        "logical_file_bytes": 73860789,
+        "allocated_file_bytes": 86777856,
+        "files": 5576
+      },
+      "/usr/lib/gcc": {
+        "logical_file_bytes": 101585711,
+        "allocated_file_bytes": 101928960,
+        "files": 166
+      },
+      "/root/.cache/pip": {
+        "logical_file_bytes": 0,
+        "allocated_file_bytes": 0,
+        "files": 0
+      },
+      "/var/lib/apt/lists": {
+        "logical_file_bytes": 0,
+        "allocated_file_bytes": 0,
+        "files": 0
+      }
+    },
+    "ros_deb_count": 191,
+    "ros_deb_installed_kib": 86168
+  },
+  "top_python": {
+    "torch": {
+      "logical_file_bytes": 656707399,
+      "allocated_file_bytes": 685424640,
+      "files": 10733
+    },
+    "numpy.libs": {
+      "logical_file_bytes": 38057019,
+      "allocated_file_bytes": 38064128,
+      "files": 3
+    },
+    "numpy": {
+      "logical_file_bytes": 26406439,
+      "allocated_file_bytes": 28643328,
+      "files": 906
+    },
+    "sympy": {
+      "logical_file_bytes": 26082484,
+      "allocated_file_bytes": 29351936,
+      "files": 1546
+    },
+    "mujoco": {
+      "logical_file_bytes": 21026874,
+      "allocated_file_bytes": 21213184,
+      "files": 95
+    },
+    "Cython": {
+      "logical_file_bytes": 10478750,
+      "allocated_file_bytes": 11194368,
+      "files": 322
+    },
+    "OpenGL": {
+      "logical_file_bytes": 7563217,
+      "allocated_file_bytes": 15822848,
+      "files": 2895
+    },
+    "pip": {
+      "logical_file_bytes": 6392134,
+      "allocated_file_bytes": 7561216,
+      "files": 514
+    },
+    "networkx": {
+      "logical_file_bytes": 6360519,
+      "allocated_file_bytes": 7569408,
+      "files": 576
+    },
+    "setuptools": {
+      "logical_file_bytes": 3871495,
+      "allocated_file_bytes": 5042176,
+      "files": 484
+    },
+    "torchgen": {
+      "logical_file_bytes": 2088802,
+      "allocated_file_bytes": 2441216,
+      "files": 142
+    },
+    "mpmath": {
+      "logical_file_bytes": 1932254,
+      "allocated_file_bytes": 2109440,
+      "files": 87
+    },
+    "torch-2.5.1+cpu.dist-info": {
+      "logical_file_bytes": 1850325,
+      "allocated_file_bytes": 1871872,
+      "files": 9
+    },
+    "glfw": {
+      "logical_file_bytes": 958231,
+      "allocated_file_bytes": 970752,
+      "files": 7
+    },
+    "fsspec": {
+      "logical_file_bytes": 735218,
+      "allocated_file_bytes": 864256,
+      "files": 57
+    },
+    "jinja2": {
+      "logical_file_bytes": 490066,
+      "allocated_file_bytes": 544768,
+      "files": 26
+    },
+    "absl": {
+      "logical_file_bytes": 464276,
+      "allocated_file_bytes": 512000,
+      "files": 25
+    },
+    "pyopengl-3.1.10.dist-info": {
+      "logical_file_bytes": 462661,
+      "allocated_file_bytes": 479232,
+      "files": 5
+    },
+    "etils": {
+      "logical_file_bytes": 384917,
+      "allocated_file_bytes": 606208,
+      "files": 97
+    },
+    "functorch": {
+      "logical_file_bytes": 380584,
+      "allocated_file_bytes": 438272,
+      "files": 23
+    }
+  },
+  "full_package": {
+    "filename": "omindos-control-preview-0.2.0-preview.5-size-candidate.1-linux-amd64.tar",
+    "bytes": 540416000,
+    "sha256": "af2cc32308c0ffc0a14b26cd71f454b8b9566096573ee09fb09f191ec7eedbd8",
+    "image_bytes": 539986065,
+    "image_id": "sha256:094e974a408dbc17c6e3ef1440c6308dcd6c0fb4c3a29bc53862dabf67dd1dc1",
+    "publication_status": "private_candidate"
+  },
+  "verification": {
+    "status": "PASS",
+    "unchanged_application_files": 71,
+    "compiled_regression_count": 110,
+    "native_audit": {
+      "status": "PASS",
+      "checks": [
+        "19_native_modules",
+        "no_backend_source_or_generated_C",
+        "private_customer_records_excluded",
+        "tampered_model_manifest_rejected",
+        "tampered_model_asset_rejected"
+      ],
+      "native_modules": 19,
+      "backend_source_included": false,
+      "versions": {
+        "python": "3.10.12",
+        "torch": "2.5.1+cpu",
+        "mujoco": "3.3.7",
+        "numpy": "1.26.4"
+      }
+    }
+  },
+  "ros_profile": {
+    "status": "PASS",
+    "checks": [
+      "restart_requires_explicit_profile_load",
+      "profile_loaded_into_real_ros2_node_and_joint_state_published",
+      "late_subscriber_receives_transient_local_robot_description",
+      "named_joint_trajectory_reaches_ros_topic_and_active_reload_rejected",
+      "stop_command_holds_last_ros_joint_position",
+      "lost_client_stops_preview_without_automatic_resume",
+      "stale_session_cannot_control_new_loaded_version",
+      "no_hardware_command_topics_created",
+      "process_restart_does_not_restore_activation"
+    ],
+    "ros_distro": "humble",
+    "runtime_target": "ros2_joint_preview",
+    "hardware_tested": false
+  },
+  "ros_quadruped": {
+    "status": "PASS",
+    "checks": {
+      "simulation_only_disarmed": true,
+      "walk_before_arm_rejected": true,
+      "default_joint_position_interface": true,
+      "explicit_arm": true,
+      "explicit_stand": true,
+      "standing_height": true,
+      "old_ros_stamp_rejected": true,
+      "explicit_walk": true,
+      "ROS_forward_motion": true,
+      "loss_of_command_balanced_hold": true,
+      "fresh_command_does_not_auto_resume": true,
+      "explicit_resume": true,
+      "operator_stop": true,
+      "estop": true,
+      "fault_latched": true,
+      "no_target_stream_after_estop": true,
+      "named_angle_stream_without_replay": true,
+      "real_DDS_sensor_streams": true
+    },
+    "counts": {
+      "status": 722,
+      "joint_state": 723,
+      "imu": 722,
+      "joint_targets": 700
+    },
+    "forward_displacement_m": 1.0455527586074056,
+    "minimum_upright_while_walking": 0.9864653655905623,
+    "hardware_tested": false,
+    "customer_RS04_dynamics_tested": false,
+    "model": "pinned_MEVIUS2_RS03_reference",
+    "mass_sensitivity": null,
+    "control_mode": "joint_position",
+    "joint_interface": "omindos.joint_position.v1",
+    "target_sequence_first": 1,
+    "target_sequence_last": 2797,
+    "invalid_targets": [],
+    "control_profile_sha256": null,
+    "transport": null,
+    "simulated_CAN_tx_frames": null,
+    "scope": "ROS2_Humble_DDS_loopback_worker_pinned_MEVIUS2_MuJoCo"
+  },
+  "dynamics": {
+    "status": "PASS",
+    "hardware_tested": false,
+    "customer_RS04_dynamics_tested": false,
+    "upstream_commit": "4f09680bb575574377b903bbc971bdb2695d507b",
+    "policy_sha256": "392b4d3f30e856caedcb0ec25f125201e97b28795bc9342ee2fc1d8125656510",
+    "physics_hz": 200,
+    "policy_hz": 50,
+    "control_mode": "joint-position",
+    "joint_loop": "simulated_position_pd",
+    "versions": {
+      "torch": "2.5.1+cpu",
+      "mujoco": "3.3.7",
+      "numpy": "1.26.4"
+    }
+  },
+  "dynamics_scenarios": [
+    {
+      "name": "forward",
+      "checks": {
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "policy_executed": true,
+        "forward_progress": true
+      }
+    },
+    {
+      "name": "lateral",
+      "checks": {
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "policy_executed": true,
+        "lateral_progress": true
+      }
+    },
+    {
+      "name": "turn",
+      "checks": {
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "policy_executed": true,
+        "turn_progress": true
+      }
+    },
+    {
+      "name": "standing_push",
+      "checks": {
+        "upright": true,
+        "clearance": true,
+        "stop_speed": true,
+        "policy_executed": true
+      }
+    }
+  ],
+  "fresh_install": {
+    "status": "PASS",
+    "archive_sha256": "af2cc32308c0ffc0a14b26cd71f454b8b9566096573ee09fb09f191ec7eedbd8",
+    "bytes": 540416000,
+    "manifest_files_verified": 21,
+    "docker_load": true,
+    "launcher_version": "0.2.0-preview.5"
+  },
+  "browser": {
+    "status": "PASS",
+    "checks": [
+      "quadruped_default_loaded_12_joints_no_manipulation_only_controls",
+      "browser_point_one_degree_jog",
+      "browser_stop_locks_motion",
+      "desktop_and_mobile_render_without_page_errors"
+    ],
+    "errors": []
+  },
+  "split_ros": {
+    "status": "PASS",
+    "checks": [
+      "desktop_connects_to_released_compiled_ros2_runtime",
+      "shared_profile_store_loads_quadruped_model_and_publishes_dds",
+      "late_subscriber_receives_robot_description",
+      "desktop_run_and_heartbeat_produce_named_joint_motion_on_dds",
+      "desktop_estop_stops_real_ros_node_and_dds_pose_holds",
+      "manual_reset_never_resumes_ros_motion",
+      "lost_heartbeat_stops_real_node_without_automatic_resume",
+      "no_hardware_command_topics_created",
+      "runtime_exit_reported_while_local_configuration_remains_available"
+    ],
+    "ros_distro": "humble",
+    "desktop_source_commit": "80cd7d907a97e6b3bdc35691fe5dcc3be5849a52",
+    "runtime_image": "omindos/control-size-candidate:20261009",
+    "native_ros_validation": true,
+    "desktop_compiled_binary": true,
+    "hardware_tested": false
+  },
+  "desktop": {
+    "source_commit": "80cd7d907a97e6b3bdc35691fe5dcc3be5849a52",
+    "workflow_run": 37847826019,
+    "source_unit_tests_per_platform": 45,
+    "compiled_checks_before_and_after_unpack": 15,
+    "linux": {
+      "bytes": 21990166,
+      "sha256": "134fc899a9c2f320527578d8eb80e88ffabb4d44e4e87942828edc0351b79bfe",
+      "unpacked_file_bytes": 56246042,
+      "artifact_id": 11581225087
+    },
+    "windows": {
+      "bytes": 8232521,
+      "sha256": "1001f67e9e6c8a54a619ffcee9a42b160f6a70aacda61b606eb9df8ac356ffc6",
+      "unpacked_file_bytes": 22042034,
+      "artifact_id": 11581050678
+    }
+  },
+  "baseline_archive": {
+    "bytes": 820449280,
+    "sha256": "276b666a8fee186ba839c30bda8676baba4125a7c9e51408f07ed596cc9db5cc",
+    "unchanged": true
+  }
+}

@@ -1,0 +1,21 @@
+# Private size-study candidate; does not overwrite the released image.
+# Verify the local SOURCE_IMAGE tag against the recorded image ID before building.
+# BuildKit does not accept a bare sha256 ID as a FROM repository name.
+ARG SOURCE_IMAGE=omindos/control-preview:0.2.0-preview.5
+FROM ${SOURCE_IMAGE} AS cleaned
+RUN /opt/omindos-runtime/bin/python -m pip uninstall -y Cython wheel \
+    && rm -rf /root/.cache/pip /var/lib/apt/lists/* \
+    && find /opt/omindos-runtime -type d -name __pycache__ -prune -exec rm -rf '{}' +
+
+# A deletion layer alone leaves the old bytes in docker save. Copy the merged
+# filesystem into a new image so removed caches/build dependencies are absent
+# from every distributable layer. Retain ROS development packages: blindly
+# purging gcc/python3-dev also removes ROS Humble through apt dependencies.
+FROM scratch
+COPY --from=cleaned / /
+ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    LANG=C.UTF-8 LC_ALL=C.UTF-8 ROS_DISTRO=humble \
+    PYTHONDONTWRITEBYTECODE=1 ROS_LOCALHOST_ONLY=1 OMP_NUM_THREADS=1
+WORKDIR /opt/omindos
+ENTRYPOINT ["/ros_entrypoint.sh", "/usr/local/bin/omindos-runtime"]
+CMD ["--help"]

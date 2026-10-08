@@ -21,6 +21,7 @@ import urllib.request
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('executable', type=Path)
+    parser.add_argument('--variant', choices=('manipulation', 'quadruped'), default='manipulation')
     parser.add_argument('--source', action='store_true', help='Development-only source smoke, not a binary acceptance result')
     parser.add_argument('--report', type=Path)
     args = parser.parse_args()
@@ -74,31 +75,45 @@ def main():
             checks.append('unconfigured_runtime_reported_without_blocking_local_preview')
             profile = request(base,'/example.json')
             profile['robot_id'] = 'release-smoke'
-            options = request(base,'/v1/connection-options')
-            assert set(options['devices']) == {'left_arm','right_arm','waist','chassis'}
-            assert options['adapter_status'] == 'not_integrated' and options['hardware_connected'] is False
-            profile['connections'] = {'schema_version':1,'devices':{
-                'left_arm':{'selected':'sdk_tcp','profiles':{'sdk_tcp':{'host':'192.0.2.10','port':8080}}},
-                'right_arm':{'selected':'json_tcp','profiles':{'json_tcp':{'host':'192.0.2.11','port':8081}}},
-                'waist':{'selected':'unselected','profiles':{'canopen':{'node_id':3},'ethercat':{'slave_position':0}}},
-                'chassis':{'selected':'unselected','profiles':{'rs232':{'device':'COM3'},'mqtt':{'host':'broker.test'}}}}}
+            if args.variant == 'manipulation':
+                options = request(base,'/v1/connection-options')
+                assert set(options['devices']) == {'left_arm','right_arm','waist','chassis'}
+                assert options['adapter_status'] == 'not_integrated' and options['hardware_connected'] is False
+                profile['connections'] = {'schema_version':1,'devices':{
+                    'left_arm':{'selected':'sdk_tcp','profiles':{'sdk_tcp':{'host':'192.0.2.10','port':8080}}},
+                    'right_arm':{'selected':'json_tcp','profiles':{'json_tcp':{'host':'192.0.2.11','port':8081}}},
+                    'waist':{'selected':'unselected','profiles':{'canopen':{'node_id':3},'ethercat':{'slave_position':0}}},
+                    'chassis':{'selected':'unselected','profiles':{'rs232':{'device':'COM3'},'mqtt':{'host':'broker.test'}}}}}
             applied = request(base,'/v1/workbench-active-profile',profile)
             assert applied['workbench_applied'] and not applied['runtime_applied']
             assert applied['hardware_connected'] is False
-            checks.append('connection_options_and_independent_drafts_saved_without_connecting')
-            for velocity, angular, expected in ((.15,0,.225),(-.15,0,-.225),(0,.4,.6),(0,-.4,-.6)):
-                result = request(base,'/v1/robot-wheel-base',{'linear_m_s':velocity,'angular_rad_s':angular,'duration_s':3})
+            if args.variant == 'manipulation':
+                checks.append('connection_options_and_independent_drafts_saved_without_connecting')
+                for velocity, angular, expected in ((.15,0,.225),(-.15,0,-.225),(0,.4,.6),(0,-.4,-.6)):
+                    result = request(base,'/v1/robot-wheel-base',{'linear_m_s':velocity,'angular_rad_s':angular,'duration_s':3})
+                    assert not result['runtime_applied']
+                    key = 'x_m' if velocity else 'yaw_rad'
+                    assert math.isclose(result['frames'][-1]['base_pose'][key],expected,abs_tol=1e-10)
+                checks.append('four_wheel_forward_reverse_left_right')
+            else:
+                model = request(base, '/v1/robot-model', {'urdf_xml': profile['kinematics']['urdf_xml']})
+                assert len(model['pose']['positions']) == 12
+                checks.append('quadruped_12_joint_model_and_profile_saved')
+                result = request(base, '/v1/robot-jog', {'joint':'fl_hip', 'direction':1})
+                assert math.isclose(result['frames'][-1]['positions']['fl_hip'], math.radians(.1), abs_tol=1e-10)
                 assert not result['runtime_applied']
-                key = 'x_m' if velocity else 'yaw_rad'
-                assert math.isclose(result['frames'][-1]['base_pose'][key],expected,abs_tol=1e-10)
-            checks.append('four_wheel_forward_reverse_left_right')
+                checks.append('quadruped_compiled_point_one_degree_jog')
+                result = request(base, '/v1/robot-sine', {'joints':list(model['pose']['positions']), 'amplitude_deg':2, 'period_s':4, 'cycles':1})
+                assert result['motion_type'] == 'sine' and not result['runtime_applied']
+                checks.append('quadruped_compiled_twelve_joint_sine')
             stop = request(base,'/v1/workbench-stop',{'engaged':True})
-            profile['connections']['devices']['waist']['selected'] = 'canopen'
+            if args.variant == 'manipulation':
+                profile['connections']['devices']['waist']['selected'] = 'canopen'
             applied = request(base,'/v1/workbench-active-profile',profile)
             assert applied['emergency_stop'] and not applied['hardware_connected']
             checks.append('saving_connection_selection_preserves_emergency_stop')
             try:
-                request(base,'/v1/robot-wheel-base',{'linear_m_s':.1})
+                request(base,'/v1/robot-jog',{'joint': next(iter(profile['dynamics']['joints'])), 'direction':1})
                 raise AssertionError('Stopped server accepted motion')
             except urllib.error.HTTPError as error:
                 assert error.code == 423
@@ -150,12 +165,13 @@ def main():
             loaded = request(base, '/v1/runtime/load', {'profile_id': registered['profile_id']})
             assert loaded['runtime_applied'] and not loaded['hardware_active']
             token = loaded['lease_token']
-            target = loaded['pose']['positions'].copy(); target['left_joint_4'] = .2
+            moving_joint = 'fl_hip' if args.variant == 'quadruped' else 'left_joint_4'
+            target = loaded['pose']['positions'].copy(); target[moving_joint] = .2
             run = {'profile_id':registered['profile_id'], 'lease_token':token, 'target':target, 'duration_s':2}
             assert request(base, '/v1/runtime/run', run)['state'] == 'RUNNING'
             time.sleep(.12)
             moving = request(base, '/v1/runtime/heartbeat', {'lease_token':token})
-            assert moving['pose']['positions']['left_joint_4'] > 0
+            assert moving['pose']['positions'][moving_joint] > 0
             checks.append('desktop_cli_runtime_url_load_run_heartbeat_and_pose_feedback')
             stopped = request(base, '/v1/workbench-stop', {'engaged':True})
             assert stopped['ros_preview_stop_confirmed']
@@ -192,7 +208,7 @@ def main():
     report = {'status':'PASS','system':platform.system(),'machine':platform.machine(), 'checks':checks,
               'hardware_validated':False,'ros_required':False,'ros_runtime_bundled':False,
               'native_ros_validation':False,'runtime_bridge_test':'localhost_protocol_fixture',
-              'compiled_executable':not args.source}
+              'compiled_executable':not args.source, 'variant':args.variant}
     destination = args.report or executable.parent/'VALIDATION.json'
     destination.write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     print(json.dumps(report), flush=True)
@@ -200,5 +216,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
