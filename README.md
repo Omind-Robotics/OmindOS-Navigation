@@ -61,3 +61,11 @@ edits robot/drive parameters, computes forward kinematics and fixed-base static
 gravity loads, previews velocity-limited joint trajectories, and saves versioned
 profiles. Start with `python3 scripts/robot_workbench.py --store ./robot-configurations`.
 This is a kinematic preview, not collision, balance, full dynamics or hardware acceptance.
+
+## ROS 2 profile preview integration
+
+The workbench can now explicitly load a saved profile into a ROS 2 joint-preview node,
+run a bounded kinematic trajectory, stop, and render the node's reported positions.
+See [ROS 2 参数加载与工作台联动](docs/ROS2_PROFILE_RUNTIME.zh-CN.md).
+The loaded target is `ros2_joint_preview`; this does not activate a hardware driver
+or validate quadruped gait, balance, or physical stopping.

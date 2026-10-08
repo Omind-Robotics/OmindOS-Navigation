@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmindOS · 机器人调参工作台</title><link rel="stylesheet" href="/workbench.css"><script defer src="/workbench.js"></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmindOS · 机器人调参工作台</title><link rel="stylesheet" href="/workbench.css"><script defer src="/workbench.js"></script><script defer src="/runtime.js"></script></head>
 <body>
 <header><div><b>OmindOS</b><span>机器人调参工作台</span></div><span class="badge">运动学预览版</span></header>
 <main>
@@ -33,7 +33,14 @@
 <hr><h2>配置版本</h2><button id="save">保存新版本</button><button id="export">导出完整配置</button>
 <label>已保存的配置编号<input id="profile-id" placeholder="粘贴完整配置编号" spellcheck="false"></label><button id="load">读取配置</button>
 <p class="muted" id="saved">参数保存在本机服务目录；旧版本保留。</p>
-<hr><button disabled>真机执行 · 未接入</button>
+<hr><h2>ROS 2 联动预览</h2>
+<p class="muted">将当前配置加载到 ROS 2 预览节点，从节点当前姿态试运行。</p>
+<button id="runtime-load">保存并加载到 ROS 2</button>
+<button id="runtime-run" disabled>ROS 2 试运行</button><button id="runtime-stop" disabled>停止 ROS 2 预览</button>
+<p id="runtime-status" class="note" role="status" aria-live="polite">正在检查 ROS 2 预览连接…</p>
+<p id="runtime-profile" class="muted"></p>
+<p class="note">状态来自 ROS 2 节点。此处为固定基座关节预览，不驱动电机。</p>
+<hr><button disabled>真机执行 · 待驱动接入与验收</button>
 </aside>
 </main>
 <footer>导入模型 → 调整参数 → 运动学试运行 → 保存配置</footer>
