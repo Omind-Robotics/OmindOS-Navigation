@@ -11,7 +11,7 @@ import urllib.error
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from robot_kinematics import build_model, pose, trial
+from robot_kinematics import build_model, pose, trial, transform
 from robot_parameter_api import validate_parameters
 from robot_workbench import ThreadingHTTPServer, make_handler
 
@@ -82,8 +82,51 @@ class KinematicsTests(unittest.TestCase):
         data = json.loads((ROOT/'config/robot_profiles/workbench-demo.json').read_text())
         validate_parameters(data)
         result = trial({'profile':data,'target':{'left_shoulder':-.5,'left_elbow':-.7},'duration_s':2})
-        self.assertEqual(len(result['model']['links']), 10)
-        self.assertEqual(len(result['frames'][-1]['positions']), 7)
+        self.assertEqual(len(result['model']['links']), 19)
+        self.assertEqual(len(result['frames'][-1]['positions']), 16)
+
+    def test_planar_base_transforms_entire_tree_without_changing_gravity(self):
+        model = build_model(fixture()['kinematics']['urdf_xml'])
+        original = pose(model, {})
+        moved = pose(model, {}, {'x_m':2, 'y_m':-1, 'yaw_rad':math.pi/2})
+        tip = transform(moved['link_transforms']['tip'], [0,0,0])
+        for got, expected in zip(tip, [2,0,0]):
+            self.assertAlmostEqual(got, expected)
+        self.assertAlmostEqual(moved['holding_torque_nm']['hinge'], original['holding_torque_nm']['hinge'])
+        result = trial({'profile':fixture(), 'base_start':{'x_m':-.2},
+                        'base_target':{'x_m':.4, 'yaw_rad':.4}, 'duration_s':2})
+        self.assertEqual(result['frames'][0]['base_pose']['x_m'], -.2)
+        self.assertEqual(result['frames'][-1]['base_pose'], {'x_m':.4,'y_m':0,'yaw_rad':.4})
+        self.assertAlmostEqual(result['peak_base_velocity']['linear_m_s'], .45)
+        self.assertIn('prescribed_planar', result['scope'])
+        with self.assertRaisesRegex(ValueError, 'velocity'):
+            trial({'profile':fixture(), 'base_target':{'x_m':1}, 'duration_s':1})
+
+    def test_base_pose_rejects_invalid_values(self):
+        model = build_model(fixture()['kinematics']['urdf_xml'])
+        for value in [[], {'z_m':1}, {'x_m':6}, {'y_m':float('nan')}, {'yaw_rad':7}]:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                pose(model, {}, value)
+        with self.assertRaisesRegex(ValueError, 'rgba'):
+            build_model(fixture()['kinematics']['urdf_xml'].replace('</link>',
+                '<visual><geometry><sphere radius=".1"/></geometry><material><color rgba="1 2 0 1"/></material></visual></link>',1))
+
+    def test_grippers_and_pitch_move_downstream_but_leave_chassis_fixed(self):
+        data = json.loads((ROOT/'config/robot_profiles/workbench-demo.json').read_text())
+        model = build_model(data['kinematics']['urdf_xml'])
+        closed = pose(model, {})
+        opened = pose(model, {'left_outer_finger_joint':.65, 'left_inner_finger_joint':.65})
+        def gap(frame):
+            points = [transform(frame['link_transforms']['left_'+name+'_finger'], [0,0,-.1]) for name in ('outer','inner')]
+            return math.dist(*points)
+        self.assertGreater(gap(opened), gap(closed)+.1)
+        self.assertEqual(opened['link_transforms']['right_hand'], closed['link_transforms']['right_hand'])
+        pitched = pose(model, {'waist_pitch':.3})
+        self.assertEqual(pitched['link_transforms']['base'], closed['link_transforms']['base'])
+        self.assertEqual(pitched['link_transforms']['left_front_wheel'], closed['link_transforms']['left_front_wheel'])
+        self.assertNotEqual(pitched['link_transforms']['left_hand'], closed['link_transforms']['left_hand'])
+        joint = next(j for j in model['joints'] if j['name']=='waist_pitch')
+        self.assertEqual(joint['axis'], [0,1,0])
 
 
 class WorkbenchHTTPTests(unittest.TestCase):
@@ -98,8 +141,10 @@ class WorkbenchHTTPTests(unittest.TestCase):
                 with request('/') as r:
                     self.assertIn('机器人调参工作台',r.read().decode());self.assertIn("frame-ancestors 'none'",r.headers['Content-Security-Policy'])
                 data=fixture()
-                with request('/v1/robot-model',{'urdf_xml':data['kinematics']['urdf_xml']}) as r:
-                    self.assertEqual(json.load(r)['model']['root'],'base')
+                with request('/v1/robot-model',{'urdf_xml':data['kinematics']['urdf_xml'], 'base_pose':{'x_m':.2}}) as r:
+                    response = json.load(r)
+                    self.assertEqual(response['model']['root'],'base')
+                    self.assertEqual(response['pose']['link_transforms']['base'][0][3], .2)
                 with request('/v1/robot-preview',{'profile':data,'target':{'hinge':.5}}) as r:
                     self.assertEqual(json.load(r)['frames'][-1]['positions']['hinge'],.5)
                 with request('/v1/robot-profiles',data) as r:

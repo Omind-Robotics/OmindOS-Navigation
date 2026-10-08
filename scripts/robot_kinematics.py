@@ -1,4 +1,4 @@
-"""URDF forward kinematics and fixed-base static gravity loads, in SI units.
+"""URDF forward kinematics and static gravity loads, in SI units.
 
 No controller, contact solver, collision detection or hardware commands.
 """
@@ -61,6 +61,7 @@ def build_model(xml):
     if root.tag != "robot":
         raise ValueError("expected robot root")
     links, joints, parents, warnings = {}, [], {}, []
+    materials = {m.get('name'): m.find('color') for m in root.findall('material')}
     if len(root.findall("link")) > 128 or len(root.findall("joint")) > 127:
         raise ValueError("workbench supports at most 128 links and 127 joints")
     for link in root.findall("link"):
@@ -76,6 +77,15 @@ def build_model(xml):
                 raise ValueError(name + ": expected one visual geometry")
             g = geometry[0]
             item = {"type": g.tag, "transform": origin(visual)}
+            material = visual.find('material')
+            if material is not None:
+                color = material.find('color')
+                if color is None:
+                    color = materials.get(material.get('name'))
+                if color is not None:
+                    item['color'] = vec(color.get('rgba', ''), 4)
+                    if any(not 0 <= c <= 1 for c in item['color']):
+                        raise ValueError('material rgba must be between 0 and 1')
             if g.tag == "box":
                 item["size"] = vec(g.get("size", ""))
                 if any(x <= 0 for x in item["size"]):
@@ -127,7 +137,7 @@ def build_model(xml):
         reached.update(j["child"] for j in batch)
     return {"name": root.get("name", "robot"), "root": base, "links": list(links.values()),
             "joints": ordered, "warnings": list(dict.fromkeys(warnings)),
-            "scope": "fixed_base_kinematics_and_static_gravity"}
+            "scope": "kinematics_and_static_gravity"}
 
 
 def positions(model, values):
@@ -145,9 +155,22 @@ def positions(model, values):
     return q
 
 
-def pose(model, values):
+def base_position(value=None):
+    value = {} if value is None else value
+    if not isinstance(value, dict) or set(value) - {'x_m', 'y_m', 'yaw_rad'}:
+        raise ValueError('base_pose must contain only x_m, y_m and yaw_rad')
+    result = {k: number(value.get(k, 0), 'base_pose.'+k) for k in ('x_m', 'y_m', 'yaw_rad')}
+    if any(abs(result[k]) > 5 for k in ('x_m', 'y_m')) or abs(result['yaw_rad']) > 2*math.pi:
+        raise ValueError('base_pose exceeds preview range: XY +/-5 m, yaw +/-2pi rad')
+    return result
+
+
+def pose(model, values, base_pose=None):
     q = positions(model, values)
-    world, pivot, axes = {model["root"]: identity()}, {}, {}
+    base = base_position(base_pose)
+    root_frame = rotation([0, 0, 1], base['yaw_rad'])
+    root_frame[0][3], root_frame[1][3] = base['x_m'], base['y_m']
+    world, pivot, axes = {model["root"]: root_frame}, {}, {}
     ancestors = {model["root"]: []}
     for j in model["joints"]:
         frame = mul(world[j["parent"]], j["origin"])
@@ -171,19 +194,24 @@ def pose(model, values):
             force = -9.80665 * link["mass"]
             cross = [r[1]*force, -r[0]*force, 0]
             torque[name] -= sum(axes[name][i]*cross[i] for i in range(3))
-    return {"positions": q, "link_transforms": world, "joint_positions": pivot, "centers_of_mass": coms,
+    return {"positions": q, "base_pose": base, "link_transforms": world, "joint_positions": pivot, "centers_of_mass": coms,
             "holding_torque_nm": torque if complete_mass else None}
 
 
 def trial(payload):
-    if not isinstance(payload, dict) or set(payload) - {"profile", "start", "target", "duration_s"} or "profile" not in payload:
-        raise ValueError("expected profile, start, target and duration_s")
+    if not isinstance(payload, dict) or set(payload) - {"profile", "start", "target", "duration_s", "base_start", "base_target"} or "profile" not in payload:
+        raise ValueError("expected profile, start, target, duration_s and optional base_start/base_target")
     profile = payload["profile"]
     validate_parameters(profile)
     model = build_model(profile["kinematics"]["urdf_xml"])
     start, target = positions(model, payload.get("start", {})), positions(model, payload.get("target", {}))
+    base_start, base_target = base_position(payload.get('base_start')), base_position(payload.get('base_target'))
+    distance = math.hypot(base_target['x_m']-base_start['x_m'], base_target['y_m']-base_start['y_m'])
+    turn = abs(base_target['yaw_rad']-base_start['yaw_rad'])
     drives = profile["dynamics"]["joints"]
     minimum = max([1.5*abs(target[n]-start[n])/drives[n]["velocity_limit_rad_s"] for n in start] or [0])
+    # Preview pacing only: not specifications or wheel-space limits of a real chassis.
+    minimum = max(minimum, 1.5*distance/.5, 1.5*turn/.8)
     duration = number(payload.get("duration_s", max(2, minimum)), "duration_s", positive=True)
     if duration > 60 or duration + 1e-10 < minimum:
         raise ValueError(f"duration_s must be between {minimum:.3f} and 60 seconds to respect velocity limits")
@@ -197,7 +225,12 @@ def trial(payload):
             q = start.copy()
         elif i == count-1:
             q = target.copy()
-        frame = pose(model, q)
+        base = {k: base_start[k] + (base_target[k]-base_start[k])*smooth for k in base_start}
+        if i == 0:
+            base = base_start.copy()
+        elif i == count-1:
+            base = base_target.copy()
+        frame = pose(model, q, base)
         frame["time_s"] = u*duration
         frame["motor_positions_rad"] = {
             n: (q[n]-drives[n]["zero_offset_rad"])*drives[n]["reduction_ratio"]/drives[n]["direction"] for n in q}
@@ -208,5 +241,7 @@ def trial(payload):
     return {"model": model, "frames": frames, "duration_s": duration, "minimum_duration_s": minimum,
             "peak_holding_torque_nm": peaks, "gravity_limit_exceeded": exceeded,
             "peak_joint_velocity_rad_s": {n: 1.5*abs(target[n]-start[n])/duration for n in start},
-            "scope": model["scope"], "runtime_applied": False, "hardware_validated": False,
-            "limitations": ["基座固定；没有碰撞、接触、平衡或惯性动力学积分。", "静态重力负载不包含加速度、摩擦或外部负载。"]}
+            "peak_base_velocity": {'linear_m_s': 1.5*distance/duration, 'angular_rad_s': 1.5*turn/duration},
+            "scope": 'prescribed_planar_base_kinematics_and_static_gravity' if any(base_start.values()) or any(base_target.values()) else 'fixed_base_kinematics_and_static_gravity',
+            "runtime_applied": False, "hardware_validated": False,
+            "limitations": ["底盘为给定平面位姿预览，未计算轮速、轮地接触、打滑或导航。", "没有碰撞、平衡或惯性动力学积分；静态重力不包含加速度、摩擦或外部负载。"]}

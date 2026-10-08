@@ -7,7 +7,7 @@
 <aside class="parameters">
 <h2>模型与参数</h2><p class="muted">导入模型，在三维视图中检查调整。</p>
 <label class="file">导入 URDF / 完整配置<input id="import" type="file" accept=".urdf,.xml,.json"></label>
-<button id="example">加载双臂示例</button><p class="note">内置模型为 7 轴教学示例，不是 RM75 实机模型。</p>
+<button id="example">加载移动双臂示例</button><p class="note">双指夹爪 · 腰部俯仰 · 四轮底盘<br>合成教学模型，参数需按实机标定。</p>
 <label>机器人编号<input id="robot-id" value="demo-dual-arm" maxlength="64"></label>
 <div class="tabs"><button id="joint-tab" aria-pressed="true">关节</button><button id="link-tab" aria-pressed="false">连杆</button></div>
 <label>选择部件<select id="part" aria-label="选择部件"></select></label>
@@ -21,9 +21,23 @@
 <div class="view-controls"><button data-view="iso">立体</button><button data-view="front">正面</button><button data-view="side">侧面</button><button id="fit">适合窗口</button></div>
 <p class="hint">拖动旋转 · 滚轮缩放 · 点击选择部件</p>
 <div id="warnings" class="notice" role="status"></div>
-<div class="scope">固定基座 · 正向运动学 + 静态重力负载<br>不包含碰撞、地面接触、平衡和完整动力学仿真</div>
+<div class="scope">关节运动学 · 底盘平面位姿 · 静态重力负载<br>不包含轮地接触、碰撞、平衡和完整动力学仿真</div>
 </section>
 <aside class="actions">
+<section class="quick-controls" aria-label="整机快捷控制">
+<h2>整机控制</h2><p class="muted">拖动查看目标姿态，点击试运行播放。</p>
+<label id="pitch-control">腰部俯仰 / ° <output id="pitch-value">0°</output><input id="pitch" type="range" min="-31.5" max="31.5" step="0.1" value="0" aria-label="腰部俯仰"></label>
+<div class="gripper-controls">
+<label id="left-gripper-control">左夹爪 <output id="left-gripper-value">0%</output><input id="left-gripper" type="range" min="0" max="100" step="1" value="0" aria-label="左夹爪开合"></label>
+<label id="right-gripper-control">右夹爪 <output id="right-gripper-value">0%</output><input id="right-gripper" type="range" min="0" max="100" step="1" value="0" aria-label="右夹爪开合"></label>
+</div><p class="note">夹爪 0% 合拢 · 100% 张开</p>
+<div class="base-label">底盘平面预览</div><div class="fields base-fields">
+<label>X / m<input id="base-x" type="number" min="-5" max="5" step="0.1" value="0" aria-label="底盘 X"></label>
+<label>Y / m<input id="base-y" type="number" min="-5" max="5" step="0.1" value="0" aria-label="底盘 Y"></label>
+<label>转向 / °<input id="base-yaw" type="number" min="-360" max="360" step="5" value="0" aria-label="底盘转向"></label>
+</div><p class="note">世界坐标位姿预览，不计算轮速和导航。</p>
+<button id="reset-pose">姿态归零</button>
+</section><hr>
 <h2>试运行</h2><p class="muted">从零位（按限位约束）运动到当前目标姿态。</p>
 <label>运行时长 / 秒<input id="duration" type="number" min="0.1" max="60" step="0.1" value="3"></label>
 <button class="primary" id="run">试一下 · 运动学</button><button id="stop" disabled>停止</button>

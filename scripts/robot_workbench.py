@@ -67,10 +67,10 @@ def make_handler(store_dir):
                     raise ValueError("incomplete request")
                 payload = json.loads(raw)
                 if self.path == "/v1/robot-model":
-                    if not isinstance(payload, dict) or set(payload) - {"urdf_xml", "positions"} or "urdf_xml" not in payload:
-                        raise ValueError("expected urdf_xml and optional positions")
+                    if not isinstance(payload, dict) or set(payload) - {"urdf_xml", "positions", "base_pose"} or "urdf_xml" not in payload:
+                        raise ValueError("expected urdf_xml and optional positions/base_pose")
                     model = build_model(payload["urdf_xml"])
-                    result = {"model": model, "pose": pose(model, payload.get("positions", {}))}
+                    result = {"model": model, "pose": pose(model, payload.get("positions", {}), payload.get('base_pose'))}
                 else:
                     result = trial(payload)
                 self.respond(200, result)

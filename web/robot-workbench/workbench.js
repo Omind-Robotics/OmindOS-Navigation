@@ -4,6 +4,7 @@ let xml, profile, model, currentPose, targets = {}, mode = 'joint', revision = 0
 let timer, animation, latestTrial, view = {yaw: .75, pitch: .48, zoom: 1, center: [0, 0, .5], span: 1.5};
 let projected = [], operation = false;
 let sceneEngine = null;
+let baseTarget = {x_m:0, y_m:0, yaw_rad:0};
 const pendingNodes = new WeakMap(), pendingParents = new WeakMap();
 const serializer = new XMLSerializer();
 const child = (node, tag) => [...node.children].find(x => x.tagName === tag);
@@ -42,12 +43,14 @@ function edited({refresh = true, config = true} = {}) {
 async function refreshModel(fit = false) {
   const rev = revision; document.body.dataset.pending = 'true';
   try {
-    const result = await api('/v1/robot-model', {urdf_xml: payload().kinematics.urdf_xml, positions: targets});
+    if (document.querySelector('.base-fields [aria-invalid="true"]')) throw Error('请先修正底盘位姿输入。');
+    const result = await api('/v1/robot-model', {urdf_xml: payload().kinematics.urdf_xml, positions: targets, base_pose:baseTarget});
     if (rev !== revision) return;
     model = result.model; currentPose = result.pose; targets = {...result.pose.positions}; readyRevision = rev;
     $('model-name').textContent = model.name;
     $('model-info').textContent = `${model.links.length} 个连杆 · ${Object.keys(targets).length} 个活动关节`;
     $('warnings').textContent = model.warnings.join('；');
+    syncQuickControls();
     if (fit) fitView(); draw();
     status('模型已更新 · 使用当前参数');
   } catch (e) { if (rev === revision) { readyRevision = -1; currentPose = null; draw(); status(e.message, true); } }
@@ -64,15 +67,53 @@ async function importProfile(data, fromUrdf = false) {
   if (fromUrdf) candidate.dynamics.joints = missingDrives(doc);
   stop(); clearTimeout(timer); revision++; readyRevision = revision; latestTrial = null;
   profile = candidate; xml = doc; model = result.model; currentPose = result.pose; targets = {...result.pose.positions};
+  baseTarget = {...result.pose.base_pose};
+  document.querySelectorAll('.base-fields input').forEach(input=>input.removeAttribute('aria-invalid'));
   $('robot-id').value = candidate.robot_id || ''; $('xml').value = candidate.kinematics.urdf_xml;
   $('dirty').textContent = '未保存'; $('model-name').textContent = model.name;
   $('model-info').textContent = `${model.links.length} 个连杆 · ${Object.keys(targets).length} 个活动关节`;
   $('warnings').textContent = model.warnings.join('；'); $('results').replaceChildren(); $('progress').value = 0;
   $('profile-id').value='';$('saved').textContent='参数保存在本机服务目录；旧版本保留。';
-  rebuildParts(); fitView(); draw();
+  syncQuickControls(); rebuildParts(); fitView(); draw();
   status(fromUrdf ? '模型已导入。请补充各活动关节的电机参数后试运行、保存。' : '模型已载入 · 可调整参数');
 }
 function textBlock(text, cls = 'note') { const el = document.createElement('div'); el.className = cls; el.textContent = text; $('editor').append(el); return el; }
+const fingerNames = side => ['outer','inner'].map(f=>`${side}_${f}_finger_joint`);
+function syncQuickControls() {
+  const pitch=model.joints.find(j=>j.name==='waist_pitch' && j.type==='revolute');
+  $('pitch-control').hidden=!pitch;
+  if(pitch){$('pitch').min=Math.ceil(pitch.lower*1800/Math.PI)/10;$('pitch').max=Math.floor(pitch.upper*1800/Math.PI)/10;$('pitch').value=targets.waist_pitch*180/Math.PI;$('pitch-value').textContent=(targets.waist_pitch*180/Math.PI).toFixed(1)+'°';}
+  for(const side of ['left','right']){
+    const joints=fingerNames(side).map(n=>model.joints.find(j=>j.name===n && j.type==='revolute'));
+    $(side+'-gripper-control').hidden=joints.some(j=>!j);
+    if(joints.every(Boolean)){
+      const values=joints.map(j=>(targets[j.name]-j.lower)/(j.upper-j.lower)*100);
+      $(side+'-gripper').value=values[0];
+      $(side+'-gripper-value').textContent=Math.abs(values[0]-values[1])>.5?'单指已调':Math.round(values[0])+'%';
+    }
+  }
+  $('base-x').value=baseTarget.x_m;$('base-y').value=baseTarget.y_m;$('base-yaw').value=Number((baseTarget.yaw_rad*180/Math.PI).toFixed(3));
+}
+function quickJointUpdate(selected) {
+  mode='joint';rebuildParts(selected);edited({config:false});syncQuickControls();
+}
+$('pitch').oninput=()=>{const j=model.joints.find(j=>j.name==='waist_pitch');targets.waist_pitch=Math.max(j.lower,Math.min(j.upper,Number($('pitch').value)*Math.PI/180));quickJointUpdate('waist_pitch');};
+for(const side of ['left','right'])$(side+'-gripper').oninput=()=>{
+  const fraction=Number($(side+'-gripper').value)/100;
+  for(const name of fingerNames(side)){const j=model.joints.find(j=>j.name===name);targets[name]=j.lower+(j.upper-j.lower)*fraction;}
+  quickJointUpdate(fingerNames(side)[0]);
+};
+for(const [id,key,factor] of [['base-x','x_m',1],['base-y','y_m',1],['base-yaw','yaw_rad',Math.PI/180]])$(id).onchange=()=>{
+  const input=$(id), value=numeric(input.value);
+  edited({refresh:false,config:false});
+  if(!Number.isFinite(value)||value<Number(input.min)||value>Number(input.max)){input.setAttribute('aria-invalid','true');status('底盘 X/Y 范围为 ±5 m，转向为 ±360°，请输入有效数字。',true);return;}
+  input.removeAttribute('aria-invalid');baseTarget[key]=value*factor;refreshModel(true);
+};
+$('reset-pose').onclick=()=>{
+  if(!model)return;for(const j of model.joints)if(j.type!=='fixed')targets[j.name]=Math.min(j.upper,Math.max(j.lower,0));
+  baseTarget={x_m:0,y_m:0,yaw_rad:0};document.querySelectorAll('.base-fields input').forEach(input=>input.removeAttribute('aria-invalid'));
+  edited({refresh:false,config:false});syncQuickControls();buildEditor();refreshModel(true);
+};
 function field(parent, label, value, onChange, attrs = {}) {
   const l = document.createElement('label'); l.textContent = label; const input = document.createElement('input');
   input.type = attrs.type || 'number'; input.step = 'any'; input.value = value ?? ''; for (const [key,v] of Object.entries(attrs)) input.setAttribute(key, v);
@@ -153,13 +194,13 @@ function geometry(g) {
     else for(let axis=0;axis<3;axis++)for(let i=0;i<n;i++){const a=[r*Math.cos(i*2*Math.PI/n),r*Math.sin(i*2*Math.PI/n),0],b=[r*Math.cos((i+1)*2*Math.PI/n),r*Math.sin((i+1)*2*Math.PI/n),0];add(a.slice(axis).concat(a.slice(0,axis)),b.slice(axis).concat(b.slice(0,axis)));}
   } return lines;
 }
-function worldLines() {
-  if(!model||!currentPose)return[]; const lines=[];
-  for(const link of model.links)for(const g of link.visuals)for(const [a,b]of geometry(g))lines.push({a:trans(currentPose.link_transforms[link.name],trans(g.transform,a)),b:trans(currentPose.link_transforms[link.name],trans(g.transform,b)),link:link.name});
+function worldLines(pose=currentPose) {
+  if(!model||!pose)return[]; const lines=[];
+  for(const link of model.links)for(const g of link.visuals)for(const [a,b]of geometry(g))lines.push({a:trans(pose.link_transforms[link.name],trans(g.transform,a)),b:trans(pose.link_transforms[link.name],trans(g.transform,b)),link:link.name});
   return lines;
 }
-function fitView(){
-  if(!currentPose)return;const pts=[...worldLines().flatMap(l=>[l.a,l.b]),...Object.values(currentPose.joint_positions),...Object.values(currentPose.centers_of_mass)];
+function fitView(poses=[currentPose]){
+  if(!currentPose)return;const pts=poses.flatMap(pose=>[...worldLines(pose).flatMap(l=>[l.a,l.b]),...Object.values(pose.joint_positions),...Object.values(pose.centers_of_mass)]);
   if(!pts.length)return;const lo=[0,1,2].map(i=>Math.min(...pts.map(p=>p[i]))),hi=[0,1,2].map(i=>Math.max(...pts.map(p=>p[i])));
   view.center=lo.map((x,i)=>(x+hi[i])/2);view.span=Math.max(.15,...lo.map((x,i)=>hi[i]-x))*1.45;view.zoom=1;
 }
@@ -193,11 +234,11 @@ function report(result){
   if(result.gravity_limit_exceeded.length){const warn=document.createElement('p');warn.className='error';warn.textContent='静态重力负载超限：'+result.gravity_limit_exceeded.join('、');$('results').append(warn);}
 }
 async function guarded(fn){if(operation)return;operation=true;try{await fn();}catch(e){status(e.message,true);}finally{operation=false;}}
-async function loadExample(){await importProfile(await api('/example.json'));targets={...targets,left_shoulder:-.45,left_elbow:-.65,right_shoulder:-.3,right_elbow:-.75};mode='joint';rebuildParts('left_elbow');await refreshModel(true);status('教学示例已载入 · 点击“试一下”查看目标姿态运动');}
+async function loadExample(){await importProfile(await api('/example.json'));targets={...targets,waist_pitch:.12,left_shoulder:-.45,left_elbow:-.65,right_shoulder:-.3,right_elbow:-.75};for(const side of ['left','right'])for(const name of fingerNames(side))targets[name]=side==='left'?.4:.23;mode='joint';rebuildParts('waist_pitch');await refreshModel(true);status('教学示例已载入 · 双指夹爪、腰部俯仰、四轮底盘');}
 $('run').onclick=()=>guarded(async()=>{
   clearTimeout(timer);if(readyRevision!==revision)await refreshModel(false);if(readyRevision!==revision)throw Error('模型参数有误，请先修正。');
-  stop();const rev=revision;status('正在计算运动轨迹和重力负载…');const result=await api('/v1/robot-preview',{profile:payload(),target:targets,duration_s:numeric($('duration').value)});
-  if(rev!==revision)return;latestTrial=result;report(result);model=result.model;const start=performance.now();$('stop').disabled=false;
+  stop();const rev=revision;status('正在计算运动轨迹和重力负载…');const result=await api('/v1/robot-preview',{profile:payload(),target:targets,base_target:baseTarget,duration_s:numeric($('duration').value)});
+  if(rev!==revision)return;latestTrial=result;report(result);model=result.model;fitView([result.frames[0],result.frames.at(-1)]);const start=performance.now();$('stop').disabled=false;
   const tick=now=>{const elapsed=(now-start)/1000,index=Math.min(result.frames.length-1,Math.floor(elapsed/result.duration_s*(result.frames.length-1)));currentPose=result.frames[index];$('progress').value=Math.min(1,elapsed/result.duration_s);draw();status(`运动学试运行 ${Math.min(elapsed,result.duration_s).toFixed(1)} / ${result.duration_s.toFixed(1)} 秒`);if(elapsed<result.duration_s)animation=requestAnimationFrame(tick);else{stop();status(result.gravity_limit_exceeded.length?'试运行结束 · 发现静态重力负载超限':'运动学试运行完成 · 未进行碰撞或动力学验收');}};animation=requestAnimationFrame(tick);
 });
 $('stop').onclick=()=>stop('已停止预览 · 未发送真机指令');
