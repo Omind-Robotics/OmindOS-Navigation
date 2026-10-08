@@ -10,6 +10,15 @@
 <label class="file">导入 URDF / 完整配置<input id="import" type="file" accept=".urdf,.xml,.json"></label>
 <button id="example">加载双七轴移动机器人</button><p class="note">双臂各7轴 + 腰部pitch = 15个主体关节<br>RM75-B关节结构；机身、夹爪与驱动参数待标定。</p>
 <label>机器人编号<input id="robot-id" value="demo-dual-rm75" maxlength="64"></label>
+<details id="connections-panel" open>
+<summary>设备通信 <span class="connection-badge">可稍后选择</span></summary>
+<label>设备<select id="connection-device" aria-label="通信设备"></select></label>
+<label>通信方式<select id="connection-protocol" aria-label="通信方式"></select></label>
+<div id="connection-fields"></div>
+<p id="connection-note" class="note"></p>
+<p id="connection-state" class="note" role="status">仅保存配置 · 驱动未接入</p>
+<p class="note">未选择也可保存，切换方式保留已填参数。</p>
+</details>
 <div class="tabs"><button id="joint-tab" aria-pressed="true">关节</button><button id="link-tab" aria-pressed="false">连杆</button></div>
 <label>选择部件<select id="part" aria-label="选择部件"></select></label>
 <div id="editor"></div>

@@ -6,6 +6,8 @@ let projected = [], operation = false;
 let sceneEngine = null;
 let baseTarget = {x_m:0, y_m:0, yaw_rad:0};
 let emergencyStop = false, safetyPending = false, safetyRequest = 0, motionEpoch = -1, motionTicket = 0;
+let connectionOptions, connectionDraft = {schema_version:1,devices:{}};
+const connectionInvalid = new Set();
 const pendingNodes = new WeakMap(), pendingParents = new WeakMap();
 const serializer = new XMLSerializer();
 const child = (node, tag) => [...node.children].find(x => x.tagName === tag);
@@ -27,7 +29,7 @@ function ensure(node, tag) {
   n = xml.createElement(tag); cache.set(tag,n); pendingParents.set(n,node);
   const set = n.setAttribute.bind(n); n.setAttribute = (...args) => { attach(n); return set(...args); }; return n;
 }
-function payload() { if (!profile || !xml) throw Error('请先导入模型。'); if (document.querySelector('#editor [aria-invalid="true"]')) throw Error('请先修正标记为无效的参数。'); profile.robot_id = $('robot-id').value; profile.kinematics.urdf_xml = serializer.serializeToString(xml); return structuredClone(profile); }
+function payload() { if (!profile || !xml) throw Error('请先导入模型。'); if (connectionInvalid.size||document.querySelector('#editor [aria-invalid="true"]')) throw Error('请先修正标记为无效的参数。'); profile.robot_id = $('robot-id').value; profile.kinematics.urdf_xml = serializer.serializeToString(xml); return structuredClone(profile); }
 async function api(path, data) {
   const response = await fetch(path, data === undefined ? {} : {method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)});
   const body = await response.json(); if (!response.ok) throw Error(body.error || `请求失败 ${response.status}`); return body;
@@ -66,10 +68,11 @@ async function importProfile(data, fromUrdf = false) {
   const candidate = fromUrdf ? {robot_id:$('robot-id').value || 'robot-a', kinematics:{urdf_xml:data}, dynamics:{joints:{}}} : structuredClone(data);
   if (!candidate || !candidate.kinematics || typeof candidate.kinematics.urdf_xml !== 'string' || !candidate.dynamics || typeof candidate.dynamics.joints !== 'object' || candidate.dynamics.joints === null) throw Error('完整配置需要 robot_id、kinematics.urdf_xml 和 dynamics.joints。');
   const doc = parse(candidate.kinematics.urdf_xml);
-  const result = await api('/v1/robot-model', {urdf_xml:candidate.kinematics.urdf_xml});
+  const result = await api('/v1/robot-model', {urdf_xml:candidate.kinematics.urdf_xml,connections:candidate.connections});
   if (fromUrdf) candidate.dynamics.joints = missingDrives(doc);
   stop(); clearTimeout(timer); revision++; readyRevision = revision; latestTrial = null;
   profile = candidate; xml = doc; model = result.model; currentPose = result.pose; targets = {...result.pose.positions};
+  connectionInvalid.clear();connectionDraft=structuredClone(candidate.connections||{schema_version:1,devices:{}});renderConnections();
   baseTarget = {...result.pose.base_pose};
   document.querySelectorAll('.base-fields input').forEach(input=>input.removeAttribute('aria-invalid'));
   $('robot-id').value = candidate.robot_id || ''; $('xml').value = candidate.kinematics.urdf_xml;
@@ -82,6 +85,56 @@ async function importProfile(data, fromUrdf = false) {
   status(fromUrdf ? '模型已导入。请补充各活动关节的电机参数后试运行、保存。' : '模型已载入 · 可调整参数');
 }
 function textBlock(text, cls = 'note') { const el = document.createElement('div'); el.className = cls; el.textContent = text; $('editor').append(el); return el; }
+function connectionChanged(){
+  const wasReady=readyRevision===revision;stop();freezePose();clearTimeout(timer);
+  profile.connections=structuredClone(connectionDraft);edited({refresh:false});
+  if(wasReady)readyRevision=revision;
+  $('connection-state').textContent='通信配置已修改 · 尚未写入程序';
+}
+function connectionRecord(device){
+  return connectionDraft.devices[device] ||= {selected:'unselected',profiles:{}};
+}
+function renderConnections(){
+  if(!connectionOptions)return;
+  const device=$('connection-device').value,spec=connectionOptions.devices[device];
+  const saved=connectionDraft.devices[device]||{selected:'unselected',profiles:{}};
+  const select=$('connection-protocol');select.replaceChildren();
+  for(const [key,label] of [['unselected','待选择'],...Object.entries(spec.protocols).map(([k,v])=>[k,v.label])]){
+    const option=document.createElement('option');option.value=key;option.textContent=label;select.append(option);
+  }
+  select.value=saved.selected;$('connection-fields').replaceChildren();
+  const protocol=spec.protocols[saved.selected];
+  $('connection-note').textContent=protocol?.note||'先保存设备配置，连接时再选择通信方式。';
+  $('connection-state').textContent='仅保存配置 · 驱动未接入';
+  if(!protocol)return;
+  for(const field of protocol.fields){
+    const label=document.createElement('label');label.textContent=field.label;
+    const input=document.createElement(field.type==='choice'?'select':'input');input.id=`connection-${device}-${field.key}`;
+    if(field.type==='choice'){
+      const translations={none:'无校验',even:'偶校验',odd:'奇校验',tcp:'TCP',tls:'TLS',rtu:'RTU',standard_rs232:'标准 RS-232',ttl:'TTL'};
+      for(const value of ['',...field.choices]){const option=document.createElement('option');option.value=value;option.textContent=value?(translations[value]||value):'待填写';input.append(option);}
+    }else{input.type=field.type==='integer'?'number':'text';input.autocomplete='off';input.placeholder=field.placeholder||'待填写';
+      if(field.type==='integer'){input.min=field.min;input.max=field.max;input.step='1';}else input.maxLength=256;}
+    input.value=saved.profiles[saved.selected]?.[field.key]??'';
+    const invalidKey=`${device}/${saved.selected}/${field.key}`;
+    if(connectionInvalid.has(invalidKey))input.setAttribute('aria-invalid','true');
+    input.oninput=()=>{
+      const record=connectionRecord(device),values=record.profiles[record.selected]||={};
+      const raw=input.value;let value=raw;
+      if(field.type==='integer')value=raw===''?null:Number(raw);
+      const valid=input.validity.valid && (field.type!=='integer'||value===null||(Number.isInteger(value)&&value>=field.min&&value<=field.max));
+      if(valid){input.removeAttribute('aria-invalid');connectionInvalid.delete(invalidKey);}
+      else{input.setAttribute('aria-invalid','true');connectionInvalid.add(invalidKey);}
+      values[field.key]=value;connectionChanged();
+    };
+    label.append(input);$('connection-fields').append(label);
+  }
+}
+$('connection-device').onchange=renderConnections;
+$('connection-protocol').onchange=()=>{
+  const record=connectionRecord($('connection-device').value);record.selected=$('connection-protocol').value;
+  renderConnections();connectionChanged();
+};
 const fingerNames = side => ['outer','inner'].map(f=>`${side}_${f}_finger_joint`);
 function syncQuickControls() {
   const pitch=model.joints.find(j=>j.name==='waist_pitch' && j.type==='revolute');
@@ -383,6 +436,7 @@ $('apply-program').onclick=()=>guarded(async()=>{
   stop();const rev=revision;const result=await api('/v1/workbench-active-profile',payload());motionEpoch=Math.max(motionEpoch,result.motion_epoch);
   $('profile-id').value=result.profile_id;$('saved').textContent='程序当前配置：'+result.profile_id;
   $('apply-note').textContent=rev===revision?'已写入程序 · 重启后自动加载此配置':'写入完成，当前编辑内容另有修改。';
+  if(rev===revision)$('connection-state').textContent='通信配置已写入 · 驱动未接入';
   if(rev===revision)$('dirty').textContent='参数已写入程序';status('参数已写入工作台程序 · 未接入真机控制器');
 });
 $('save').onclick=()=>guarded(async()=>{const rev=revision;const result=await api('/v1/robot-profiles',payload());$('profile-id').value=result.profile_id;$('saved').textContent='已保存配置：'+result.profile_id;if(rev===revision)$('dirty').textContent='参数已保存';status(rev===revision?'配置已保存，旧版本保留；未应用到控制器。':'修改前的参数已保存，当前编辑内容尚未保存。');});
@@ -401,6 +455,11 @@ canvas.addEventListener('pointermove',e=>{if(!drag)return;view.yaw+=(e.clientX-d
 canvas.addEventListener('pointerup',e=>{if(drag&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<5){const r=canvas.getBoundingClientRect(),p=[e.clientX-r.left,e.clientY-r.top];const hit=sceneEngine?.pick(...p);const nearest=hit||projected.map(item=>({...item,d:Math.hypot(item.p[0]-p[0],item.p[1]-p[1])})).sort((a,b)=>a.d-b.d)[0];if(nearest&&(hit||nearest.d<18)){mode=nearest.type;rebuildParts(nearest.name);draw();}}drag=null;});canvas.addEventListener('pointercancel',()=>drag=null);canvas.addEventListener('wheel',e=>{e.preventDefault();view.zoom=Math.max(.3,Math.min(5,view.zoom*Math.exp(-e.deltaY*.001)));draw();},{passive:false});
 updateMotionControls();
 guarded(async()=>{
+  connectionOptions=await api('/v1/connection-options');
+  for(const [key,spec] of Object.entries(connectionOptions.devices)){
+    const option=document.createElement('option');option.value=key;option.textContent=spec.label+' · '+spec.model;$('connection-device').append(option);
+  }
+  $('connection-device').value='chassis';renderConnections();
   try{const {RobotScene}=await import('/robot-scene.js');sceneEngine=new RobotScene(canvas);}
   catch(error){console.warn('实体渲染不可用，使用兼容线框视图。',error);canvas.dataset.renderer='canvas2d';$('solid-view').disabled=true;$('solid-view').setAttribute('aria-pressed','false');$('wireframe-view').setAttribute('aria-pressed','true');}
   new ResizeObserver(draw).observe(canvas);
