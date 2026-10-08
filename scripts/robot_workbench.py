@@ -8,6 +8,7 @@ from urllib.parse import urlsplit
 from robot_parameter_api import MAX_BYTES, ThreadingHTTPServer, make_handler as registry_handler
 from robot_kinematics import build_model, pose, trial, jog_trial, sine_trial, wheel_trial
 from workbench_state import WorkbenchState, MotionLocked
+from robot_connections import connection_catalog, validate_connections
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = {"/": ("web/robot-workbench/index.html", "text/html; charset=utf-8"),
@@ -40,6 +41,8 @@ def make_handler(store_dir):
                 return
             if self.path == '/v1/workbench-state':
                 return self.respond(200, runtime.snapshot())
+            if self.path == '/v1/connection-options':
+                return self.respond(200, connection_catalog())
             if self.path == '/v1/workbench-active-profile':
                 try:
                     with runtime.lock:
@@ -82,8 +85,10 @@ def make_handler(store_dir):
                 elif self.path == '/v1/workbench-stop':
                     result = runtime.set_stop(payload)
                 elif self.path == "/v1/robot-model":
-                    if not isinstance(payload, dict) or set(payload) - {"urdf_xml", "positions", "base_pose"} or "urdf_xml" not in payload:
+                    if not isinstance(payload, dict) or set(payload) - {"urdf_xml", "positions", "base_pose", "connections"} or "urdf_xml" not in payload:
                         raise ValueError("expected urdf_xml and optional positions/base_pose")
+                    if 'connections' in payload:
+                        validate_connections(payload['connections'])
                     model = build_model(payload["urdf_xml"])
                     result = {"model": model, "pose": pose(model, payload.get("positions", {}), payload.get('base_pose'))}
                 else:
