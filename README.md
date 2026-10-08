@@ -42,5 +42,14 @@ Existing v0.1 tags and published assets are unchanged.
 The next customer version keeps one core for quadruped, differential, and
 omnidirectional bases, with quadruped integration first. See
 [客户版接入检查与交付范围](docs/UNIFIED_CUSTOMER_RELEASE.zh-CN.md).
-The configuration checker is available now; hardware adapters and physical
-acceptance remain pending. This does not promote the preview to a hardware release.
+The configuration checker and a pinned MEVIUS2 headless locomotion validation
+are available now. See [MEVIUS2 adaptation and simulation evidence](docs/MEVIUS2_INTEGRATION.zh-CN.md).
+Customer setup follows [URDF, motor model, then other parameters](docs/CUSTOMER_ROBOT_CONFIGURATION.zh-CN.md),
+with a per-robot configuration record and update history.
+The [robot parameter API](docs/ROBOT_PARAMETER_API.zh-CN.md) accepts URDF and joint
+drive parameters, validates and versions them, and supports retrieval by profile ID.
+It currently registers configuration only; controller activation is pending.
+The customer quadruped is designed with reference to MEVIUS2; the original
+model/policy passed a short stand/walk/stop simulation. ROS 2 locomotion integration,
+the customer-specific model and physical acceptance remain pending.
+This does not promote the preview to a hardware release.

@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "record_type": "customer_robot_configuration_record",
+  "robot_id": null,
+  "profile_revision": 1,
+  "reference": {
+    "repository": "https://github.com/haraduka/mevius2",
+    "commit": "4f09680bb575574377b903bbc971bdb2695d507b",
+    "policy_sha256": "392b4d3f30e856caedcb0ec25f125201e97b28795bc9342ee2fc1d8125656510"
+  },
+  "model": {
+    "urdf": "models/mevius2_dae.urdf",
+    "collision_urdf": "models/mevius2_stl.urdf",
+    "mujoco_scene": "models/scene.xml",
+    "path_base": "pinned_mevius2_checkout",
+    "custom_model_path": null
+  },
+  "motors": {
+    "model": "RobStride03",
+    "transport": "SocketCAN",
+    "gear_ratio_definition": "motor_angle / joint_angle; confirm driver output units",
+    "gear_ratio": null
+  },
+  "joints": [
+    {
+      "name": "BL_collar_joint",
+      "can_device": "can0",
+      "can_id": 10,
+      "direction": 1,
+      "calibrated_motor_offset_rad": null
+    },
+    {
+      "name": "BL_hip_joint",
+      "can_device": "can0",
+      "can_id": 11,
+      "direction": -1,
+      "calibrated_motor_offset_rad": null
+    },
+    {
+      "name": "BL_knee_joint",
+      "can_device": "can0",
+      "can_id": 12,
+      "direction": -1,
+      "calibrated_motor_offset_rad": null
+    },
+    {
+      "name": "BR_collar_joint",
+      "can_device": "can0",
+      "can_id": 7,
+      "direction": 1,
+      "calibrated_motor_offset_rad": null
+    },
+    {
+      "name": "BR_hip_joint",
+      "can_device": "can0",
+      "can_id": 8,
+      "direction": 1,
+      "calibrated_motor_offset_rad": null
+    },
+    {
+      "name": "BR_knee_joint",
+      "can_device": "can0",
+      "can_id": 9,
+      "direction": 1,
+      "calibrated_motor_offset_rad": null
+    },
+    {
+      "name": "FL_collar_joint",
+      "can_device": "can1",
+      "can_id": 4,
+      "direction": -1,
+      "calibrated_motor_offset_rad": null
+    },
+    {
+      "name": "FL_hip_joint",
+      "can_device": "can1",
+      "can_id": 5,
+      "direction": -1,
+      "calibrated_motor_offset_rad": null
+    },
+    {
+      "name": "FL_knee_joint",
+      "can_device": "can1",
+      "can_id": 6,
+      "direction": -1,
+      "calibrated_motor_offset_rad": null
+    },
+    {
+      "name": "FR_collar_joint",
+      "can_device": "can1",
+      "can_id": 1,
+      "direction": -1,
+      "calibrated_motor_offset_rad": null
+    },
+    {
+      "name": "FR_hip_joint",
+      "can_device": "can1",
+      "can_id": 2,
+      "direction": 1,
+      "calibrated_motor_offset_rad": null
+    },
+    {
+      "name": "FR_knee_joint",
+      "can_device": "can1",
+      "can_id": 3,
+      "direction": 1,
+      "calibrated_motor_offset_rad": null
+    }
+  ],
+  "control_reference": {
+    "default_joint_angles_rad": [
+      0,
+      0.7,
+      -1.2,
+      0,
+      0.7,
+      -1.2,
+      0,
+      0.7,
+      -1.2,
+      0,
+      0.7,
+      -1.2
+    ],
+    "kp": [
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50
+    ],
+    "kd": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    "policy_hz": 50,
+    "motor_hz": 200,
+    "simulation_hz": 200,
+    "action_scale": 0.2
+  },
+  "sensors": {
+    "imu_model": null,
+    "imu_frame": null,
+    "imu_mount_xyz_m": null,
+    "imu_mount_rpy_rad": null,
+    "lidars": [],
+    "odometry_source": null
+  },
+  "runtime": {
+    "computer_architecture": null,
+    "os": null,
+    "driver_version": null,
+    "motor_firmware_version": null
+  },
+  "changes": [],
+  "validation": {
+    "model_and_config_version": null,
+    "simulation_record": null,
+    "hardware_record": null
+  }
+}
