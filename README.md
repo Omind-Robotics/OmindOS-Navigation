@@ -69,3 +69,7 @@ run a bounded kinematic trajectory, stop, and render the node's reported positio
 See [ROS 2 参数加载与工作台联动](docs/ROS2_PROFILE_RUNTIME.zh-CN.md).
 The loaded target is `ros2_joint_preview`; this does not activate a hardware driver
 or validate quadruped gait, balance, or physical stopping.
+
+## 四足闭环控制与 RS04 驱动（开发预览）
+
+新增 MEVIUS2 姿态/关节反馈策略、浮动机身 MuJoCo 验证、ROS 2 运动接口及 ROBSTRIDE04 SocketCAN 驱动。57 项 Python 测试、4 个原版模型动力学场景和 15 项真实 ROS 2 联调检查通过。RS04 整机与真实电机尚未验收，公开 `v0.2.0-preview.2` 下载包未包含本增量。见 [接入说明](docs/QUADRUPED_RS04_RUNTIME.zh-CN.md) 与 [验证记录](docs/validation/quadruped-rs04-20261008.md)。

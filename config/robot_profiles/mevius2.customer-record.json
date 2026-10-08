@@ -16,10 +16,11 @@
     "custom_model_path": null
   },
   "motors": {
-    "model": "RobStride03",
+    "model": "ROBSTRIDE04",
     "transport": "SocketCAN",
     "gear_ratio_definition": "motor_angle / joint_angle; confirm driver output units",
-    "gear_ratio": null
+    "gear_ratio": null,
+    "reference_model": "RobStride03 (unchanged upstream dynamics)"
   },
   "joints": [
     {
@@ -169,7 +170,15 @@
     "driver_version": null,
     "motor_firmware_version": null
   },
-  "changes": [],
+  "changes": [
+    {
+      "date": "2026-10-08",
+      "source": "user shopping-cart screenshot 21104.jpg",
+      "main_motor_target": "ROBSTRIDE04",
+      "cart_quantity": 13,
+      "note": "12 single units plus one adapter bundle; joint assignment/calibration not established. Two EDULITE 05 entries unassigned."
+    }
+  ],
   "validation": {
     "model_and_config_version": null,
     "simulation_record": null,
