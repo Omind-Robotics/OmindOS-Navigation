@@ -6,7 +6,8 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from robot_parameter_api import MAX_BYTES, ThreadingHTTPServer, make_handler as registry_handler
-from robot_kinematics import build_model, pose, trial
+from robot_kinematics import build_model, pose, trial, jog_trial, sine_trial
+from workbench_state import WorkbenchState, MotionLocked
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = {"/": ("web/robot-workbench/index.html", "text/html; charset=utf-8"),
@@ -17,6 +18,7 @@ ASSETS = {"/": ("web/robot-workbench/index.html", "text/html; charset=utf-8"),
 
 
 def make_handler(store_dir):
+    runtime = WorkbenchState(store_dir)
     class Handler(registry_handler(store_dir)):
         def end_headers(self):
             self.send_header("Cache-Control", "no-store")
@@ -36,6 +38,14 @@ def make_handler(store_dir):
         def do_GET(self):
             if not self.permitted():
                 return
+            if self.path == '/v1/workbench-state':
+                return self.respond(200, runtime.snapshot())
+            if self.path == '/v1/workbench-active-profile':
+                try:
+                    with runtime.lock:
+                        return self.respond(200, {**runtime.snapshot(), 'profile': runtime.active_profile()})
+                except (ValueError, OSError):
+                    return self.respond(500, {'error': 'active workbench configuration unavailable'})
             asset = ASSETS.get(urlsplit(self.path).path)
             if asset:
                 try:
@@ -55,7 +65,8 @@ def make_handler(store_dir):
                 return
             if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
                 return self.respond(415, {"error": "Content-Type must be application/json"})
-            if self.path not in ("/v1/robot-model", "/v1/robot-preview"):
+            if self.path not in ("/v1/robot-model", "/v1/robot-preview", '/v1/robot-jog', '/v1/robot-sine',
+                                 '/v1/workbench-active-profile', '/v1/workbench-stop'):
                 return super().do_POST()
             try:
                 self.connection.settimeout(10)
@@ -66,14 +77,29 @@ def make_handler(store_dir):
                 if len(raw) != size:
                     raise ValueError("incomplete request")
                 payload = json.loads(raw)
-                if self.path == "/v1/robot-model":
+                if self.path == '/v1/workbench-active-profile':
+                    result = runtime.apply(payload)
+                elif self.path == '/v1/workbench-stop':
+                    result = runtime.set_stop(payload)
+                elif self.path == "/v1/robot-model":
                     if not isinstance(payload, dict) or set(payload) - {"urdf_xml", "positions", "base_pose"} or "urdf_xml" not in payload:
                         raise ValueError("expected urdf_xml and optional positions/base_pose")
                     model = build_model(payload["urdf_xml"])
                     result = {"model": model, "pose": pose(model, payload.get("positions", {}), payload.get('base_pose'))}
                 else:
-                    result = trial(payload)
+                    epoch = runtime.check_motion()
+                    if isinstance(payload, dict) and 'profile' not in payload:
+                        profile = runtime.active_profile()
+                        if profile is None:
+                            raise ValueError('请先将参数写入程序，或提供完整 profile。')
+                        payload = {**payload, 'profile': profile}
+                    function = {'/v1/robot-preview': trial, '/v1/robot-jog': jog_trial, '/v1/robot-sine': sine_trial}[self.path]
+                    result = function(payload)
+                    runtime.check_motion(epoch)
+                    result['motion_epoch'] = epoch
                 self.respond(200, result)
+            except MotionLocked as e:
+                self.respond(423, {'error': str(e), **runtime.snapshot()})
             except (ValueError, TypeError, OverflowError, RecursionError) as e:
                 self.respond(400, {"error": str(e)})
             except OSError:

@@ -245,3 +245,78 @@ def trial(payload):
             "scope": 'prescribed_planar_base_kinematics_and_static_gravity' if any(base_start.values()) or any(base_target.values()) else 'fixed_base_kinematics_and_static_gravity',
             "runtime_applied": False, "hardware_validated": False,
             "limitations": ["底盘为给定平面位姿预览，未计算轮速、轮地接触、打滑或导航。", "没有碰撞、平衡或惯性动力学积分；静态重力不包含加速度、摩擦或外部负载。"]}
+
+
+def jog_trial(payload):
+    if not isinstance(payload, dict) or set(payload) - {'profile', 'start', 'joint', 'direction', 'base_pose'}:
+        raise ValueError('expected profile, start, joint, direction and base_pose')
+    profile = payload.get('profile')
+    validate_parameters(profile)
+    model = build_model(profile['kinematics']['urdf_xml'])
+    start = positions(model, payload.get('start', {}))
+    name, direction = payload.get('joint'), payload.get('direction')
+    if not isinstance(name, str) or name not in start or type(direction) is not int or direction not in (-1, 1):
+        raise ValueError('choose an active joint and direction -1 or +1')
+    target = {**start, name: start[name] + direction*math.radians(.1)}
+    positions(model, target)
+    duration = max(.15, 1.5*math.radians(.1)/profile['dynamics']['joints'][name]['velocity_limit_rad_s'])
+    result = trial({'profile': profile, 'start': start, 'target': target, 'duration_s': duration,
+                    'base_start': payload.get('base_pose'), 'base_target': payload.get('base_pose')})
+    return {**result, 'motion_type': 'jog', 'jog_joint': name, 'step_deg': direction*.1}
+
+
+def sine_trial(payload):
+    if not isinstance(payload, dict) or set(payload) - {'profile', 'start', 'joints', 'amplitude_deg', 'period_s', 'cycles', 'base_pose'}:
+        raise ValueError('expected profile, start, joints, amplitude_deg, period_s, cycles and base_pose')
+    profile = payload.get('profile')
+    validate_parameters(profile)
+    model = build_model(profile['kinematics']['urdf_xml'])
+    start = positions(model, payload.get('start', {}))
+    selected = payload.get('joints')
+    if not isinstance(selected, list) or not selected or any(not isinstance(n, str) or n not in start for n in selected) or len(set(selected)) != len(selected):
+        raise ValueError('joints must be a nonempty list of unique active joints')
+    amplitude = number(payload.get('amplitude_deg', 5), 'amplitude_deg', positive=True)
+    period = number(payload.get('period_s', 4), 'period_s', positive=True)
+    cycles = payload.get('cycles', 2)
+    if amplitude > 90 or not .5 <= period <= 30 or type(cycles) is not int or not 1 <= cycles <= 10 or period*cycles > 60:
+        raise ValueError('振幅应为 (0,90]°，周期 0.5–30 秒，1–10 个周期，总时长不超过 60 秒。')
+    joints = {j['name']: j for j in model['joints']}
+    requested = math.radians(amplitude)
+    actual = {}
+    for name in selected:
+        j = joints[name]
+        room = min(start[name]-j['lower'], j['upper']-start[name]) if j['type'] == 'revolute' else requested
+        actual[name] = min(requested, max(0, room))
+    if not any(a > 1e-12 for a in actual.values()):
+        raise ValueError('所选关节均位于限位，无法围绕当前角度做正弦运动；请先点动离开限位。')
+    drives = profile['dynamics']['joints']
+    minimum_period = max(2*math.pi*a/drives[n]['velocity_limit_rad_s'] for n, a in actual.items())
+    if period + 1e-10 < minimum_period:
+        raise ValueError(f'period_s must be at least {minimum_period:.3f} seconds to respect velocity limits')
+    base = base_position(payload.get('base_pose'))
+    duration = period*cycles
+    # Whole cycles have samples at extrema and exact start/end positions.
+    per_cycle = max(24, min(120, math.ceil(period*30/4)*4, (360//cycles//4)*4))
+    count = per_cycle*cycles + 1
+    frames, peaks = [], {n: 0 for n in start}
+    for i in range(count):
+        t = duration*i/(count-1)
+        wave = math.sin(2*math.pi*i/per_cycle)
+        q = {n: q0 + actual.get(n, 0)*wave for n, q0 in start.items()}
+        if i in (0, count-1):
+            q = start.copy()
+        frame = pose(model, q, base)
+        frame['time_s'] = t
+        frame['motor_positions_rad'] = {n: (q[n]-drives[n]['zero_offset_rad'])*drives[n]['reduction_ratio']/drives[n]['direction'] for n in q}
+        for n, value in frame['holding_torque_nm'].items():
+            peaks[n] = max(peaks[n], abs(value))
+        frames.append(frame)
+    return {'model': model, 'frames': frames, 'duration_s': duration, 'motion_type': 'sine',
+            'selected_joints': selected, 'period_s': period, 'cycles': cycles,
+            'actual_amplitude_deg': {n: math.degrees(a) for n, a in actual.items()},
+            'amplitude_limited_joints': [n for n, a in actual.items() if a < requested-1e-12],
+            'minimum_period_s': minimum_period, 'peak_holding_torque_nm': peaks,
+            'gravity_limit_exceeded': [n for n in peaks if peaks[n] > drives[n]['torque_limit_nm']],
+            'peak_joint_velocity_rad_s': {n: 2*math.pi*actual.get(n, 0)/period for n in start},
+            'scope': 'joint_sine_kinematics_and_static_gravity', 'runtime_applied': False, 'hardware_validated': False,
+            'limitations': ['正弦仅作用于选定旋转关节，底盘平面位姿保持不变。', '没有碰撞、接触或动力学求解；起止速度未做真机控制整形。']}

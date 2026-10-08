@@ -11,9 +11,11 @@ import urllib.error
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from robot_kinematics import build_model, pose, trial, transform
+from robot_kinematics import build_model, pose, trial, transform, jog_trial, sine_trial
 from robot_parameter_api import validate_parameters
 from robot_workbench import ThreadingHTTPServer, make_handler
+from workbench_state import WorkbenchState, MotionLocked
+from unittest.mock import patch
 
 
 def fixture():
@@ -164,6 +166,101 @@ class WorkbenchHTTPTests(unittest.TestCase):
                 self.assertEqual(caught.exception.code,400)
             finally:
                 server.shutdown();thread.join(timeout=5);server.server_close()
+
+
+class MotionControlsTests(unittest.TestCase):
+    def test_jog_is_exact_tenth_degree_and_leaves_base_unchanged(self):
+        data = fixture()
+        result = jog_trial({'profile':data, 'start':{'hinge':.2}, 'joint':'hinge', 'direction':1, 'base_pose':{'x_m':.4}})
+        end = result['frames'][-1]
+        self.assertAlmostEqual(end['positions']['hinge']-.2, math.pi/1800, places=14)
+        self.assertEqual(end['base_pose']['x_m'], .4)
+        reverse = jog_trial({'profile':data, 'start':end['positions'], 'joint':'hinge', 'direction':-1})
+        self.assertAlmostEqual(reverse['frames'][-1]['positions']['hinge'], .2)
+        with self.assertRaisesRegex(ValueError, 'limits'):
+            jog_trial({'profile':data, 'start':{'hinge':2}, 'joint':'hinge', 'direction':1})
+        for name, direction in [('tip_fixed',1),('hinge',True),('hinge',0)]:
+            with self.assertRaises(ValueError):
+                jog_trial({'profile':data, 'joint':name, 'direction':direction})
+
+    def test_sine_matches_analytic_extrema_and_returns_to_start(self):
+        result = sine_trial({'profile':fixture(),'start':{'hinge':.3},'joints':['hinge'],'amplitude_deg':10,'period_s':2,'cycles':2})
+        frames = result['frames']; quarter = (len(frames)-1)//8
+        self.assertAlmostEqual(frames[quarter]['positions']['hinge'], .3+math.radians(10))
+        self.assertAlmostEqual(frames[3*quarter]['positions']['hinge'], .3-math.radians(10))
+        self.assertEqual(frames[0]['positions'], frames[-1]['positions'])
+        self.assertAlmostEqual(result['peak_joint_velocity_rad_s']['hinge'], math.pi*math.radians(10))
+        self.assertFalse(result['runtime_applied'])
+
+    def test_sine_holds_unselected_joints_and_clamps_amplitude_at_limits(self):
+        data = json.loads((ROOT/'config/robot_profiles/workbench-demo.json').read_text())
+        result = sine_trial({'profile':data,'start':{'left_elbow':2.59,'right_elbow':.3},'joints':['left_elbow'],'amplitude_deg':5,'period_s':2,'cycles':1})
+        self.assertEqual(result['amplitude_limited_joints'], ['left_elbow'])
+        self.assertAlmostEqual(result['actual_amplitude_deg']['left_elbow'], math.degrees(.01))
+        for frame in result['frames']:
+            self.assertLessEqual(frame['positions']['left_elbow'],2.6)
+            self.assertEqual(frame['positions']['right_elbow'],.3)
+            self.assertEqual(frame['base_pose'], {'x_m':0,'y_m':0,'yaw_rad':0})
+
+    def test_sine_rejects_bad_groups_parameters_and_excess_speed(self):
+        base = {'profile':fixture(),'joints':['hinge']}
+        for extra in [{'joints':[]},{'joints':['hinge','hinge']},{'joints':['tip_fixed']},
+                      {'amplitude_deg':float('nan')},{'period_s':.4},{'cycles':1.5},{'cycles':True},
+                      {'cycles':10,'period_s':30},{'start':{'hinge':2}}]:
+            with self.subTest(extra=extra), self.assertRaises(ValueError):
+                sine_trial({**base, **extra})
+        with self.assertRaisesRegex(ValueError,'velocity'):
+            sine_trial({**base,'amplitude_deg':45,'period_s':.5})
+
+    def test_parameter_application_survives_restart_and_invalid_apply_preserves_version(self):
+        with tempfile.TemporaryDirectory() as folder:
+            state=WorkbenchState(folder);data=fixture();saved=state.apply(data)
+            self.assertTrue(saved['workbench_applied']);self.assertFalse(saved['runtime_applied'])
+            restarted=WorkbenchState(folder)
+            self.assertEqual(restarted.active_profile(),data)
+            self.assertEqual(restarted.profile_id,saved['profile_id'])
+            bad=copy.deepcopy(data);bad['dynamics']['joints']['hinge']['velocity_limit_rad_s']=-1
+            with self.assertRaises(ValueError):
+                state.apply(bad)
+            self.assertEqual(WorkbenchState(folder).active_profile(),data)
+
+    def test_stop_latches_and_stale_reset_or_motion_cannot_resume(self):
+        with tempfile.TemporaryDirectory() as folder:
+            state=WorkbenchState(folder);epoch=state.check_motion()
+            stopped=state.set_stop({'engaged':True})
+            with self.assertRaises(MotionLocked):state.check_motion()
+            with self.assertRaises(MotionLocked):state.set_stop({'engaged':False,'expected_epoch':epoch})
+            state.set_stop({'engaged':False,'expected_epoch':stopped['motion_epoch']})
+            with self.assertRaises(MotionLocked):state.check_motion(epoch)
+            self.assertFalse(state.snapshot()['emergency_stop'])
+
+    def test_http_stop_interrupts_inflight_calculation_and_blocks_all_motion_routes(self):
+        with tempfile.TemporaryDirectory() as folder:
+            server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(folder));runner=threading.Thread(target=server.serve_forever,daemon=True);runner.start()
+            base=f'http://127.0.0.1:{server.server_port}'
+            def request(path, data=None):
+                try:
+                    with urllib.request.urlopen(urllib.request.Request(base+path,data=None if data is None else json.dumps(data).encode(),headers={'Content-Type':'application/json'}),timeout=5) as response:
+                        return response.status,json.load(response)
+                except urllib.error.HTTPError as e:return e.code,json.load(e)
+            entered, release=threading.Event(), threading.Event();response=[]
+            def delayed(payload):
+                entered.set();release.wait(4);return trial(payload)
+            try:
+                self.assertEqual(request('/v1/workbench-active-profile',fixture())[0],200)
+                with patch('robot_workbench.trial',delayed):
+                    pending=threading.Thread(target=lambda:response.append(request('/v1/robot-preview',{'target':{'hinge':.1}})))
+                    pending.start();self.assertTrue(entered.wait(2))
+                    code,state=request('/v1/workbench-stop',{'engaged':True});self.assertEqual(code,200)
+                    release.set();pending.join(5)
+                self.assertEqual(response[0][0],423)
+                for route in ('/v1/robot-preview','/v1/robot-jog','/v1/robot-sine'):
+                    self.assertEqual(request(route,{})[0],423)
+                self.assertTrue(request('/v1/workbench-active-profile')[1]['emergency_stop'])
+                self.assertEqual(request('/v1/workbench-stop',{'engaged':False,'expected_epoch':state['motion_epoch']})[0],200)
+                self.assertEqual(request('/v1/robot-jog',{'joint':'hinge','direction':1})[0],200)
+            finally:
+                release.set();server.shutdown();runner.join(5);server.server_close()
 
 
 if __name__=='__main__':

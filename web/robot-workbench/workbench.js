@@ -5,6 +5,7 @@ let timer, animation, latestTrial, view = {yaw: .75, pitch: .48, zoom: 1, center
 let projected = [], operation = false;
 let sceneEngine = null;
 let baseTarget = {x_m:0, y_m:0, yaw_rad:0};
+let emergencyStop = false, safetyPending = false, safetyRequest = 0, motionEpoch = -1, motionTicket = 0;
 const pendingNodes = new WeakMap(), pendingParents = new WeakMap();
 const serializer = new XMLSerializer();
 const child = (node, tag) => [...node.children].find(x => x.tagName === tag);
@@ -32,12 +33,13 @@ async function api(path, data) {
   const body = await response.json(); if (!response.ok) throw Error(body.error || `请求失败 ${response.status}`); return body;
 }
 function stop(message) {
+  motionTicket++;
   cancelAnimationFrame(animation); animation = null; $('stop').disabled = true;
   if (message) status(message);
 }
 function edited({refresh = true, config = true} = {}) {
   stop(); revision++; readyRevision = -1; latestTrial = null; $('results').replaceChildren(); $('progress').value = 0;
-  if(config)$('dirty').textContent = '有修改 · 未保存'; $('xml').value = serializer.serializeToString(xml);
+  if(config){$('dirty').textContent = '有修改 · 未保存';$('apply-note').textContent='参数有修改，点击写入后作为程序当前配置。';} $('xml').value = serializer.serializeToString(xml);
   status('参数已修改'); clearTimeout(timer); if (refresh) timer = setTimeout(() => refreshModel(false), 120);
 }
 async function refreshModel(fit = false) {
@@ -74,6 +76,7 @@ async function importProfile(data, fromUrdf = false) {
   $('model-info').textContent = `${model.links.length} 个连杆 · ${Object.keys(targets).length} 个活动关节`;
   $('warnings').textContent = model.warnings.join('；'); $('results').replaceChildren(); $('progress').value = 0;
   $('profile-id').value='';$('saved').textContent='参数保存在本机服务目录；旧版本保留。';
+  $('apply-note').textContent='当前编辑配置尚未写入程序，点击写入后生效。';
   syncQuickControls(); rebuildParts(); fitView(); draw();
   status(fromUrdf ? '模型已导入。请补充各活动关节的电机参数后试运行、保存。' : '模型已载入 · 可调整参数');
 }
@@ -95,6 +98,63 @@ function syncQuickControls() {
   for(const [id,value] of [['base-x',baseTarget.x_m],['base-y',baseTarget.y_m],['base-yaw',Number((baseTarget.yaw_rad*180/Math.PI).toFixed(3))]]){
     const input=$(id);if(document.activeElement!==input && input.getAttribute('aria-invalid')!=='true')input.value=value;
   }
+  syncJogControls(); updateMotionControls();
+}
+function armJoints(side){return (model?.joints||[]).filter(j=>j.type!=='fixed' && j.name.startsWith(side+'_') && !/wheel|finger|gripper|hand|waist|neck|head/i.test(j.name)).map(j=>j.name);}
+function syncJogControls(){
+  const select=$('jog-joint'), names=(model?.joints||[]).filter(j=>j.type!=='fixed').map(j=>j.name);
+  if([...select.options].map(o=>o.value).join('|')!==names.join('|')){
+    const previous=select.value;select.replaceChildren(...names.map(name=>{const option=document.createElement('option');option.value=name;option.textContent=name;return option;}));
+    if(names.includes(previous))select.value=previous;
+  }
+  updateJogAngle();
+}
+function updateJogAngle(){const q=currentPose?.positions[$('jog-joint').value];$('jog-angle').textContent=Number.isFinite(q)?(q*180/Math.PI).toFixed(3)+'°':'—';}
+function updateMotionControls(){
+  const locked=emergencyStop||safetyPending||!model;
+  document.body.dataset.estop=String(emergencyStop);
+  document.querySelectorAll('[data-motion],#pitch,#left-gripper,#right-gripper,#base-x,#base-y,#base-yaw,#reset-pose,#editor input[type=range]').forEach(el=>el.disabled=locked);
+  for(const button of document.querySelectorAll('[data-sine]')){
+    const group=button.dataset.sine;
+    if(group==='left'||group==='right')button.disabled=locked||!armJoints(group).length;
+    if(group==='both')button.disabled=locked||!armJoints('left').length||!armJoints('right').length;
+  }
+  $('reset-stop').disabled=!emergencyStop||safetyPending;
+  $('emergency-state').textContent=emergencyStop?'已急停 · 运动锁定，需手动解除':'电脑端软件急停 · 真机未连接';
+}
+function freezePose(){
+  if(!currentPose)return;targets={...currentPose.positions};baseTarget={...currentPose.base_pose};syncQuickControls();
+  const slider=$('editor').querySelector('input[type=range]');
+  if(slider && mode==='joint' && targets[$('part').value]!==undefined){slider.value=targets[$('part').value];slider.parentElement.querySelector('output').textContent=targets[$('part').value].toFixed(3);}
+}
+function latchStop(message='已急停 · 运动已锁定'){
+  const wasReady=readyRevision===revision;stop();clearTimeout(timer);revision++;readyRevision=wasReady?revision:-1;
+  document.body.dataset.pending='false';emergencyStop=true;freezePose();updateMotionControls();status(message,true);
+}
+async function engageStop(){
+  const request=++safetyRequest;safetyPending=true;latchStop();
+  try{const state=await api('/v1/workbench-stop',{engaged:true});if(request===safetyRequest)motionEpoch=Math.max(motionEpoch,state.motion_epoch);}
+  catch(e){if(request===safetyRequest)status('本页已停止；服务急停确认失败：'+e.message,true);}
+  finally{if(request===safetyRequest){safetyPending=false;updateMotionControls();}}
+}
+$('emergency-stop').onclick=engageStop;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();engageStop();}});
+$('reset-stop').onclick=async()=>{
+  if(safetyPending)return;const request=++safetyRequest;safetyPending=true;updateMotionControls();
+  try{const state=await api('/v1/workbench-stop',{engaged:false,expected_epoch:motionEpoch});
+    if(request!==safetyRequest)return;motionEpoch=state.motion_epoch;emergencyStop=false;status('急停已解除 · 请重新选择并启动运动');
+  }catch(e){if(request===safetyRequest)status(e.message,true);}
+  finally{if(request===safetyRequest){safetyPending=false;updateMotionControls();}}
+};
+async function pollSafety(){
+  try{const state=await api('/v1/workbench-state');
+    if(!safetyPending && state.motion_epoch>=motionEpoch){
+      const changed=motionEpoch>=0 && state.motion_epoch!==motionEpoch;motionEpoch=state.motion_epoch;
+      if(state.emergency_stop&&!emergencyStop)latchStop('服务已急停 · 运动已锁定');
+      else if(changed && !emergencyStop){stop();freezePose();status('程序状态已改变 · 本次运动已停止');}
+    }
+  }catch(e){if(!emergencyStop)latchStop('服务连接中断 · 运动已停止，恢复后请手动解除');}
+  finally{setTimeout(pollSafety,750);}
 }
 function quickJointUpdate(selected) {
   mode='joint';rebuildParts(selected);edited({config:false});syncQuickControls();
@@ -183,6 +243,8 @@ function buildEditor() {
     });
     textBlock('外形尺寸只改变显示几何；关节连接距离在“关节”页调整。');
   }
+  if(mode==='joint' && currentPose?.positions[$('part').value]!==undefined)$('jog-joint').value=$('part').value;
+  updateJogAngle();updateMotionControls();
 }
 function trans(t,p) { return [0,1,2].map(i => t[i][3]+p.reduce((s,x,j)=>s+t[i][j]*x,0)); }
 function geometry(g) {
@@ -232,18 +294,56 @@ function drawWireframe(){
 }
 function report(result){
   $('results').replaceChildren();const head=document.createElement('p');head.textContent='运动路径采样点的峰值静态保持力矩';$('results').append(head);
+  if(result.actual_amplitude_deg){const note=document.createElement('p');note.textContent='实际正弦振幅：'+Object.entries(result.actual_amplitude_deg).map(([n,v])=>`${n} ${v.toFixed(2)}°`).join('；');$('results').append(note);}
   for(const [name,value] of Object.entries(result.peak_holding_torque_nm)){const row=document.createElement('div');row.className='metric';const label=document.createElement('span');label.textContent=name;const val=document.createElement('strong');val.textContent=`${value.toFixed(2)} N·m`;if(result.gravity_limit_exceeded.includes(name))val.className='error';row.append(label,val);$('results').append(row);}
   if(result.gravity_limit_exceeded.length){const warn=document.createElement('p');warn.className='error';warn.textContent='静态重力负载超限：'+result.gravity_limit_exceeded.join('、');$('results').append(warn);}
 }
 async function guarded(fn){if(operation)return;operation=true;try{await fn();}catch(e){status(e.message,true);}finally{operation=false;}}
 async function loadExample(){await importProfile(await api('/example.json'));targets={...targets,waist_pitch:.12,left_shoulder:-.45,left_elbow:-.65,right_shoulder:-.3,right_elbow:-.75};for(const side of ['left','right'])for(const name of fingerNames(side))targets[name]=side==='left'?.4:.23;mode='joint';rebuildParts('waist_pitch');await refreshModel(true);status('教学示例已载入 · 双指夹爪、腰部俯仰、四轮底盘');}
-$('run').onclick=()=>guarded(async()=>{
+async function motionReady(){
+  if(emergencyStop||safetyPending)throw Error('急停锁定中，请先手动解除。');
+  if(animation){stop();freezePose();}
   clearTimeout(timer);if(readyRevision!==revision)await refreshModel(false);if(readyRevision!==revision)throw Error('模型参数有误，请先修正。');
-  stop();const rev=revision;status('正在计算运动轨迹和重力负载…');const result=await api('/v1/robot-preview',{profile:payload(),target:targets,base_target:baseTarget,duration_s:numeric($('duration').value)});
-  if(rev!==revision)return;latestTrial=result;report(result);model=result.model;fitView([result.frames[0],result.frames.at(-1)]);const start=performance.now();$('stop').disabled=false;
-  const tick=now=>{const elapsed=(now-start)/1000,index=Math.min(result.frames.length-1,Math.floor(elapsed/result.duration_s*(result.frames.length-1)));currentPose=result.frames[index];$('progress').value=Math.min(1,elapsed/result.duration_s);draw();status(`运动学试运行 ${Math.min(elapsed,result.duration_s).toFixed(1)} / ${result.duration_s.toFixed(1)} 秒`);if(elapsed<result.duration_s)animation=requestAnimationFrame(tick);else{stop();status(result.gravity_limit_exceeded.length?'试运行结束 · 发现静态重力负载超限':'运动学试运行完成 · 未进行碰撞或动力学验收');}};animation=requestAnimationFrame(tick);
+  if(emergencyStop||safetyPending)throw Error('急停锁定中，请先手动解除。');
+}
+async function executeMotion(path,data,label){
+  stop();const rev=revision,ticket=motionTicket;status('正在计算运动轨迹和重力负载…');
+  const result=await api(path,data);
+  if(rev!==revision||ticket!==motionTicket||emergencyStop||safetyPending||result.motion_epoch<motionEpoch)return;
+  motionEpoch=result.motion_epoch;latestTrial=result;report(result);model=result.model;
+  if(result.motion_type==='sine'){
+    const step=(result.frames.length-1)/result.cycles;
+    fitView([result.frames[0],result.frames[Math.round(step/4)],result.frames[Math.round(3*step/4)]]);
+    $('sine-info').textContent=result.amplitude_limited_joints.length?'限位已缩小振幅：'+result.amplitude_limited_joints.join('、'):'围绕当前姿态往复，完成后回到起点。';
+  }else if(result.motion_type!=='jog')fitView([result.frames[0],result.frames.at(-1)]);
+  const start=performance.now();$('stop').disabled=false;
+  const tick=now=>{
+    if(ticket!==motionTicket||emergencyStop)return;
+    // A frame timestamp can precede performance.now() when scheduled in the same frame.
+    const elapsed=Math.max(0,(now-start)/1000),index=Math.min(result.frames.length-1,Math.floor(elapsed/result.duration_s*(result.frames.length-1)));
+    currentPose=result.frames[index];$('progress').value=Math.min(1,elapsed/result.duration_s);updateJogAngle();draw();
+    status(`${label} ${Math.min(elapsed,result.duration_s).toFixed(1)} / ${result.duration_s.toFixed(1)} 秒`);
+    if(elapsed<result.duration_s)animation=requestAnimationFrame(tick);
+    else{stop();freezePose();status(result.gravity_limit_exceeded.length?`${label}结束 · 发现静态重力负载超限`:`${label}完成 · 仅运动学预览`);}
+  };animation=requestAnimationFrame(tick);
+}
+$('run').onclick=()=>guarded(async()=>{await motionReady();await executeMotion('/v1/robot-preview',{profile:payload(),target:targets,base_target:baseTarget,duration_s:numeric($('duration').value)},'运动学试运行');});
+$('jog-joint').onchange=()=>{mode='joint';rebuildParts($('jog-joint').value);draw();};
+for(const [id,direction] of [['jog-minus',-1],['jog-plus',1]])$(id).onclick=()=>guarded(async()=>{
+  await motionReady();await executeMotion('/v1/robot-jog',{profile:payload(),start:currentPose.positions,joint:$('jog-joint').value,direction,base_pose:currentPose.base_pose},'单关节点动');
 });
-$('stop').onclick=()=>stop('已停止预览 · 未发送真机指令');
+for(const button of document.querySelectorAll('[data-sine]'))button.onclick=()=>guarded(async()=>{
+  await motionReady();const group=button.dataset.sine;
+  const joints=group==='all'?model.joints.filter(j=>j.type!=='fixed').map(j=>j.name):group==='both'?[...armJoints('left'),...armJoints('right')]:armJoints(group);
+  await executeMotion('/v1/robot-sine',{profile:payload(),start:currentPose.positions,joints,amplitude_deg:numeric($('sine-amplitude').value),period_s:numeric($('sine-period').value),cycles:numeric($('sine-cycles').value),base_pose:currentPose.base_pose},button.textContent);
+});
+$('stop').onclick=()=>{stop('已停止预览 · 未发送真机指令');freezePose();};
+$('apply-program').onclick=()=>guarded(async()=>{
+  stop();const rev=revision;const result=await api('/v1/workbench-active-profile',payload());motionEpoch=Math.max(motionEpoch,result.motion_epoch);
+  $('profile-id').value=result.profile_id;$('saved').textContent='程序当前配置：'+result.profile_id;
+  $('apply-note').textContent=rev===revision?'已写入程序 · 重启后自动加载此配置':'写入完成，当前编辑内容另有修改。';
+  if(rev===revision)$('dirty').textContent='参数已写入程序';status('参数已写入工作台程序 · 未接入真机控制器');
+});
 $('save').onclick=()=>guarded(async()=>{const rev=revision;const result=await api('/v1/robot-profiles',payload());$('profile-id').value=result.profile_id;$('saved').textContent='已保存配置：'+result.profile_id;if(rev===revision)$('dirty').textContent='参数已保存';status(rev===revision?'配置已保存，旧版本保留；未应用到控制器。':'修改前的参数已保存，当前编辑内容尚未保存。');});
 $('load').onclick=()=>guarded(async()=>{const id=$('profile-id').value.trim();if(!/^[0-9a-f]{64}$/.test(id))throw Error('请输入完整的 64 位配置编号。');await importProfile(await api('/v1/robot-profiles/'+id));$('profile-id').value=id;$('saved').textContent='当前读取版本：'+id;$('dirty').textContent='已读取保存版本';status('已读取保存版本 · 尚未应用到控制器');});
 $('export').onclick=()=>{try{const data=payload(),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='robot-parameters.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status('已导出编辑内容；保存版本时会进行完整参数校验。');}catch(e){status(e.message,true);}};
@@ -258,9 +358,14 @@ $('wireframe-view').onclick=()=>{if(sceneEngine)sceneEngine.wireframe=true;$('so
 let drag;const canvas=$('scene');canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY};canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{if(!drag)return;view.yaw+=(e.clientX-drag.x)*.008;view.pitch=Math.max(-1.3,Math.min(1.3,view.pitch+(e.clientY-drag.y)*.006));drag.x=e.clientX;drag.y=e.clientY;draw();});
 canvas.addEventListener('pointerup',e=>{if(drag&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<5){const r=canvas.getBoundingClientRect(),p=[e.clientX-r.left,e.clientY-r.top];const hit=sceneEngine?.pick(...p);const nearest=hit||projected.map(item=>({...item,d:Math.hypot(item.p[0]-p[0],item.p[1]-p[1])})).sort((a,b)=>a.d-b.d)[0];if(nearest&&(hit||nearest.d<18)){mode=nearest.type;rebuildParts(nearest.name);draw();}}drag=null;});canvas.addEventListener('pointercancel',()=>drag=null);canvas.addEventListener('wheel',e=>{e.preventDefault();view.zoom=Math.max(.3,Math.min(5,view.zoom*Math.exp(-e.deltaY*.001)));draw();},{passive:false});
+updateMotionControls();
 guarded(async()=>{
   try{const {RobotScene}=await import('/robot-scene.js');sceneEngine=new RobotScene(canvas);}
   catch(error){console.warn('实体渲染不可用，使用兼容线框视图。',error);canvas.dataset.renderer='canvas2d';$('solid-view').disabled=true;$('solid-view').setAttribute('aria-pressed','false');$('wireframe-view').setAttribute('aria-pressed','true');}
   new ResizeObserver(draw).observe(canvas);
-  await loadExample();
+  const saved=await api('/v1/workbench-active-profile');motionEpoch=saved.motion_epoch;
+  if(saved.profile){await importProfile(saved.profile);$('profile-id').value=saved.active_profile_id;$('dirty').textContent='程序当前配置';$('apply-note').textContent='已加载上次写入程序的配置';status('已加载程序当前配置 · 可开始调试');}
+  else await loadExample();
+  if(saved.emergency_stop)latchStop('服务已急停 · 请手动解除后再运动');
+  updateMotionControls();pollSafety();
 });
