@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/dm_mc02_protocol.py'
+      - 'scripts/*dm_mc02*usb.py'
       - 'firmware/dm_mc02/**'
       - 'tests/test_dm_mc02*.py'
       - 'release/control-preview/**'
@@ -29,6 +30,8 @@ jobs:
           for module in om_usb om_cdc; do
             arm-none-eabi-gcc -std=c11 -Wall -Wextra -Werror -mcpu=cortex-m7 -mthumb -mfloat-abi=soft -ffreestanding -c firmware/dm_mc02/$module.c -o /tmp/$module.o
           done
+      - name: Compile STM32 USB binding against pinned vendor headers
+        run: python3 scripts/check_dm_mc02_stm32_usb.py
   arm64:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
