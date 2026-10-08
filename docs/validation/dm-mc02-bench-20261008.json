@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-08",
+  "stage": "portable_protocol_core",
+  "transport_plan": "Jetson USB CDC to DM-MC02; three classic CAN buses to RS04",
+  "joint_count": 12,
+  "joints_per_bus_planned": 4,
+  "software_tests": 20,
+  "software_test_result": "passed",
+  "rs04_codec_comparison_batches": 100,
+  "compiler": "gcc C11 -Wall -Wextra -Werror",
+  "fixture_is_customer_calibration": false,
+  "hardware_adapter_ready": false,
+  "flashable_board_firmware_available": false,
+  "hardware_connected": false,
+  "motor_output_enabled": false,
+  "hardware_messages_sent": 0,
+  "arm64_build_result": "pending_actions",
+  "jetson_hardware_tested": false,
+  "control_frequency_hz": null
+}

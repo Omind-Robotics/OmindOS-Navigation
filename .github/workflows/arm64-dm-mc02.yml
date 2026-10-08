@@ -1,0 +1,45 @@
+name: ARM64 build and DM-MC02 bench validation
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/dm_mc02_protocol.py'
+      - 'firmware/dm_mc02/**'
+      - 'tests/test_dm_mc02.py'
+      - 'release/control-preview/**'
+      - '.github/workflows/arm64-dm-mc02.yml'
+permissions:
+  contents: read
+jobs:
+  protocol:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tests -p test_dm_mc02.py -v
+      - name: Compile portable core for Cortex-M7
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi
+          arm-none-eabi-gcc -std=c11 -Wall -Wextra -Werror -mcpu=cortex-m7 -mthumb -mfloat-abi=soft -ffreestanding -c firmware/dm_mc02/om_usb.c -o /tmp/om_usb.o
+  arm64:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build native ARM64 compiled runtime
+        run: docker build -f release/control-preview/Dockerfile.arm64 -t omindos/control-arm64:candidate .
+      - name: Verify final image and perform a MuJoCo step
+        run: |
+          mkdir -p arm64-artifact
+          docker run --rm --entrypoint /opt/omindos-runtime/bin/python -e PYTHONPATH=/opt/omindos/scripts -v "$PWD/release/control-preview/check_arm64.py:/tmp/check_arm64.py:ro" omindos/control-arm64:candidate /tmp/check_arm64.py | tee arm64-artifact/VALIDATION.json
+          docker image inspect --format '{{.Id}}' omindos/control-arm64:candidate > arm64-artifact/IMAGE_ID.txt
+          docker save omindos/control-arm64:candidate | gzip -1 > arm64-artifact/omindos-control-linux-arm64.image.tar.gz
+          cd arm64-artifact
+          sha256sum omindos-control-linux-arm64.image.tar.gz > SHA256SUMS-image.txt
+      - name: Save private candidate, not a public hardware release
+        uses: actions/upload-artifact@v4
+        with:
+          name: omindos-control-arm64-candidate
+          path: arm64-artifact/
+          compression-level: 0
+          retention-days: 7
