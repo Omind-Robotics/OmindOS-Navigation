@@ -376,7 +376,11 @@ function report(result){
 }
 async function guarded(fn){if(operation)return;operation=true;try{await fn();}catch(e){status(e.message,true);}finally{operation=false;}}
 async function loadExample(){
-  await importProfile(await api('/example.json'));targets.waist_pitch=0;
+  await importProfile(await api('/example.json'));
+  if(!model.joints.some(j=>j.name==='waist_pitch')){
+    mode='joint';rebuildParts();await refreshModel(true);status('四足教学示例已载入 · 12关节；示意参数，非实机标定');return;
+  }
+  targets.waist_pitch=0;
   for(const [side,q] of [['left',[1.57,1.30,-1.57,1.10,.10,.50,0]],['right',[-1.57,1.30,1.57,1.10,-.10,.50,0]]]){
     q.forEach((v,i)=>targets[`${side}_joint_${i+1}`]=v);
     for(const name of fingerNames(side))targets[name]=side==='left'?.4:.23;
@@ -469,3 +473,4 @@ guarded(async()=>{
   if(saved.emergency_stop)latchStop('服务已急停 · 请手动复位后再运动');
   updateMotionControls();pollSafety();
 });
+
