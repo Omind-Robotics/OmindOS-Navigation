@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "${root}"
+image='omindos/navigation:0.2.0-preview.1'
+runtime='omindos-navigation-0.2.0-preview.1-linux-amd64.tar.gz'
+case "${1:-help}" in
+  profiles)
+    printf '%s\n' 'wheeled_diff  差速轮式' 'wheeled_omni  全向轮式' 'quadruped     四足机身速度（不含步态）'
+    exit 0
+    ;;
+  help|-h|--help)
+    printf '%s\n' 'OmindOS Navigation 0.2.0-preview.1 (Linux amd64)' \
+      './omindos verify             校验发行文件' \
+      './omindos install            导入独立 Docker 镜像' \
+      './omindos test               运行测试与三平台仿真验收' \
+      './omindos preview quadruped  启动指定平台的离线仿真；Ctrl-C 停止' \
+      './omindos profiles           列出配置'
+    exit 0
+    ;;
+  verify|install|test|preview) ;;
+  *) echo 'Unknown command; run ./omindos help' >&2; exit 2 ;;
+esac
+sha256sum --strict --check SHA256SUMS
+if [[ "$1" == verify ]]; then exit 0; fi
+command -v docker >/dev/null || { echo 'Please install Docker first.' >&2; exit 2; }
+if [[ "$(uname -s)" != Linux || "$(uname -m)" != x86_64 ]]; then
+  echo 'This preview is validated only on Linux amd64.' >&2
+  exit 2
+fi
+if [[ "$1" == install ]]; then
+  docker load --input "${runtime}"
+fi
+expected="$(tr -d '\r\n' < IMAGE_ID)"
+actual="$(docker image inspect --format '{{.Id}}' "${image}")"
+if [[ "${expected}" != "${actual}" ]]; then
+  echo 'Installed image does not match this package; run ./omindos install.' >&2
+  exit 1
+fi
+if [[ "$1" == install ]]; then
+  echo 'Installed preview image. Run ./omindos test.'
+  exit 0
+fi
+# No host networking, hardware mounts, elevated privileges or host ROS graph.
+docker run --rm --init --network none --cap-drop ALL --security-opt no-new-privileges \
+  --pids-limit 256 --cpus 2 --memory 1g \
+  -e ROS_LOCALHOST_ONLY=1 -e ROS_DOMAIN_ID=171 \
+  "${image}" "$@"

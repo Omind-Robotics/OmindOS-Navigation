@@ -7,9 +7,10 @@ setup(
     name=package_name,
     version='2.0.0',
     packages=find_packages(exclude=['test']),
+    package_data={'nav3d_native': ['platform_profiles.json']},
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name, ['package.xml', 'LICENSE', 'NOTICE']),
         ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
         ('share/' + package_name + '/config', glob('config/*.yaml')),
     ],
@@ -27,5 +28,6 @@ setup(
         'planner = nav3d_native.planner_node:main',
         'controller = nav3d_native.controller_node:main',
         'demo_supervisor = nav3d_native.demo_supervisor:main',
+        'platform_adapter = nav3d_native.platform_adapter_node:main',
     ]},
 )

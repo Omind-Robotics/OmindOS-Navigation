@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "wheeled_diff": {
+      "kind": "differential",
+      "description": "Generic differential-drive kinematic preview",
+      "max_vx": 0.6, "max_vy": 0.0, "max_wz": 1.2
+    },
+    "wheeled_omni": {
+      "kind": "omnidirectional",
+      "description": "Generic omnidirectional-wheel kinematic preview",
+      "max_vx": 0.6, "max_vy": 0.4, "max_wz": 1.2
+    },
+    "quadruped": {
+      "kind": "quadruped_body",
+      "description": "Generic quadruped body-velocity preview; no gait or motor control",
+      "max_vx": 0.45, "max_vy": 0.2, "max_wz": 1.0
+    }
+  }
+}

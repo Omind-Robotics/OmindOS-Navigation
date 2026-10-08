@@ -24,3 +24,12 @@ The navigation core is platform-independent. Existing Go2-specific files are ret
 - nav3d_hardware_bringup (legacy/platform integration)
 
 See docs/OMINDOS_V0_1.md.
+
+## Unified wheeled / quadruped preview
+
+The development preview uses one navigation core and selectable `wheeled_diff`,
+`wheeled_omni`, and `quadruped` body-velocity profiles. See
+[统一平台预览说明（中文）](docs/UNIFIED_PLATFORM_PREVIEW.zh-CN.md).
+It adds a guarded simulation command boundary; it is not a hardware release,
+a quadruped gait controller, or evidence that the C++ hardware stack is validated.
+Existing v0.1 tags and published assets are unchanged.

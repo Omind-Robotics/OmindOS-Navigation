@@ -1,12 +1,17 @@
 name: Bootstrap OmindOS Navigation v0.1
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      confirm_source_reimport:
+        description: 'Overwrite the current source tree from upstream (initial import only)'
+        type: boolean
+        required: true
+        default: false
 permissions:
   contents: write
 jobs:
   bootstrap:
+    if: ${{ inputs.confirm_source_reimport }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4

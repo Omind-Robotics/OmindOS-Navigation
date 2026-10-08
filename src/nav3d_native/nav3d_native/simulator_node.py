@@ -18,8 +18,15 @@ class NativeSimulator(Node):
         super().__init__('nav3d_simulator')
         self.declare_parameter('mapping_phase_seconds', 5.0)
         self.declare_parameter('scan_rate', 10.0)
+        self.declare_parameter('lateral_velocity_enabled', False)
+        self.declare_parameter('command_timeout_seconds', 0.3)
         self.mapping_seconds = float(self.get_parameter('mapping_phase_seconds').value)
         self.scan_rate = float(self.get_parameter('scan_rate').value)
+        self.lateral_enabled = bool(self.get_parameter('lateral_velocity_enabled').value)
+        self.command_timeout = float(self.get_parameter('command_timeout_seconds').value)
+        if not math.isfinite(self.command_timeout) or self.command_timeout <= 0:
+            raise ValueError('command_timeout_seconds must be finite and positive')
+        self.last_command_time = None
         self.pose = Pose2D(-3.5, -2.5, 0.0)
         self.command = Twist()
         self.started = time.monotonic()
@@ -60,7 +67,10 @@ class NativeSimulator(Node):
         return any(x0 <= x <= x1 and y0 <= y <= y1 for x0, x1, y0, y1 in rectangles)
 
     def _command_callback(self, message: Twist):
-        self.command = message
+        values = (message.linear.x, message.linear.y, message.linear.z,
+                  message.angular.x, message.angular.y, message.angular.z)
+        self.command = message if all(math.isfinite(v) for v in values) else Twist()
+        self.last_command_time = time.monotonic()
 
     def _raycast(self, angle: float, max_range: float) -> float:
         distance = 0.08
@@ -95,11 +105,15 @@ class NativeSimulator(Node):
             if elapsed - self.mapping_seconds < 0.25:
                 self.pose = Pose2D(-3.5, -2.5, 0.0)
             else:
+                if (self.last_command_time is None or
+                        now_mono - self.last_command_time > self.command_timeout):
+                    self.command = Twist()
                 linear = clamp(self.command.linear.x, -0.7, 0.7)
+                lateral = clamp(self.command.linear.y, -0.7, 0.7) if self.lateral_enabled else 0.0
                 angular = clamp(self.command.angular.z, -1.5, 1.5)
                 next_yaw = normalize_angle(self.pose.yaw + angular * dt)
-                nx = self.pose.x + linear * math.cos(next_yaw) * dt
-                ny = self.pose.y + linear * math.sin(next_yaw) * dt
+                nx = self.pose.x + (linear * math.cos(next_yaw) - lateral * math.sin(next_yaw)) * dt
+                ny = self.pose.y + (linear * math.sin(next_yaw) + lateral * math.cos(next_yaw)) * dt
                 if not self._occupied(nx, ny):
                     self.pose.x, self.pose.y = nx, ny
                 self.pose.yaw = next_yaw

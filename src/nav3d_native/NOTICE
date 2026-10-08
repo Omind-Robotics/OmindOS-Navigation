@@ -1,0 +1,17 @@
+OmindOS Navigation unified preview — nav3d_native
+
+The inherited package declares Apache-2.0 in package.xml and setup.py.
+Its recorded maintainer is Chen Lvping. The import baseline is
+maganrobotics-boop/OmindOS-Navigation@b5881e32d69698e7135aa5e40b3b697e9a1e8603;
+the import workflow refers to fushenger/nav_3d2.
+
+Modified for OmindOS Navigation 0.2.0-preview.1 in October 2026:
+unified platform profiles and guarded body-velocity adapter; isolated preview
+launch; lateral kinematics and command watchdog; stop verification and tests;
+clean runtime packaging and accompanying documentation.
+
+The project owner confirmed the right to distribute this inherited package
+on 2026-10-08. This records the distribution confirmation; it does not replace
+existing authorship or make a new claim about the upstream copyright holder.
+See LICENSE for Apache License, Version 2.0. System dependencies keep their
+respective licenses, including the notices installed under /usr/share/doc.
