@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "platform": "wheeled_omni",
+  "runtime_architecture": "linux/amd64",
+  "hardware": {
+    "model": null,
+    "computer_architecture": null,
+    "control_protocol": null,
+    "controller_sdk_version": null,
+    "adapter": null,
+    "odometry_source": null,
+    "stop_semantics": null,
+    "watchdog_timeout_ms": null,
+    "physical_estop_available": null,
+    "locomotion_controller_ready": null
+  }
+}
