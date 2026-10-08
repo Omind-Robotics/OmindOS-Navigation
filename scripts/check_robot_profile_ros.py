@@ -81,17 +81,17 @@ def main():
             node.create_subscription(String,'/omindos_workbench/robot_description',lambda m:late.append(m.data),qos)
             spin_until(lambda:bool(late));assert late[-1]==profile['kinematics']['urdf_xml']
             checks.append('late_subscriber_receives_transient_local_robot_description')
-            target=result['pose']['positions'].copy();target['left_elbow']=.4
+            target=result['pose']['positions'].copy();target['left_joint_4']=.4
             request('run',{'profile_id':ident,'lease_token':token,'target':target,'duration_s':2})
             def moved():
-                m=joint_messages[-1];return m.position[m.name.index('left_elbow')]>.025
+                m=joint_messages[-1];return m.position[m.name.index('left_joint_4')]>.025
             spin_until(moved,heartbeat=token)
             request('load',{'profile_id':ident},expected=409)
             checks.append('named_joint_trajectory_reaches_ros_topic_and_active_reload_rejected')
             stopped=request('stop',{'lease_token':token})
-            hold=stopped['pose']['positions']['left_elbow'];mark=len(joint_messages)
+            hold=stopped['pose']['positions']['left_joint_4'];mark=len(joint_messages)
             spin_until(lambda:len(joint_messages)>mark+6)
-            last=joint_messages[-1];idx=last.name.index('left_elbow')
+            last=joint_messages[-1];idx=last.name.index('left_joint_4')
             assert abs(last.position[idx]-hold)<1e-9 and last.velocity[idx]==0
             checks.append('stop_command_holds_last_ros_joint_position')
             request('run',{'profile_id':ident,'lease_token':token,'target':target,'duration_s':4})

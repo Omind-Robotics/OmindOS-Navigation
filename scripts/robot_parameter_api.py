@@ -8,6 +8,7 @@ import math
 from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
+from robot_connections import validate_connections
 
 MAX_BYTES = 2 * 1024 * 1024
 ROBOT_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}\Z")
@@ -34,8 +35,11 @@ def validate_parameters(payload):
     Link inertias belong in the URDF. This is a configuration check, not a
     physics simulation, controller tuning result, or driver compatibility test.
     """
-    if not isinstance(payload, dict) or set(payload) != {"robot_id", "kinematics", "dynamics"}:
-        raise ValueError("expected robot_id, kinematics and dynamics")
+    required = {"robot_id", "kinematics", "dynamics"}
+    if not isinstance(payload, dict) or not required <= set(payload) or set(payload) - required - {'connections'}:
+        raise ValueError("expected robot_id, kinematics, dynamics and optional connections")
+    if 'connections' in payload:
+        validate_connections(payload['connections'])
     rid = payload["robot_id"]
     if not isinstance(rid, str) or not ROBOT_ID.fullmatch(rid):
         raise ValueError("invalid robot_id")

@@ -24,6 +24,7 @@ curl --fail-with-body http://127.0.0.1:8085/v1/robot-profiles/PROFILE_ID
 | `robot_id` | 本机标识，1–64 个字母/数字/下划线/点/短横线，以字母或数字开头 |
 | `kinematics.urdf_xml` | URDF XML 文本，含几何、关节、各连杆质量/质心/惯量和关节限位 |
 | `dynamics.joints` | 以 URDF 关节名为键的电机与传动补充参数 |
+| `connections`（可选） | 设备通信草稿，随参数版本保存；不连接硬件。省略时旧配置编号和内容保持不变 |
 
 每个活动关节的字段如下。第一版支持独立旋转关节以及固定连接，不支持 mimic、移动关节或闭环机构自动转换。
 
@@ -67,3 +68,24 @@ URDF 的网格资源必须在后续加载环境中另行提供。本接口不下
 程序也可直接调用 `register_robot_parameters(payload, store_dir)` 和 `load_robot_profile(profile_id, store_dir)`。配置注册接口不会发送运动指令，也不会因参数更新重启控制器。
 
 2026-10-08 已通过 13 项配置/API 测试，包括真实本机 HTTP 提交和读取、新旧版本保留、重复提交、关节映射错误、无效惯量、超限驱动参数和配置篡改检测。原版 MEVIUS2 的 20 秒 MuJoCo 基线是独立验证，未与此 API 的 ROS 2 加载链路联调。
+
+## 可选设备通信配置
+
+`connections` 使用以下结构。`devices` 可以为空；支持 `left_arm`、`right_arm`、`waist`、`chassis`。`selected` 为 `unselected` 或该设备的通信方式，`profiles` 保存多个方式的参数，切换选择不删除其他草稿。字段可省略、留空字符串或为 `null`；非空整数必须是 JSON 整数。所有草稿均校验，未知设备、方式及参数拒绝保存。
+
+```json
+{
+  "schema_version": 1,
+  "devices": {
+    "waist": {
+      "selected": "unselected",
+      "profiles": {
+        "canopen": {"interface": "can0", "node_id": null},
+        "ethercat": {"interface": "", "slave_position": null}
+      }
+    }
+  }
+}
+```
+
+将该对象作为完整配置的 `connections` 字段。可选方式与字段目录由工作台 `GET /v1/connection-options` 提供；详见三维工作台说明。旧配置不会被自动补字段或重新编号。通信配置纳入同一个内容摘要和版本文件，但不会使 `runtime_applied` 或 `hardware_validated` 变为 true；没有真机通信执行接口。

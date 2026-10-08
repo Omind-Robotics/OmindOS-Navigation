@@ -62,6 +62,8 @@ export class RobotScene {
     this.shell = this.own(new THREE.MeshStandardMaterial({color:0xdde5ea, roughness:.3, metalness:.35, envMapIntensity:1.05}));
     this.dark = this.own(new THREE.MeshStandardMaterial({color:0x263748, roughness:.32, metalness:.6, envMapIntensity:1.3}));
     this.selected = this.own(new THREE.MeshStandardMaterial({color:0x54c9e5, roughness:.26, metalness:.4, envMapIntensity:1.1}));
+    this.jointHighlight = this.own(this.selected.clone());
+    this.jointHighlight.depthTest = false; this.jointHighlight.transparent = true; this.jointHighlight.opacity = .9;
     this.jointMaterial = this.own(new THREE.MeshStandardMaterial({color:0x617587, roughness:.25, metalness:.85}));
     this.ringMaterial = this.own(new THREE.MeshStandardMaterial({color:0x3cc6e2, roughness:.27, metalness:.35, emissive:0x16718a, emissiveIntensity:.18}));
     this.bounds = new THREE.Box3();
@@ -78,9 +80,13 @@ export class RobotScene {
         else if (g.type === 'sphere') geometry = new THREE.SphereGeometry(g.radius, 32, 20);
         else if (g.type === 'cylinder') {geometry = new THREE.CylinderGeometry(g.radius, g.radius, g.length, 32); geometry.rotateX(Math.PI/2);}
         else continue;
-        const dark = link.name === model.root || /hand|tip|tool|wheel/i.test(link.name);
-        const mesh = new THREE.Mesh(this.own(geometry), dark ? this.dark : this.shell);
-        mesh.userData = {name:link.name, type:'link', dark};
+        const dark = link.name === model.root || /hand|tip|tool|wheel|finger/i.test(link.name);
+        const material = g.color ? this.own(new THREE.MeshStandardMaterial({
+          color:new THREE.Color().setRGB(...g.color.slice(0,3)), roughness:/wheel|finger/.test(link.name) ? .55 : .32,
+          metalness:/wheel/.test(link.name) ? .15 : .4, opacity:g.color[3], transparent:g.color[3]<1
+        })) : dark ? this.dark : this.shell;
+        const mesh = new THREE.Mesh(this.own(geometry), material);
+        mesh.userData = {name:link.name, type:'link', material};
         mesh.matrixAutoUpdate = false; mesh.matrix.copy(matrix(g.transform));
         mesh.castShadow = true; mesh.receiveShadow = true;
         group.add(mesh); meshes.push(mesh);
@@ -90,7 +96,7 @@ export class RobotScene {
     for (const joint of model.joints) {
       if (joint.type === 'fixed') continue;
       const group = new THREE.Group();
-      const size = this.markerSize;
+      const size = this.markerSize * (/finger/.test(joint.name) ? .28 : /wheel/.test(joint.name) ? .55 : 1);
       // These are compact visual joint handles, not additional URDF bodies.
       const cap = new THREE.Mesh(cylinder, this.jointMaterial);
       cap.scale.set(size, size, size*2.2); cap.castShadow = true;
@@ -125,7 +131,10 @@ export class RobotScene {
     for (const [name, link] of this.links) {
       link.group.matrix.copy(matrix(pose.link_transforms[name]));
       link.group.matrixWorldNeedsUpdate = true;
-      for (const mesh of link.meshes) mesh.material = mode === 'link' && selectedName === name ? this.selected : mesh.userData.dark ? this.dark : this.shell;
+      for (const mesh of link.meshes) {
+        mesh.userData.material.wireframe = this.wireframe;
+        mesh.material = mode === 'link' && selectedName === name ? this.selected : mesh.userData.material;
+      }
     }
     for (const [name, {group, cap, rim, joint}] of this.joints) {
       group.position.fromArray(pose.joint_positions[name]);
@@ -133,7 +142,8 @@ export class RobotScene {
       const direction = new THREE.Vector3(...joint.axis).transformDirection(world).normalize();
       group.quaternion.setFromUnitVectors(zAxis, direction);
       const selected = mode === 'joint' && name === selectedName;
-      cap.material = selected ? this.selected : this.jointMaterial;
+      cap.material = selected ? this.jointHighlight : this.jointMaterial;
+      cap.renderOrder = selected ? 2 : 0;
       rim.material = selected ? this.ringMaterial : this.dark;
     }
     const positions = this.skeleton.geometry.attributes.position;

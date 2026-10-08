@@ -1,0 +1,16 @@
+OmindOS desktop workbench bundles an unmodified CPython runtime and native support libraries.
+CPython: Python Software Foundation License and incorporated notices in Python.txt.
+Nuitka: notices and license texts in Nuitka-LICENSE and Nuitka-LICENSE.txt.
+Three.js: MIT, complete notice in Three-MIT.txt.
+OpenSSL 3: Copyright (c) 1998-2025 The OpenSSL Project Authors and contributors.
+Distributed under Apache License 2.0; see OpenSSL-3-Apache-2.0.txt.
+https://github.com/openssl/openssl
+The Linux build contains OpenSSL 3.0.2; the Windows build contains OpenSSL 3.0.16.
+This software includes bzip2, Copyright (C) 1996-2019 Julian R Seward.
+See bzip2-LICENSE.txt for the complete license.
+This software includes code from XZ Utils (liblzma), https://tukaani.org/xz/.
+The distributed liblzma code is in the public domain; see XZ-COPYING.txt.
+The Windows build includes Microsoft Visual C/C++ runtime libraries distributed with Python.
+No ROS or manufacturer control SDK is bundled or required by this preview.
+RM75-B model notices and licenses are in config/robot_models/realman_rm75/.
+
