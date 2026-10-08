@@ -46,7 +46,9 @@ def main():
     shutil.copytree(build / 'workbench_desktop.dist', package)
     paths = ['web/robot-workbench/index.html', 'web/robot-workbench/workbench.css',
              'web/robot-workbench/robot-scene.js', 'config/robot_profiles/workbench-demo.json',
-             'LICENSES/Three-MIT.txt', 'config/robot_models/realman_rm75/LICENSE',
+             'LICENSES/Three-MIT.txt', 'LICENSES/OpenSSL-3-Apache-2.0.txt',
+             'LICENSES/Workbench-Runtime-NOTICE.txt', 'LICENSES/bzip2-LICENSE.txt',
+             'LICENSES/XZ-COPYING.txt', 'config/robot_models/realman_rm75/LICENSE',
              'config/robot_models/realman_rm75/UPSTREAM_LICENSE', 'config/robot_models/realman_rm75/NOTICE.md']
     for name in paths:
         destination = package / name
