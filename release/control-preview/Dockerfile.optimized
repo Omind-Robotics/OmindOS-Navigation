@@ -1,5 +1,6 @@
 # Private size-study candidate; does not overwrite the released image.
-# Pin SOURCE_IMAGE to the inspected local image ID for an exact comparison.
+# Verify the local SOURCE_IMAGE tag against the recorded image ID before building.
+# BuildKit does not accept a bare sha256 ID as a FROM repository name.
 ARG SOURCE_IMAGE=omindos/control-preview:0.2.0-preview.5
 FROM ${SOURCE_IMAGE} AS cleaned
 RUN /opt/omindos-runtime/bin/python -m pip uninstall -y Cython wheel \
