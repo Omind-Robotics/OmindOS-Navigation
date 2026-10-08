@@ -26,12 +26,18 @@ jobs:
       - name: Compile portable core for Cortex-M7
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-none-eabi
-          for module in om_usb om_cdc; do
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
+          for module in om_usb om_cdc om_feedback; do
             arm-none-eabi-gcc -std=c11 -Wall -Wextra -Werror -mcpu=cortex-m7 -mthumb -mfloat-abi=soft -ffreestanding -c firmware/dm_mc02/$module.c -o /tmp/$module.o
           done
-      - name: Compile STM32 USB binding against pinned vendor headers
-        run: python3 scripts/check_dm_mc02_stm32_usb.py
+      - name: Compile and relocatable-link USB and receive-only CAN bindings
+        run: python3 scripts/check_dm_mc02_stm32_usb.py --output-dir dm-mc02-objects
+      - name: Save software-only compiler evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: dm-mc02-software-validation
+          path: dm-mc02-objects/validation.json
+          retention-days: 7
   arm64:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 45

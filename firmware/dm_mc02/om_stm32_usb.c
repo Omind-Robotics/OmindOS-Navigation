@@ -101,3 +101,13 @@ void om_stm32_usb_poll(void) {
 int om_stm32_usb_faulted(void) {
     return !ready || transport.transport_fault || transport.core.fault;
 }
+int om_stm32_usb_status_provider(om_status_provider provider, void *context) {
+    if(!ready || !provider || transport.core.status ||
+       hUsbDeviceHS.dev_state==USBD_STATE_CONFIGURED) return -1;
+    transport.core.status=provider;
+    transport.core.status_context=context;
+    return 0;
+}
+void om_stm32_usb_observation_fault(void) {
+    if(ready) om_fault(&transport.core,9);
+}

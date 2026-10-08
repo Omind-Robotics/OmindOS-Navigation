@@ -75,6 +75,21 @@ static void receive_probe(void) {
     crc=~crc;for(unsigned i=0;i<4;++i)p[30+i]=(uint8_t)(crc>>(8*i));
     om_stm32_usb_receive(p,7);om_stm32_usb_receive(p+7,27);
 }
+static size_t diagnostic(void *context,uint8_t selector,uint32_t tick,uint8_t out[64]) {
+    assert(context==&now && selector==0 && tick==2);
+    memset(out,0,64);out[0]=out[1]=1;out[7]=8;return 64;
+}
+static void receive_status(void) {
+    uint8_t p[35]={0};p[0]='O';p[1]='M';p[2]=1;p[3]=5;p[4]=1;
+    for(unsigned i=0;i<4;++i)p[6+4*i]=(uint8_t)(i+1);
+    p[22]=42;
+    uint32_t crc=0xffffffffu;
+    for(unsigned i=0;i<31;++i) {
+        crc^=p[i];for(unsigned k=0;k<8;++k) crc=(crc>>1)^((crc&1)?0xedb88320u:0);
+    }
+    crc=~crc;for(unsigned i=0;i<4;++i)p[31+i]=(uint8_t)(crc>>(8*i));
+    om_stm32_usb_receive(p,sizeof(p));
+}
 int main(int argc,char **argv) {
     assert(argc==2);int scenario=atoi(argv[1]);
     RNG_HandleTypeDef rng={0};uint8_t digest[32]={0};om_joint joints[12];
@@ -90,7 +105,13 @@ int main(int argc,char **argv) {
     }
     assert(result==0 && rng_calls==4 && !om_stm32_usb_faulted());
     assert(om_stm32_usb_init(&rng,digest,joints)==-1);
+    if(scenario==11) {
+        assert(om_stm32_usb_status_provider(diagnostic,&now)==0);
+        assert(om_stm32_usb_status_provider(diagnostic,&now)==-1);
+        om_stm32_usb_observation_fault();
+    }
     configure();
+    if(scenario==12) assert(om_stm32_usb_status_provider(diagnostic,&now)==-1);
     if(scenario==2)hUsbDeviceHS.pClassDataCmsit[0]=NULL;
     if(scenario==5)irq_mask=1;
     if(scenario==10)fatal=1;
@@ -101,7 +122,15 @@ int main(int argc,char **argv) {
     }
     assert(sends==1);
     assert(cdc.TxLength==67 && snapshot[3]==129 && snapshot[6]==1);
-    if(scenario==1 || scenario==5) {
+    if(scenario==11) {
+        assert(om_stm32_usb_faulted()); /* CAN failure does not hide diagnostics */
+        cdc.TxState=0;om_stm32_usb_complete(cdc.TxBuffer,cdc.TxLength);
+        receive_status();now=2;om_stm32_usb_poll();
+        assert(sends==2 && cdc.TxLength==98 && snapshot[3]==133 && snapshot[22]==42);
+        assert(snapshot[37]==8 && om_stm32_usb_faulted());
+        om_stm32_usb_disconnect();receive_status();now=3;om_stm32_usb_poll();
+        assert(sends==2); /* USB disconnect still terminal */
+    } else if(scenario==1 || scenario==5 || scenario==12) {
         receive_probe();now=2;om_stm32_usb_poll();
         assert(sends==1 && !memcmp(snapshot,cdc.TxBuffer,cdc.TxLength));
         cdc.TxState=0;om_stm32_usb_complete(cdc.TxBuffer,cdc.TxLength);
@@ -142,7 +171,7 @@ class STM32USB(unittest.TestCase):
                             *[str(CORE/(name+'.c')) for name in
                               ('om_usb', 'om_cdc', 'om_stm32_usb')],
                             '-o', str(binary)], check=True)
-            for scenario in range(1, 11):
+            for scenario in range(1, 13):
                 with self.subTest(scenario=scenario):
                     subprocess.run([str(binary), str(scenario)], check=True)
 

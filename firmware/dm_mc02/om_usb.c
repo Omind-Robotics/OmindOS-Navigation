@@ -85,8 +85,22 @@ int om_feed(om_usb *s,uint8_t byte,uint32_t now,uint8_t *out,size_t *len) {
     if(s->used<34+n) return 0;
     s->used=0;
     if(rd32(p+30+n)!=crc(p,30+n)) return error(s,2,out,len);
-    if(s->fault || !s->configured) return error(s,s->fault?s->fault:1,out,len);
     uint8_t kind=p[3];
+    /* Diagnostics remain readable after a CAN observation fault. They cannot
+     * clear a fault, renew a ticket, or actuate. Other commands stay locked. */
+    if(kind==5 && s->configured && n==1 && !rd32(p+26) &&
+       !memcmp(p+6,s->nonce,16) && s->status) {
+        uint8_t payload[64];
+        size_t count=s->status(s->status_context,p[30],now,payload);
+        if(!count || count>64) return error(s,2,out,len);
+        reply(s,133,payload,count,out,len);
+        wr32(out+22,rd32(p+22)); /* query correlation, not a command ticket */
+        wr32(out+26,0);
+        wr32(out+30+count,crc(out,30+count));
+        return 1;
+    }
+    if(!s->configured || (s->fault && !(s->fault==9 && kind==1)))
+        return error(s,s->fault?s->fault:1,out,len);
     if(kind==1) {
         uint8_t zero[16]={0}, info[33]={1};
         if(n || memcmp(p+6,zero,16) || rd32(p+22) || rd32(p+26)) return error(s,2,out,len);

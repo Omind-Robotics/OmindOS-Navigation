@@ -13,6 +13,7 @@ HEADER = struct.Struct('<2sBBH16sII')
 MAX_PAYLOAD = 64
 PROBE, TICKET, VALIDATE, STOP = 1, 2, 3, 4
 PROBE_REPLY, TICKET_REPLY, VALIDATE_REPLY, ERROR = 0x81, 0x82, 0x83, 0xff
+STATUS, STATUS_REPLY = 5, 0x85
 ZERO_NONCE = bytes(16)
 
 
@@ -116,6 +117,7 @@ class BenchClient:
         self.digest = expected_configuration_digest
         self.nonce = None
         self.failed = False
+        self.query_sequence = 0
 
     def _exchange(self, packet, kind):
         if self.failed:
@@ -126,7 +128,7 @@ class BenchClient:
                 raise RuntimeError('board_error_or_wrong_reply')
             if self.nonce is not None and reply.nonce != self.nonce:
                 raise RuntimeError('board_reboot_requires_new_client')
-            if kind == VALIDATE_REPLY and (reply.sequence != packet.sequence or
+            if kind in (VALIDATE_REPLY, STATUS_REPLY) and (reply.sequence != packet.sequence or
                                           reply.deadline_ms != packet.deadline_ms):
                 raise RuntimeError('stale_validation_ack')
             return reply
@@ -153,3 +155,67 @@ class BenchClient:
             self.failed = True
             raise RuntimeError('unexpected_bench_ack')
         return {'accepted_for_bench_validation': True, 'motor_output_enabled': False}
+
+    def read_status(self, selector=255):
+        """Read one joint (0..11) or bus diagnostics (255); never sends CAN.
+
+        Observed parameter replies are passive captures, not a verified readback
+        transaction. A fresh sample does not clear a latched CAN fault.
+        """
+        if self.nonce is None:
+            raise RuntimeError('probe_required')
+        if type(selector) is not int or selector not in (*range(12), 255):
+            raise ValueError('status_selector')
+        if self.query_sequence == 0xffffffff:
+            self.failed = True
+            raise RuntimeError('status_sequence_exhausted')
+        self.query_sequence += 1
+        reply = self._exchange(Packet(STATUS, self.nonce, self.query_sequence, 0,
+                                      bytes([selector])), STATUS_REPLY)
+        try:
+            return decode_status(reply.payload, selector)
+        except Exception:
+            self.failed = True
+            raise
+
+
+def decode_status(data, selector):
+    if len(data) != 64 or data[:2] != b'\x01\x01' or data[2] not in (0, 1) or data[3] != selector:
+        raise ValueError('status_payload')
+    result = {'motion_locked': True, 'receiver_initialized': bool(data[2]),
+              'selector': selector, 'hardware_adapter_ready': False}
+    if selector == 255:
+        result.update(now_ms=int.from_bytes(data[4:8], 'little'),
+                      timeout_ms=int.from_bytes(data[8:12], 'little'))
+        result['buses'] = [dict(zip(('accepted', 'ignored', 'malformed_reports', 'overflow_reports'),
+                                    struct.unpack_from('<4I', data, 16+16*b)),
+                                bus=b, latched_fault=data[12+b]) for b in range(3)]
+        return result
+    if selector not in range(12) or data[4] >= 3 or data[6] & ~31:
+        raise ValueError('status_joint')
+    values = struct.unpack_from('<4f', data, 24)
+    if not all(math.isfinite(v) for v in values):
+        raise ValueError('status_nonfinite')
+    seen, fresh = bool(data[6] & 1), bool(data[6] & 8)
+    if fresh and not seen:
+        raise ValueError('status_fresh_without_sample')
+    result.update(bus=data[4], motor_id=data[5], seen=seen, fresh=fresh,
+                  bus_latched_fault=data[7], any_latched_fault=bool(data[8]),
+                  motor_mode=data[9], motor_fault=data[10],
+                  now_ms=int.from_bytes(data[12:16], 'little'),
+                  received_ms=int.from_bytes(data[16:20], 'little') if seen else None,
+                  sample_count=int.from_bytes(data[20:24], 'little'),
+                  fault_frame_seen=bool(data[6] & 4),
+                  fault_bits=int.from_bytes(data[40:44], 'little'),
+                  warning_bits=int.from_bytes(data[44:48], 'little'))
+    result.update(zip(('motor_position_rad', 'motor_velocity_rad_s', 'motor_torque_nm', 'temperature_c'),
+                      values if seen else (None,)*4))
+    result['parameter_observation'] = None
+    if data[6] & 2:
+        result['parameter_observation'] = {
+            'fresh': bool(data[6] & 16), 'error': data[11],
+            'index': int.from_bytes(data[48:50], 'little'),
+            'raw_value': int.from_bytes(data[52:56], 'little'),
+            'received_ms': int.from_bytes(data[56:60], 'little'),
+            'verified_readback': False}
+    return result

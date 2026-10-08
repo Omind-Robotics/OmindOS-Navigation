@@ -11,12 +11,17 @@ typedef struct {
     float lower, upper, offset, ratio, kp, kd;
 } om_joint;
 typedef struct { uint8_t bus; uint32_t id; uint8_t data[8]; } om_can;
+/* Optional read-only diagnostic provider. One task owns it and the core.
+ * Return payload bytes (1..64), or 0 for an unsupported selector. */
+typedef size_t (*om_status_provider)(void *, uint8_t, uint32_t, uint8_t[64]);
 typedef struct {
     uint8_t nonce[16], digest[32], buffer[OM_MAX_FRAME];
     om_joint joints[OM_JOINTS];
     size_t used;
     uint32_t sequence, deadline, lease_deadline;
     uint8_t fault, configured, ticket_pending, lease;
+    om_status_provider status;
+    void *status_context;
 } om_usb;
 /* nonce must be a fresh boot nonce from the board RNG, never a constant. */
 int om_init(om_usb *, const uint8_t nonce[16], const uint8_t digest[32], const om_joint *);
