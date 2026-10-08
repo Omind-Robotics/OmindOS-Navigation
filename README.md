@@ -73,3 +73,12 @@ or validate quadruped gait, balance, or physical stopping.
 ## 四足闭环控制与 RS04 驱动（开发预览）
 
 新增 MEVIUS2 姿态/关节反馈策略、浮动机身 MuJoCo 验证及 ROS 2 运动接口。默认采用 [通用关节目标角度接口](docs/JOINT_POSITION_INTERFACE.zh-CN.md)，由仿真关节执行闭环；原 ROBSTRIDE04 SocketCAN 扭矩驱动保留为显式对照测试。用户已确认控制板为 [DM-MC02](docs/DM_MC02_INTEGRATION.zh-CN.md)，板卡适配尚未实现，RS04 实机驱动及客户整机步态、平衡仍待验收。本增量在开发 PR #4 中；不代表当前公开下载包已经包含四足控制。见 [接入说明](docs/QUADRUPED_RS04_RUNTIME.zh-CN.md) 与 [通用接口验证记录](docs/validation/joint-position-20261008.md)。
+
+## ARM64 与 DM-MC02 通信开发
+
+ARM64 编译候选包、USB CDC 通信核心与 RS04 三路 CAN 测试编码器见
+[开发与现场联调说明](docs/DM_MC02_BENCH.zh-CN.md)。
+[软件验证记录](docs/validation/dm-mc02-bench-20261008.json)记录原生 ARM64 构建、ROS/CPU Torch/MuJoCo 检查、二十项通信测试与 Cortex-M7 交叉编译。
+当前通信核心仅用于禁用状态下的校验；尚未提供完整可刷写固件、CAN 实际发送或客户机器人硬件使能，Jetson 与 RS04 实机验收仍待完成。
+
+现有 [x86_64 编译控制预览包 preview.5](https://github.com/maganrobotics-boop/OmindOS-Navigation-Release/releases/tag/v0.2.0-preview.5)已发布；它与 ARM64 私有候选包分开，均不代表客户 RS04 实机验收。
