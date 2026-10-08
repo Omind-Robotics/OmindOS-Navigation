@@ -1,0 +1,124 @@
+import copy
+import json
+import math
+from pathlib import Path
+import sys
+import tempfile
+import threading
+import unittest
+import urllib.request
+import urllib.error
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from robot_kinematics import build_model, pose, trial
+from robot_parameter_api import validate_parameters
+from robot_workbench import ThreadingHTTPServer, make_handler
+
+
+def fixture():
+    def body(name, mass, com):
+        return f'<link name="{name}"><inertial><origin xyz="{com}"/><mass value="{mass}"/><inertia ixx="1" iyy="1" izz="1" ixy="0" ixz="0" iyz="0"/></inertial></link>'
+    xml = ('<robot name="pendulum">' + body('base', 1, '0 0 0') + body('arm', 2, '.5 0 0') + body('tip', 1, '0 0 0') +
+           '<joint name="hinge" type="revolute"><parent link="base"/><child link="arm"/><axis xyz="0 1 0"/><limit lower="-2" upper="2" effort="50" velocity="2"/></joint>' +
+           '<joint name="tip_fixed" type="fixed"><parent link="arm"/><child link="tip"/><origin xyz="1 0 0"/></joint></robot>')
+    return {'robot_id':'pendulum','kinematics':{'urdf_xml':xml},'dynamics':{'joints':{'hinge':{
+        'motor_model':'synthetic','reduction_ratio':10,'direction':-1,'zero_offset_rad':.1,'torque_limit_nm':40,'velocity_limit_rad_s':1}}}}
+
+
+class KinematicsTests(unittest.TestCase):
+    def test_analytic_pendulum_pose_and_static_gravity(self):
+        model = build_model(fixture()['kinematics']['urdf_xml'])
+        flat = pose(model, {'hinge':0})
+        self.assertAlmostEqual(flat['link_transforms']['tip'][0][3], 1)
+        self.assertAlmostEqual(flat['holding_torque_nm']['hinge'], -19.6133)
+        upright = pose(model, {'hinge':math.pi/2})
+        self.assertAlmostEqual(upright['link_transforms']['tip'][0][3], 0)
+        self.assertAlmostEqual(upright['link_transforms']['tip'][2][3], -1)
+        self.assertAlmostEqual(upright['holding_torque_nm']['hinge'], 0)
+
+    def test_changed_joint_origin_and_mass_change_actual_calculation(self):
+        data = fixture()
+        data['kinematics']['urdf_xml'] = data['kinematics']['urdf_xml'].replace('xyz="1 0 0"','xyz="2 0 0"').replace('mass value="2"','mass value="4"')
+        result = pose(build_model(data['kinematics']['urdf_xml']), {})
+        self.assertAlmostEqual(result['link_transforms']['tip'][0][3], 2)
+        self.assertAlmostEqual(result['holding_torque_nm']['hinge'], -39.2266)
+
+    def test_origin_rpy_rotates_joint_axis_before_joint_motion(self):
+        xml = fixture()['kinematics']['urdf_xml'].replace('<axis xyz="0 1 0"/>', f'<origin xyz="1 2 3" rpy="0 0 {math.pi/2}"/><axis xyz="0 0 2"/>')
+        result = pose(build_model(xml), {'hinge':math.pi/2})
+        point = [result['link_transforms']['tip'][i][3] for i in range(3)]
+        for got, expected in zip(point, [0,2,3]):
+            self.assertAlmostEqual(got, expected)
+
+    def test_trial_limits_motor_mapping_and_scoped_results(self):
+        result = trial({'profile':fixture(),'target':{'hinge':1},'duration_s':2})
+        self.assertAlmostEqual(result['peak_joint_velocity_rad_s']['hinge'], .75)
+        self.assertAlmostEqual(result['frames'][0]['positions']['hinge'], 0)
+        self.assertAlmostEqual(result['frames'][-1]['positions']['hinge'], 1)
+        self.assertAlmostEqual(result['frames'][-1]['motor_positions_rad']['hinge'], -9)
+        self.assertFalse(result['runtime_applied'])
+        with self.assertRaisesRegex(ValueError, 'velocity'):
+            trial({'profile':fixture(),'target':{'hinge':1},'duration_s':1})
+        with self.assertRaisesRegex(ValueError, 'limits'):
+            trial({'profile':fixture(),'target':{'hinge':3}})
+        with self.assertRaises(ValueError):
+            trial({'profile':fixture(),'target':{'unknown':1}})
+
+    def test_gravity_overload_is_reported(self):
+        data = fixture(); data['dynamics']['joints']['hinge']['torque_limit_nm'] = 1
+        self.assertEqual(trial({'profile':data})['gravity_limit_exceeded'], ['hinge'])
+
+    def test_malformed_models_rejected_without_external_resource_loading(self):
+        original = fixture()['kinematics']['urdf_xml']
+        for xml in [original.replace('type="revolute"','type="prismatic"'), original.replace('xyz="1 0 0"','xyz="nan 0 0"'),
+                    '<!DOCTYPE robot>'+original, original.replace('name="arm"','name="base"'), original.replace('child link="tip"','child link="base"')]:
+            with self.subTest(xml=xml), self.assertRaises(ValueError):
+                build_model(xml)
+        model = build_model(original.replace('</link>', '<visual><geometry><mesh filename="http://invalid/never-fetch.stl"/></geometry></visual></link>', 1))
+        self.assertTrue(model['warnings'])
+
+    def test_demo_configuration_is_valid_and_full_trial_runs(self):
+        data = json.loads((ROOT/'config/robot_profiles/workbench-demo.json').read_text())
+        validate_parameters(data)
+        result = trial({'profile':data,'target':{'left_shoulder':-.5,'left_elbow':-.7},'duration_s':2})
+        self.assertEqual(len(result['model']['links']), 10)
+        self.assertEqual(len(result['frames'][-1]['positions']), 7)
+
+
+class WorkbenchHTTPTests(unittest.TestCase):
+    def test_real_http_model_trial_version_save_reload_and_origin_controls(self):
+        with tempfile.TemporaryDirectory() as store:
+            server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(store)); thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+            base=f'http://127.0.0.1:{server.server_port}'
+            def request(path,data=None,headers=None):
+                h={'Content-Type':'application/json',**(headers or {})}
+                return urllib.request.urlopen(urllib.request.Request(base+path,data=None if data is None else json.dumps(data).encode(),headers=h),timeout=5)
+            try:
+                with request('/') as r:
+                    self.assertIn('机器人调参工作台',r.read().decode());self.assertIn("frame-ancestors 'none'",r.headers['Content-Security-Policy'])
+                data=fixture()
+                with request('/v1/robot-model',{'urdf_xml':data['kinematics']['urdf_xml']}) as r:
+                    self.assertEqual(json.load(r)['model']['root'],'base')
+                with request('/v1/robot-preview',{'profile':data,'target':{'hinge':.5}}) as r:
+                    self.assertEqual(json.load(r)['frames'][-1]['positions']['hinge'],.5)
+                with request('/v1/robot-profiles',data) as r:
+                    one=json.load(r)['profile_id']
+                changed=copy.deepcopy(data);changed['robot_id']='updated'
+                with request('/v1/robot-profiles',changed) as r:
+                    self.assertNotEqual(json.load(r)['profile_id'],one)
+                with request('/v1/robot-profiles/'+one) as r:
+                    self.assertEqual(json.load(r),data)
+                for headers in [{'Origin':'https://example.com'},{'Host':'malicious.example'},{'Content-Type':'text/plain'}]:
+                    with self.subTest(headers=headers),self.assertRaises(urllib.error.HTTPError) as caught:
+                        request('/v1/robot-profiles',data,headers)
+                    self.assertIn(caught.exception.code,(403,415))
+                with self.assertRaises(urllib.error.HTTPError) as caught:
+                    request('/v1/robot-preview',{'profile':data,'target':{'hinge':99}})
+                self.assertEqual(caught.exception.code,400)
+            finally:
+                server.shutdown();thread.join(timeout=5);server.server_close()
+
+
+if __name__=='__main__':
+    unittest.main()

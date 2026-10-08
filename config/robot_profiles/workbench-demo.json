@@ -1,0 +1,66 @@
+{
+  "robot_id": "demo-dual-arm",
+  "kinematics": {
+    "urdf_xml": "<robot name=\"OmindOS 双臂教学模型\"><link name=\"base\"><inertial><origin xyz=\"0 0 0.09\" /><mass value=\"10\" /><inertia ixx=\"0.3073333333333333\" iyy=\"0.2353333333333333\" izz=\"0.48866666666666675\" ixy=\"0\" ixz=\"0\" iyz=\"0\" /></inertial><visual><origin xyz=\"0 0 0.09\" /><geometry><box size=\"0.5 0.58 0.18\" /></geometry></visual></link><link name=\"torso\"><inertial><origin xyz=\"0 0 0.275\" /><mass value=\"5\" /><inertia ixx=\"0.15870833333333337\" iyy=\"0.13954166666666667\" izz=\"0.04616666666666667\" ixy=\"0\" ixz=\"0\" iyz=\"0\" /></inertial><visual><origin xyz=\"0 0 0.275\" /><geometry><box size=\"0.18 0.28 0.55\" /></geometry></visual></link><joint name=\"waist\" type=\"revolute\"><parent link=\"base\" /><child link=\"torso\" /><origin xyz=\"0 0 0.18\" rpy=\"0 0 0\" /><axis xyz=\"0 0 1\" /><limit lower=\"-2.6\" upper=\"2.6\" effort=\"40\" velocity=\"1.5\" /><dynamics damping=\"0.1\" friction=\"0.02\" /></joint><link name=\"left_upper\"><inertial><origin xyz=\"0 0 -0.18\" /><mass value=\"1.2\" /><inertia ixx=\"0.013449999999999997\" iyy=\"0.013449999999999997\" izz=\"0.0009800000000000002\" ixy=\"0\" ixz=\"0\" iyz=\"0\" /></inertial><visual><origin xyz=\"0 0 -0.18\" /><geometry><box size=\"0.07 0.07 0.36\" /></geometry></visual></link><joint name=\"left_shoulder\" type=\"revolute\"><parent link=\"torso\" /><child link=\"left_upper\" /><origin xyz=\"0 0.23 0.48\" rpy=\"0 0 0\" /><axis xyz=\"0 1 0\" /><limit lower=\"-2.6\" upper=\"2.6\" effort=\"40\" velocity=\"1.5\" /><dynamics damping=\"0.1\" friction=\"0.02\" /></joint><link name=\"left_forearm\"><inertial><origin xyz=\"0 0 -0.14\" /><mass value=\"0.8\" /><inertia ixx=\"0.005466666666666668\" iyy=\"0.005466666666666668\" izz=\"0.00048\" ixy=\"0\" ixz=\"0\" iyz=\"0\" /></inertial><visual><origin xyz=\"0 0 -0.14\" /><geometry><box size=\"0.06 0.06 0.28\" /></geometry></visual></link><joint name=\"left_elbow\" type=\"revolute\"><parent link=\"left_upper\" /><child link=\"left_forearm\" /><origin xyz=\"0 0 -0.36\" rpy=\"0 0 0\" /><axis xyz=\"0 1 0\" /><limit lower=\"-2.6\" upper=\"2.6\" effort=\"40\" velocity=\"1.5\" /><dynamics damping=\"0.1\" friction=\"0.02\" /></joint><link name=\"left_hand\"><inertial><origin xyz=\"0.04 0 -0.02\" /><mass value=\"0.3\" /><inertia ixx=\"0.00021624999999999997\" iyy=\"0.000435625\" izz=\"0.000500625\" ixy=\"0\" ixz=\"0\" iyz=\"0\" /></inertial><visual><origin xyz=\"0.04 0 -0.02\" /><geometry><box size=\"0.12 0.075 0.055\" /></geometry></visual></link><joint name=\"left_wrist\" type=\"revolute\"><parent link=\"left_forearm\" /><child link=\"left_hand\" /><origin xyz=\"0 0 -0.28\" rpy=\"0 0 0\" /><axis xyz=\"0 1 0\" /><limit lower=\"-2.6\" upper=\"2.6\" effort=\"40\" velocity=\"1.5\" /><dynamics damping=\"0.1\" friction=\"0.02\" /></joint><joint name=\"left_tool_fixed\" type=\"fixed\"><parent link=\"left_hand\" /><child link=\"left_tip\" /><origin xyz=\".10 0 -.02\" /></joint><link name=\"left_tip\"><inertial><origin xyz=\"0 0 0\" /><mass value=\"0.01\" /><inertia ixx=\"1.666666666666667e-07\" iyy=\"1.666666666666667e-07\" izz=\"1.666666666666667e-07\" ixy=\"0\" ixz=\"0\" iyz=\"0\" /></inertial><visual><origin xyz=\"0 0 0\" /><geometry><box size=\"0.01 0.01 0.01\" /></geometry></visual></link><link name=\"right_upper\"><inertial><origin xyz=\"0 0 -0.18\" /><mass value=\"1.2\" /><inertia ixx=\"0.013449999999999997\" iyy=\"0.013449999999999997\" izz=\"0.0009800000000000002\" ixy=\"0\" ixz=\"0\" iyz=\"0\" /></inertial><visual><origin xyz=\"0 0 -0.18\" /><geometry><box size=\"0.07 0.07 0.36\" /></geometry></visual></link><joint name=\"right_shoulder\" type=\"revolute\"><parent link=\"torso\" /><child link=\"right_upper\" /><origin xyz=\"0 -0.23 0.48\" rpy=\"0 0 0\" /><axis xyz=\"0 1 0\" /><limit lower=\"-2.6\" upper=\"2.6\" effort=\"40\" velocity=\"1.5\" /><dynamics damping=\"0.1\" friction=\"0.02\" /></joint><link name=\"right_forearm\"><inertial><origin xyz=\"0 0 -0.14\" /><mass value=\"0.8\" /><inertia ixx=\"0.005466666666666668\" iyy=\"0.005466666666666668\" izz=\"0.00048\" ixy=\"0\" ixz=\"0\" iyz=\"0\" /></inertial><visual><origin xyz=\"0 0 -0.14\" /><geometry><box size=\"0.06 0.06 0.28\" /></geometry></visual></link><joint name=\"right_elbow\" type=\"revolute\"><parent link=\"right_upper\" /><child link=\"right_forearm\" /><origin xyz=\"0 0 -0.36\" rpy=\"0 0 0\" /><axis xyz=\"0 1 0\" /><limit lower=\"-2.6\" upper=\"2.6\" effort=\"40\" velocity=\"1.5\" /><dynamics damping=\"0.1\" friction=\"0.02\" /></joint><link name=\"right_hand\"><inertial><origin xyz=\"0.04 0 -0.02\" /><mass value=\"0.3\" /><inertia ixx=\"0.00021624999999999997\" iyy=\"0.000435625\" izz=\"0.000500625\" ixy=\"0\" ixz=\"0\" iyz=\"0\" /></inertial><visual><origin xyz=\"0.04 0 -0.02\" /><geometry><box size=\"0.12 0.075 0.055\" /></geometry></visual></link><joint name=\"right_wrist\" type=\"revolute\"><parent link=\"right_forearm\" /><child link=\"right_hand\" /><origin xyz=\"0 0 -0.28\" rpy=\"0 0 0\" /><axis xyz=\"0 1 0\" /><limit lower=\"-2.6\" upper=\"2.6\" effort=\"40\" velocity=\"1.5\" /><dynamics damping=\"0.1\" friction=\"0.02\" /></joint><joint name=\"right_tool_fixed\" type=\"fixed\"><parent link=\"right_hand\" /><child link=\"right_tip\" /><origin xyz=\".10 0 -.02\" /></joint><link name=\"right_tip\"><inertial><origin xyz=\"0 0 0\" /><mass value=\"0.01\" /><inertia ixx=\"1.666666666666667e-07\" iyy=\"1.666666666666667e-07\" izz=\"1.666666666666667e-07\" ixy=\"0\" ixz=\"0\" iyz=\"0\" /></inertial><visual><origin xyz=\"0 0 0\" /><geometry><box size=\"0.01 0.01 0.01\" /></geometry></visual></link></robot>"
+  },
+  "dynamics": {
+    "joints": {
+      "waist": {
+        "motor_model": "DEMO-NOT-HARDWARE",
+        "reduction_ratio": 10,
+        "direction": 1,
+        "zero_offset_rad": 0,
+        "torque_limit_nm": 25,
+        "velocity_limit_rad_s": 1
+      },
+      "left_shoulder": {
+        "motor_model": "DEMO-NOT-HARDWARE",
+        "reduction_ratio": 10,
+        "direction": 1,
+        "zero_offset_rad": 0,
+        "torque_limit_nm": 25,
+        "velocity_limit_rad_s": 1
+      },
+      "left_elbow": {
+        "motor_model": "DEMO-NOT-HARDWARE",
+        "reduction_ratio": 10,
+        "direction": 1,
+        "zero_offset_rad": 0,
+        "torque_limit_nm": 25,
+        "velocity_limit_rad_s": 1
+      },
+      "left_wrist": {
+        "motor_model": "DEMO-NOT-HARDWARE",
+        "reduction_ratio": 10,
+        "direction": 1,
+        "zero_offset_rad": 0,
+        "torque_limit_nm": 25,
+        "velocity_limit_rad_s": 1
+      },
+      "right_shoulder": {
+        "motor_model": "DEMO-NOT-HARDWARE",
+        "reduction_ratio": 10,
+        "direction": 1,
+        "zero_offset_rad": 0,
+        "torque_limit_nm": 25,
+        "velocity_limit_rad_s": 1
+      },
+      "right_elbow": {
+        "motor_model": "DEMO-NOT-HARDWARE",
+        "reduction_ratio": 10,
+        "direction": 1,
+        "zero_offset_rad": 0,
+        "torque_limit_nm": 25,
+        "velocity_limit_rad_s": 1
+      },
+      "right_wrist": {
+        "motor_model": "DEMO-NOT-HARDWARE",
+        "reduction_ratio": 10,
+        "direction": 1,
+        "zero_offset_rad": 0,
+        "torque_limit_nm": 25,
+        "velocity_limit_rad_s": 1
+      }
+    }
+  }
+}

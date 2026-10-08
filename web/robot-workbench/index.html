@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmindOS · 机器人调参工作台</title><link rel="stylesheet" href="/workbench.css"><script defer src="/workbench.js"></script></head>
+<body>
+<header><div><b>OmindOS</b><span>机器人调参工作台</span></div><span class="badge">运动学预览版</span></header>
+<main>
+<aside class="parameters">
+<h2>模型与参数</h2><p class="muted">导入模型，在三维视图中检查调整。</p>
+<label class="file">导入 URDF / 完整配置<input id="import" type="file" accept=".urdf,.xml,.json"></label>
+<button id="example">加载双臂示例</button><p class="note">内置模型为 7 轴教学示例，不是 RM75 实机模型。</p>
+<label>机器人编号<input id="robot-id" value="demo-dual-arm" maxlength="64"></label>
+<div class="tabs"><button id="joint-tab" aria-pressed="true">关节</button><button id="link-tab" aria-pressed="false">连杆</button></div>
+<label>选择部件<select id="part" aria-label="选择部件"></select></label>
+<div id="editor"></div>
+<details><summary>查看 URDF 文本</summary><textarea id="xml" rows="10" spellcheck="false" aria-label="URDF 文本"></textarea><button id="apply-xml">应用文本修改</button></details>
+</aside>
+<section class="viewport" aria-label="机器人三维预览">
+<div class="viewbar"><div><h1 id="model-name">机器人模型</h1><p class="muted" id="model-info">等待加载</p></div><span class="badge" id="dirty">未保存</span></div>
+<canvas id="scene" aria-label="按 URDF 正向运动学计算的机器人三维视图；拖动旋转，点击选择关节或连杆"></canvas>
+<div class="view-controls"><button data-view="iso">立体</button><button data-view="front">正面</button><button data-view="side">侧面</button><button id="fit">适合窗口</button></div>
+<p class="hint">拖动旋转 · 滚轮缩放 · 点击选择部件</p>
+<div id="warnings" class="notice" role="status"></div>
+<div class="scope">固定基座 · 正向运动学 + 静态重力负载<br>不包含碰撞、地面接触、平衡和完整动力学仿真</div>
+</section>
+<aside class="actions">
+<h2>试运行</h2><p class="muted">从零位（按限位约束）运动到当前目标姿态。</p>
+<label>运行时长 / 秒<input id="duration" type="number" min="0.1" max="60" step="0.1" value="3"></label>
+<button class="primary" id="run">试一下 · 运动学</button><button id="stop" disabled>停止</button>
+<progress id="progress" max="1" value="0" aria-label="试运行进度"></progress>
+<p id="status" role="status" aria-live="polite">正在加载示例</p>
+<div id="results" class="results"></div>
+<hr><h2>配置版本</h2><button id="save">保存新版本</button><button id="export">导出完整配置</button>
+<label>已保存的配置编号<input id="profile-id" placeholder="粘贴完整配置编号" spellcheck="false"></label><button id="load">读取配置</button>
+<p class="muted" id="saved">参数保存在本机服务目录；旧版本保留。</p>
+<hr><button disabled>真机执行 · 未接入</button>
+</aside>
+</main>
+<footer>导入模型 → 调整参数 → 运动学试运行 → 保存配置</footer>
+</body></html>

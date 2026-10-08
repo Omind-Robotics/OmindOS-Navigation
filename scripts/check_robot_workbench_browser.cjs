@@ -1,0 +1,91 @@
+// Dev-only browser acceptance. Runtime workbench uses no npm dependencies.
+// Set NODE_PATH to Playwright's node_modules and optionally CHROMIUM_EXECUTABLE.
+const assert = require('node:assert/strict');
+const {spawn} = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const {chromium} = require('playwright');
+const root = path.resolve(__dirname,'..');
+
+(async()=>{
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(),'omindos-workbench-'));
+  const server = spawn(process.env.PYTHON || 'python3',['scripts/robot_workbench.py','--store',folder,'--port','0'],{cwd:root});
+  let browser;
+  const checks = [];
+  try {
+    const url = await new Promise((resolve,reject)=>{
+      let output=''; server.stdout.on('data',data=>{output+=data;const match=output.match(/http:\/\/127\.0\.0\.1:\d+\//);if(match)resolve(match[0]);});
+      server.on('error',reject);server.once('exit',code=>reject(Error('server exited: '+code)));
+    });
+    browser = await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
+    const page = await browser.newPage({viewport:{width:1440,height:1000}}), errors=[];
+    page.on('pageerror',e=>errors.push(e.message));
+    await page.goto(url);
+    await page.waitForFunction(()=>document.getElementById('status').textContent.includes('教学示例'));
+    assert.match(await page.locator('#model-info').textContent(),/10 个连杆 · 7 个活动关节/);
+    checks.push('demo_loaded');
+    await page.locator('#save').click();await page.waitForFunction(()=>document.getElementById('profile-id').value.length===64);
+    const originalId=await page.locator('#profile-id').inputValue();
+    await page.locator('#link-tab').click();await page.locator('#part').selectOption('left_forearm');
+    await page.locator('#joint-tab').click();await page.locator('#part').selectOption('left_elbow');
+    await page.locator('#save').click();await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('配置已保存'));
+    assert.equal(await page.locator('#profile-id').inputValue(),originalId,'browsing fields must not mutate a saved configuration');
+    const before=await page.evaluate(()=>currentPose.joint_positions.left_wrist);
+    const offset=page.locator('.section-label').filter({hasText:'相对父连杆偏移 / m'}).locator('xpath=following-sibling::div[1]').getByRole('spinbutton').nth(2);
+    await offset.fill('-.5');await offset.press('Tab');
+    await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('模型已更新'));
+    const after=await page.evaluate(()=>currentPose.joint_positions.left_wrist);
+    assert.ok(Math.hypot(...after.map((x,i)=>x-before[i]))>.13,'joint offset must change calculated downstream pose');
+    await page.locator('#save').click();await page.waitForFunction(id=>document.getElementById('profile-id').value!==id,originalId);
+    const changedId=await page.locator('#profile-id').inputValue();assert.equal(changedId.length,64);
+    checks.push('joint_geometry_changes_real_fk','saved_new_version');
+    await page.locator('#profile-id').fill(originalId);await page.locator('#load').click();
+    await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('已读取保存版本'));
+    await page.locator('#part').selectOption('left_elbow');
+    assert.equal(Number(await offset.inputValue()),-.36);
+    checks.push('old_version_restores_original_geometry','field_browsing_preserves_configuration');
+    await page.getByLabel('目标关节角',{exact:true}).fill('1.2');
+    await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('模型已更新'));
+    await page.locator('#duration').fill('.2');await page.locator('#run').click();
+    await page.waitForFunction(()=>document.getElementById('status').textContent.includes('velocity limits'));
+    await page.locator('#duration').fill('2');await page.locator('#run').click();
+    await page.waitForFunction(()=>document.getElementById('status').textContent.includes('运动学试运行完成'));
+    assert.equal(await page.locator('#progress').getAttribute('value'),'1');
+    checks.push('velocity_limit_rejection','real_trajectory_animation_and_results');
+    await page.locator('#run').click();await page.locator('#stop').click();
+    assert.match(await page.locator('#status').textContent(),/已停止预览/);checks.push('stop_animation');
+    await offset.fill('');await offset.press('Tab');await page.locator('#save').click();
+    assert.match(await page.locator('#status').textContent(),/无效的参数/);checks.push('blank_numeric_field_blocks_save');
+    await offset.fill('-.36');await offset.press('Tab');
+    await page.locator('#link-tab').click();await page.locator('#part').selectOption('left_forearm');
+    await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('模型已更新'));
+    const torqueBefore=await page.evaluate(()=>currentPose.holding_torque_nm.left_elbow);
+    await page.getByLabel('质量 / kg',{exact:true}).fill('1.6');await page.getByLabel('质量 / kg',{exact:true}).press('Tab');
+    await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('模型已更新'));
+    const torqueAfter=await page.evaluate(()=>currentPose.holding_torque_nm.left_elbow);
+    assert.ok(Math.abs(torqueAfter-torqueBefore)>.1);checks.push('mass_edit_changes_gravity_load');
+    const demo=JSON.parse(fs.readFileSync(path.join(root,'config/robot_profiles/workbench-demo.json'),'utf8'));
+    await page.locator('#import').setInputFiles({name:'customer.urdf',mimeType:'text/xml',buffer:Buffer.from(demo.kinematics.urdf_xml)});
+    await page.waitForFunction(()=>document.getElementById('status').textContent.includes('请补充各活动关节'));
+    await page.locator('#save').click();await page.waitForFunction(()=>document.getElementById('status').textContent.includes('motor_model'));
+    checks.push('urdf_import_shows_model_and_requires_real_drive_parameters');
+    await page.locator('#import').setInputFiles({name:'customer.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(demo))});
+    await page.waitForFunction(()=>document.getElementById('status').textContent.includes('模型已载入'));
+    checks.push('complete_configuration_file_import');
+    await page.locator('#example').click();await page.waitForFunction(()=>document.getElementById('status').textContent.includes('教学示例'));
+    const shots=process.env.WORKBENCH_SCREENSHOT_DIR;
+    if(shots){fs.mkdirSync(shots,{recursive:true});await page.screenshot({path:path.join(shots,'robot-workbench-desktop.png'),fullPage:true});}
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'desktop horizontal overflow');
+    await page.setViewportSize({width:390,height:844});
+    await page.locator('#scene').scrollIntoViewIfNeeded();
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'mobile horizontal overflow');
+    if(shots)await page.screenshot({path:path.join(shots,'robot-workbench-mobile.png'),fullPage:true});
+    await page.locator('#part').selectOption('left_elbow');await page.getByLabel('目标关节角',{exact:true}).fill('0.4');
+    await page.locator('#duration').fill('2');await page.locator('#run').click();
+    await page.waitForFunction(()=>document.getElementById('status').textContent.includes('运动学试运行完成'));
+    checks.push('desktop_mobile_no_horizontal_overflow','mobile_controls_and_run');
+    assert.deepEqual(errors,[]);checks.push('no_browser_script_errors');
+    console.log(JSON.stringify({status:'PASS',browser:await browser.version(),checks},null,2));
+  } finally {await browser?.close();server.kill();fs.rmSync(folder,{recursive:true,force:true});}
+})().catch(e=>{console.error(e);process.exitCode=1;});
