@@ -2,7 +2,7 @@
   "schema_version": 1,
   "record_type": "customer_robot_configuration_record",
   "robot_id": null,
-  "profile_revision": 3,
+  "profile_revision": 4,
   "reference": {
     "repository": "https://github.com/haraduka/mevius2",
     "commit": "4f09680bb575574377b903bbc971bdb2695d507b",
@@ -25,84 +25,84 @@
   "joints": [
     {
       "name": "BL_collar_joint",
-      "can_device": "can0",
+      "can_device": null,
       "can_id": 10,
       "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "BL_hip_joint",
-      "can_device": "can0",
+      "can_device": null,
       "can_id": 11,
       "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "BL_knee_joint",
-      "can_device": "can0",
+      "can_device": null,
       "can_id": 12,
       "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "BR_collar_joint",
-      "can_device": "can0",
+      "can_device": null,
       "can_id": 7,
       "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "BR_hip_joint",
-      "can_device": "can0",
+      "can_device": null,
       "can_id": 8,
       "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "BR_knee_joint",
-      "can_device": "can0",
+      "can_device": null,
       "can_id": 9,
       "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FL_collar_joint",
-      "can_device": "can1",
+      "can_device": null,
       "can_id": 4,
       "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FL_hip_joint",
-      "can_device": "can1",
+      "can_device": null,
       "can_id": 5,
       "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FL_knee_joint",
-      "can_device": "can1",
+      "can_device": null,
       "can_id": 6,
       "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FR_collar_joint",
-      "can_device": "can1",
+      "can_device": null,
       "can_id": 1,
       "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FR_hip_joint",
-      "can_device": "can1",
+      "can_device": null,
       "can_id": 2,
       "direction": null,
       "calibrated_motor_offset_rad": null
     },
     {
       "name": "FR_knee_joint",
-      "can_device": "can1",
+      "can_device": null,
       "can_id": 3,
       "direction": null,
       "calibrated_motor_offset_rad": null
@@ -187,6 +187,11 @@
       "date": "2026-10-08",
       "source": "user identification: dm-mc02; procurement screenshot 01-1000091659.jpg",
       "note": "Board model confirmed by user. Procurement items recorded as planned equipment only. DM-MC02 firmware, host protocol, installed devices, joint calibration and hardware acceptance remain unverified."
+    },
+    {
+      "date": "2026-10-08",
+      "source": "user confirmation: USB host link, three CAN buses with four joints each",
+      "note": "Three-bus capacity plan confirmed. Cleared legacy two-bus can_device proposals; exact joint-to-bus assignment remains pending. Motor IDs remain proposals. Physical command/feedback rates await bandwidth accounting and measurement; existing control_reference frequencies are simulation references."
     }
   ],
   "validation": {
@@ -214,13 +219,40 @@
     "host_board_protocol": null,
     "motor_protocol": null,
     "hardware_adapter_ready": false,
-    "address_mapping_status": "proposal_only_not_calibrated",
+    "address_mapping_status": "three_bus_plan_joint_assignment_pending",
     "integration_note": "docs/DM_MC02_INTEGRATION.zh-CN.md",
     "vendor_reference": {
       "repository": "https://github.com/dmBots/DM-MC02",
       "commit": "d65a3688981405dc205f628f1a026bde8cf8303e",
       "manual": "manual/达妙科技DM-MC-Board02电机开发板使用说明书V1.1.pdf",
       "manual_sha256": "9fbc4cc2175301632c3bdf74800b26490480da93fe2210ebbc49769a9bc1eab2"
+    },
+    "confirmed_host_transport": "USB",
+    "can_bus_plan": {
+      "status": "user_confirmed_capacity_plan_not_wiring_assignment",
+      "controller": "DM-MC02",
+      "buses": [
+        {
+          "board_bus": "CAN1",
+          "planned_joint_count": 4,
+          "joint_names": null
+        },
+        {
+          "board_bus": "CAN2",
+          "planned_joint_count": 4,
+          "joint_names": null
+        },
+        {
+          "board_bus": "CAN3",
+          "planned_joint_count": 4,
+          "joint_names": null
+        }
+      ],
+      "nominal_bitrate_bps": null,
+      "hardware_command_hz": null,
+      "hardware_feedback_hz": null,
+      "frequency_status": "pending_bandwidth_budget_and_measurement",
+      "wiring_verified": false
     }
   },
   "procurement_reference": {
