@@ -11,6 +11,7 @@ from robot_kinematics import build_model, pose, trial
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = {"/": ("web/robot-workbench/index.html", "text/html; charset=utf-8"),
           "/workbench.js": ("web/robot-workbench/workbench.js", "text/javascript; charset=utf-8"),
+          "/robot-scene.js": ("web/robot-workbench/robot-scene.js", "text/javascript; charset=utf-8"),
           "/workbench.css": ("web/robot-workbench/workbench.css", "text/css; charset=utf-8"),
           "/example.json": ("config/robot_profiles/workbench-demo.json", "application/json; charset=utf-8")}
 

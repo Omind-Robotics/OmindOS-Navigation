@@ -1,8 +1,9 @@
 'use strict';
 const $ = id => document.getElementById(id);
 let xml, profile, model, currentPose, targets = {}, mode = 'joint', revision = 0, readyRevision = -1;
-let timer, animation, latestTrial, view = {yaw: -.75, pitch: .48, zoom: 1, center: [0, 0, .5], span: 1.5};
+let timer, animation, latestTrial, view = {yaw: .75, pitch: .48, zoom: 1, center: [0, 0, .5], span: 1.5};
 let projected = [], operation = false;
+let sceneEngine = null;
 const pendingNodes = new WeakMap(), pendingParents = new WeakMap();
 const serializer = new XMLSerializer();
 const child = (node, tag) => [...node.children].find(x => x.tagName === tag);
@@ -163,7 +164,14 @@ function fitView(){
   view.center=lo.map((x,i)=>(x+hi[i])/2);view.span=Math.max(.15,...lo.map((x,i)=>hi[i]-x))*1.45;view.zoom=1;
 }
 function draw(){
+  $('selected-kind').textContent = mode === 'joint' ? '当前关节' : '当前连杆';
+  $('selected-part').textContent = $('part').value || '—';
+  if(sceneEngine){sceneEngine.render(model,currentPose,view,mode,$('part').value);return;}
+  drawWireframe();
+}
+function drawWireframe(){
   const canvas=$('scene'),ctx=canvas.getContext('2d'),w=canvas.clientWidth,h=canvas.clientHeight,dpr=Math.min(devicePixelRatio||1,2);
+  if(!ctx)return;
   canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);projected=[];
   if(!currentPose){ctx.fillStyle='#718596';ctx.font='14px system-ui';ctx.textAlign='center';ctx.fillText('导入有效模型后显示三维机构',w/2,h/2);return;}
   const scale=Math.min(w,h)/view.span*view.zoom, cy=Math.cos(view.yaw),sy=Math.sin(view.yaw),cp=Math.cos(view.pitch),sp=Math.sin(view.pitch);
@@ -201,9 +209,15 @@ $('import').onchange=()=>guarded(async()=>{const file=$('import').files[0];if(!f
 $('apply-xml').onclick=()=>guarded(async()=>{const candidate=payload();candidate.kinematics.urdf_xml=$('xml').value;const doc=parse(candidate.kinematics.urdf_xml),missing=missingDrives(doc);candidate.dynamics.joints=Object.fromEntries(Object.keys(missing).map(n=>[n,candidate.dynamics.joints[n]||missing[n]]));await importProfile(candidate);});
 $('robot-id').onchange=()=>edited();$('part').onchange=()=>{buildEditor();draw();};
 $('joint-tab').onclick=()=>{mode='joint';rebuildParts();draw();};$('link-tab').onclick=()=>{mode='link';rebuildParts();draw();};
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{view.yaw=b.dataset.view==='front'?0:b.dataset.view==='side'?Math.PI/2:-.75;view.pitch=b.dataset.view==='iso'?.48:0;draw();});$('fit').onclick=()=>{fitView();draw();};
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{view.yaw=b.dataset.view==='front'?Math.PI/2:b.dataset.view==='side'?0:.75;view.pitch=b.dataset.view==='iso'?.48:0;draw();});$('fit').onclick=()=>{fitView();draw();};
+$('solid-view').onclick=()=>{if(sceneEngine)sceneEngine.wireframe=false;$('solid-view').setAttribute('aria-pressed','true');$('wireframe-view').setAttribute('aria-pressed','false');draw();};
+$('wireframe-view').onclick=()=>{if(sceneEngine)sceneEngine.wireframe=true;$('solid-view').setAttribute('aria-pressed','false');$('wireframe-view').setAttribute('aria-pressed','true');draw();};
 let drag;const canvas=$('scene');canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY};canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointermove',e=>{if(!drag)return;view.yaw+=(e.clientX-drag.x)*.008;view.pitch=Math.max(-1.3,Math.min(1.3,view.pitch+(e.clientY-drag.y)*.006));drag.x=e.clientX;drag.y=e.clientY;draw();});
-canvas.addEventListener('pointerup',e=>{if(drag&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<5){const r=canvas.getBoundingClientRect(),p=[e.clientX-r.left,e.clientY-r.top];const nearest=projected.map(item=>({...item,d:Math.hypot(item.p[0]-p[0],item.p[1]-p[1])})).sort((a,b)=>a.d-b.d)[0];if(nearest&&nearest.d<18){mode=nearest.type;rebuildParts(nearest.name);draw();}}drag=null;});canvas.addEventListener('pointercancel',()=>drag=null);canvas.addEventListener('wheel',e=>{e.preventDefault();view.zoom=Math.max(.3,Math.min(5,view.zoom*Math.exp(-e.deltaY*.001)));draw();},{passive:false});
-new ResizeObserver(draw).observe(canvas);
-guarded(loadExample);
+canvas.addEventListener('pointerup',e=>{if(drag&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<5){const r=canvas.getBoundingClientRect(),p=[e.clientX-r.left,e.clientY-r.top];const hit=sceneEngine?.pick(...p);const nearest=hit||projected.map(item=>({...item,d:Math.hypot(item.p[0]-p[0],item.p[1]-p[1])})).sort((a,b)=>a.d-b.d)[0];if(nearest&&(hit||nearest.d<18)){mode=nearest.type;rebuildParts(nearest.name);draw();}}drag=null;});canvas.addEventListener('pointercancel',()=>drag=null);canvas.addEventListener('wheel',e=>{e.preventDefault();view.zoom=Math.max(.3,Math.min(5,view.zoom*Math.exp(-e.deltaY*.001)));draw();},{passive:false});
+guarded(async()=>{
+  try{const {RobotScene}=await import('/robot-scene.js');sceneEngine=new RobotScene(canvas);}
+  catch(error){console.warn('实体渲染不可用，使用兼容线框视图。',error);canvas.dataset.renderer='canvas2d';$('solid-view').disabled=true;$('solid-view').setAttribute('aria-pressed','false');$('wireframe-view').setAttribute('aria-pressed','true');}
+  new ResizeObserver(draw).observe(canvas);
+  await loadExample();
+});

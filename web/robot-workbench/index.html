@@ -16,7 +16,8 @@
 </aside>
 <section class="viewport" aria-label="机器人三维预览">
 <div class="viewbar"><div><h1 id="model-name">机器人模型</h1><p class="muted" id="model-info">等待加载</p></div><span class="badge" id="dirty">未保存</span></div>
-<canvas id="scene" aria-label="按 URDF 正向运动学计算的机器人三维视图；拖动旋转，点击选择关节或连杆"></canvas>
+<div class="stage-toolbar"><span>三维模型预览</span><div class="render-modes" role="group" aria-label="显示样式"><button id="solid-view" aria-pressed="true">实体</button><button id="wireframe-view" aria-pressed="false">线框</button></div></div>
+<div class="canvas-stage"><canvas id="scene" aria-label="按 URDF 正向运动学计算的机器人三维视图；拖动旋转，点击选择关节或连杆"></canvas><div class="part-caption"><span id="selected-kind">当前关节</span><strong id="selected-part">—</strong></div></div>
 <div class="view-controls"><button data-view="iso">立体</button><button data-view="front">正面</button><button data-view="side">侧面</button><button id="fit">适合窗口</button></div>
 <p class="hint">拖动旋转 · 滚轮缩放 · 点击选择部件</p>
 <div id="warnings" class="notice" role="status"></div>

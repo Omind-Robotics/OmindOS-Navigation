@@ -1,0 +1,8 @@
+{
+  "name": "omindos-robot-workbench-renderer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Development-only builder; the shipped UI uses its local prebuilt bundle.",
+  "scripts": {"build": "node build-renderer.cjs"},
+  "devDependencies": {"esbuild": "0.25.10", "three": "0.180.0"}
+}
