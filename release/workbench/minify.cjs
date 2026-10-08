@@ -5,3 +5,4 @@ const result = esbuild.transformSync(fs.readFileSync(process.argv[2], 'utf8'), {
   legalComments: 'inline', sourcemap: false, target: 'es2020'
 });
 fs.writeFileSync(process.argv[3], result.code);
+

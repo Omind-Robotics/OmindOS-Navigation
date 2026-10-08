@@ -6,6 +6,10 @@ on:
       - '.github/workflows/workbench-binaries.yml'
       - 'release/workbench/**'
       - 'scripts/workbench_desktop.py'
+      - 'scripts/robot_connections.py'
+      - 'scripts/robot_parameter_api.py'
+      - 'scripts/robot_workbench.py'
+      - 'web/robot-workbench/**'
   workflow_dispatch:
 permissions:
   contents: read
@@ -59,3 +63,4 @@ jobs:
             build/workbench-release/*.sha256
           if-no-files-found: error
           retention-days: 14
+

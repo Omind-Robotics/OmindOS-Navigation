@@ -10,7 +10,7 @@ import webbrowser
 
 import robot_workbench
 
-VERSION = '0.2.0-preview.3'
+VERSION = '0.2.0-preview.4'
 ROOT = Path(__file__).resolve().parent if '__compiled__' in globals() else Path(__file__).resolve().parents[1]
 
 
@@ -62,3 +62,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

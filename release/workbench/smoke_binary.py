@@ -57,8 +57,18 @@ def main():
             checks.append('all_local_assets_served')
             profile = request(base,'/example.json')
             profile['robot_id'] = 'release-smoke'
+            options = request(base,'/v1/connection-options')
+            assert set(options['devices']) == {'left_arm','right_arm','waist','chassis'}
+            assert options['adapter_status'] == 'not_integrated' and options['hardware_connected'] is False
+            profile['connections'] = {'schema_version':1,'devices':{
+                'left_arm':{'selected':'sdk_tcp','profiles':{'sdk_tcp':{'host':'192.0.2.10','port':8080}}},
+                'right_arm':{'selected':'json_tcp','profiles':{'json_tcp':{'host':'192.0.2.11','port':8081}}},
+                'waist':{'selected':'unselected','profiles':{'canopen':{'node_id':3},'ethercat':{'slave_position':0}}},
+                'chassis':{'selected':'unselected','profiles':{'rs232':{'device':'COM3'},'mqtt':{'host':'broker.test'}}}}}
             applied = request(base,'/v1/workbench-active-profile',profile)
             assert applied['workbench_applied'] and not applied['runtime_applied']
+            assert applied['hardware_connected'] is False
+            checks.append('connection_options_and_independent_drafts_saved_without_connecting')
             for velocity, angular, expected in ((.15,0,.225),(-.15,0,-.225),(0,.4,.6),(0,-.4,-.6)):
                 result = request(base,'/v1/robot-wheel-base',{'linear_m_s':velocity,'angular_rad_s':angular,'duration_s':3})
                 assert not result['runtime_applied']
@@ -66,12 +76,16 @@ def main():
                 assert math.isclose(result['frames'][-1]['base_pose'][key],expected,abs_tol=1e-10)
             checks.append('four_wheel_forward_reverse_left_right')
             stop = request(base,'/v1/workbench-stop',{'engaged':True})
+            profile['connections']['devices']['waist']['selected'] = 'canopen'
+            applied = request(base,'/v1/workbench-active-profile',profile)
+            assert applied['emergency_stop'] and not applied['hardware_connected']
+            checks.append('saving_connection_selection_preserves_emergency_stop')
             try:
                 request(base,'/v1/robot-wheel-base',{'linear_m_s':.1})
                 raise AssertionError('Stopped server accepted motion')
             except urllib.error.HTTPError as error:
                 assert error.code == 423
-            reset = request(base,'/v1/workbench-stop',{'engaged':False,'expected_epoch':stop['motion_epoch']})
+            reset = request(base,'/v1/workbench-stop',{'engaged':False,'expected_epoch':applied['motion_epoch']})
             assert not reset['emergency_stop']
             checks.append('estop_rejects_motion_and_manual_reset')
         finally:
@@ -82,6 +96,7 @@ def main():
             assert active['profile'] == profile
             assert active['active_profile_id'] == applied['active_profile_id']
             checks.append('saved_configuration_survives_executable_restart')
+            checks.append('all_connection_drafts_and_selected_protocol_survive_restart')
         finally:
             process.terminate(); process.wait(timeout=10); log.close()
     report = {'status':'PASS','system':platform.system(),'machine':platform.machine(), 'checks':checks,
@@ -92,3 +107,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

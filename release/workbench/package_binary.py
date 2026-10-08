@@ -15,7 +15,7 @@ import urllib.request
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.2.0-preview.3'
+VERSION = '0.2.0-preview.4'
 
 
 def main():
@@ -35,11 +35,12 @@ def main():
                '--output-dir=' + str(build), '--output-filename=' + executable,
                '--report=' + str(output / 'private-compilation-report.xml'),
                '--include-module=robot_workbench', '--include-module=robot_parameter_api',
-               '--include-module=robot_kinematics', '--include-module=workbench_state']
+               '--include-module=robot_kinematics', '--include-module=workbench_state',
+               '--include-module=robot_connections']
     if windows:
         command += ['--msvc=latest', '--windows-console-mode=force',
                     '--company-name=OriginMind', '--product-name=OmindOS Workbench',
-                    '--file-version=0.2.0.3', '--product-version=0.2.0.3']
+                    '--file-version=0.2.0.4', '--product-version=0.2.0.4']
     command.append(str(ROOT / 'scripts/workbench_desktop.py'))
     subprocess.run(command, cwd=ROOT, env=env, check=True)
     package = output / ('omindos-workbench-' + VERSION + '-' + target)
@@ -107,3 +108,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

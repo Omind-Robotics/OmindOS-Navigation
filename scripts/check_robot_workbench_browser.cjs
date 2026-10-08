@@ -242,6 +242,53 @@ const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{reso
     await page.waitForFunction(()=>document.getElementById('status').textContent.includes('有效的底盘速度'));
     assert.equal(await page.evaluate(()=>animation),null);await page.locator('#drive-linear').fill('0.15');
     checks.push('invalid_wheel_speed_input_blocks_motion');
+    // Connection choices are drafts, persisted with the existing parameter version.
+    const profileBeforeBrowsing=await page.evaluate(()=>JSON.stringify(payload()));
+    for(const device of ['left_arm','right_arm','waist','chassis'])await page.locator('#connection-device').selectOption(device);
+    assert.equal(await page.evaluate(()=>JSON.stringify(payload())),profileBeforeBrowsing);
+    checks.push('browsing_connection_devices_preserves_legacy_profile');
+    await page.locator('#connection-protocol').selectOption('rs232');
+    await page.locator('#connection-chassis-device').fill('COM3');await page.locator('#connection-chassis-baud_rate').fill('115200');
+    await page.locator('#connection-protocol').selectOption('mqtt');await page.locator('#connection-chassis-host').fill('broker.test');
+    await page.locator('#connection-protocol').selectOption('rs232');assert.equal(await page.locator('#connection-chassis-device').inputValue(),'COM3');
+    await page.locator('#connection-protocol').selectOption('unselected');
+    await page.locator('#connection-device').selectOption('waist');await page.locator('#connection-protocol').selectOption('canopen');
+    await page.locator('#connection-waist-node_id').fill('3');
+    await page.locator('#connection-protocol').selectOption('ethercat');await page.locator('#connection-waist-slave_position').fill('0');
+    for(const [device,host]of [['left_arm','192.0.2.10'],['right_arm','192.0.2.11']]){
+      await page.locator('#connection-device').selectOption(device);await page.locator('#connection-protocol').selectOption('sdk_tcp');
+      await page.locator(`#connection-${device}-host`).fill(host);
+    }
+    const connections=await page.evaluate(()=>structuredClone(payload().connections));
+    await page.locator('#apply-program').click();await page.waitForFunction(()=>document.getElementById('apply-note').textContent.startsWith('已写入程序'));
+    await page.reload();await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('已加载程序当前配置'));
+    assert.deepEqual(await page.evaluate(()=>payload().connections),connections);
+    assert.equal(await page.locator('#connection-protocol').inputValue(),'unselected');
+    await page.locator('#connection-protocol').selectOption('rs232');assert.equal(await page.locator('#connection-chassis-device').inputValue(),'COM3');
+    checks.push('connection_drafts_switch_and_reload_with_independent_arm_addresses');
+    await page.locator('#connection-device').selectOption('left_arm');await page.locator('#connection-left_arm-port').fill('70000');
+    await page.locator('#connection-device').selectOption('chassis');await page.locator('#apply-program').click();
+    assert.match(await page.locator('#status').textContent(),/无效/);
+    await page.locator('#connection-device').selectOption('left_arm');assert.equal(await page.locator('#connection-left_arm-port').getAttribute('aria-invalid'),'true');
+    await page.locator('#connection-left_arm-port').fill('');
+    checks.push('invalid_connection_field_stays_blocking_when_hidden_blank_allowed');
+    const exported=await Promise.all([page.waitForEvent('download'),page.locator('#export').click()]);
+    const exportedData=JSON.parse(fs.readFileSync(await exported[0].path(),'utf8'));
+    assert.deepEqual(exportedData.connections,await page.evaluate(()=>payload().connections));
+    await page.locator('#import').setInputFiles({name:'connection-config.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exportedData))});
+    await page.waitForFunction(()=>document.getElementById('status').textContent.includes('模型已载入'));
+    assert.deepEqual(await page.evaluate(()=>payload().connections),exportedData.connections);
+    checks.push('connection_configuration_exports_and_imports_without_loss');
+    await page.locator('#emergency-stop').click();await page.waitForFunction(()=>emergencyStop&&!safetyPending);
+    await page.locator('#connection-device').selectOption('waist');await page.locator('#connection-protocol').selectOption('canopen');
+    await page.locator('#apply-program').click();await page.waitForFunction(()=>document.getElementById('apply-note').textContent.startsWith('已写入程序'));
+    const connectionState=await page.evaluate(async()=>await(await fetch('/v1/workbench-state')).json());
+    assert.equal(connectionState.hardware_connected,false);assert.equal(connectionState.emergency_stop,true);
+    assert.equal(await page.evaluate(()=>animation),null);assert.ok(await page.locator('#jog-plus').isDisabled());
+    const shotsForConnections=process.env.WORKBENCH_SCREENSHOT_DIR;
+    if(shotsForConnections){fs.mkdirSync(shotsForConnections,{recursive:true});await page.evaluate(()=>document.querySelectorAll('aside,.parameter-fields').forEach(el=>el.scrollTop=0));await page.screenshot({path:path.join(shotsForConnections,'robot-workbench-connections.png'),fullPage:true});}
+    await page.locator('#reset-stop').click();await page.waitForFunction(()=>!emergencyStop&&!safetyPending);
+    checks.push('saving_connection_settings_never_connects_or_clears_emergency_stop');
     await page.locator('#example').click();await page.waitForFunction(()=>document.getElementById('status').textContent.includes('教学示例'));
     assert.match(await page.locator('#apply-note').textContent(),/尚未写入程序/);
     await page.evaluate(()=>document.querySelectorAll('aside,.parameter-fields').forEach(el=>el.scrollTop=0));
