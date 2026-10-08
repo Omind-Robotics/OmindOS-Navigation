@@ -7,13 +7,15 @@ if [ "$(uname -m)" != x86_64 ]; then
 fi
 command -v docker >/dev/null 2>&1 || { echo 'Please install Docker Engine first.' >&2; exit 2; }
 image='omindos/control-preview:0.2.0-preview.5'
-expected=$(cat IMAGE_ID.txt)
-actual=$(docker image inspect --format '{{.Id}}' "$image" 2>/dev/null || true)
-if [ "$actual" != "$expected" ]; then
+image_known() {
+    actual=$(docker image inspect --format '{{.Id}}' "$image" 2>/dev/null || true)
+    [ -n "$actual" ] && grep -Fqx -- "$actual" IMAGE_ID.txt
+}
+if ! image_known; then
     sha256sum -c SHA256SUMS-image.txt
     docker load -i omindos-control-preview-0.2.0-preview.5-linux-amd64.image.tar.gz
 fi
-test "$(docker image inspect --format '{{.Id}}' "$image")" = "$expected" || { echo 'Image identity mismatch.' >&2; exit 2; }
+image_known || { echo 'Image identity mismatch.' >&2; exit 2; }
 mkdir -p data
 if [ "$#" -eq 0 ]; then set -- workbench; fi
 case "$1" in
