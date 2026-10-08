@@ -8,6 +8,8 @@ target.mkdir(exist_ok=True)
 for name in ['config','scripts','web']:
     shutil.copytree(root/'native-app'/name,target/name,dirs_exist_ok=True)
 shutil.copytree(root/'source/tests',target/'tests',dirs_exist_ok=True)
+# Customer records remain private test fixtures, outside the distributed app.
+shutil.copytree(root/'source/config',target/'config',dirs_exist_ok=True)
 for path in (target/'tests').glob('test_*.py'):
     text=path.read_text()
     if path.name=='test_robot_parameter_api.py':

@@ -21,7 +21,8 @@ setup(name='omindos-control-native',ext_modules=cythonize(
     build_dir='/build/native-c',compiler_directives={'language_level':3,'annotation_typing':False,'binding':True,'embedsignature':False}),
     script_args=['build_ext','--build-lib',str(out/'scripts'),'--build-temp','/build/native-objects','-j','2'])
 for folder in ['config','LICENSES']:
-    shutil.copytree(root/folder,out/folder,dirs_exist_ok=True)
+    shutil.copytree(root/folder,out/folder,dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns('*.customer-record.json'))
 web=out/'web/robot-workbench';web.mkdir(parents=True,exist_ok=True)
 for name in ['index.html','workbench.css','robot-scene.js','workbench.js','runtime.js','THIRD_PARTY.md']:
     shutil.copy2(root/'web/robot-workbench'/name,web/name)
