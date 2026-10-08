@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from robot_parameter_api import MAX_BYTES, ThreadingHTTPServer, make_handler as registry_handler
-from robot_kinematics import build_model, pose, trial, jog_trial, sine_trial
+from robot_kinematics import build_model, pose, trial, jog_trial, sine_trial, wheel_trial
 from workbench_state import WorkbenchState, MotionLocked
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -65,7 +65,7 @@ def make_handler(store_dir):
                 return
             if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
                 return self.respond(415, {"error": "Content-Type must be application/json"})
-            if self.path not in ("/v1/robot-model", "/v1/robot-preview", '/v1/robot-jog', '/v1/robot-sine',
+            if self.path not in ("/v1/robot-model", "/v1/robot-preview", '/v1/robot-jog', '/v1/robot-sine', '/v1/robot-wheel-base',
                                  '/v1/workbench-active-profile', '/v1/workbench-stop'):
                 return super().do_POST()
             try:
@@ -93,7 +93,7 @@ def make_handler(store_dir):
                         if profile is None:
                             raise ValueError('请先将参数写入程序，或提供完整 profile。')
                         payload = {**payload, 'profile': profile}
-                    function = {'/v1/robot-preview': trial, '/v1/robot-jog': jog_trial, '/v1/robot-sine': sine_trial}[self.path]
+                    function = {'/v1/robot-preview': trial, '/v1/robot-jog': jog_trial, '/v1/robot-sine': sine_trial, '/v1/robot-wheel-base': wheel_trial}[self.path]
                     result = function(payload)
                     runtime.check_motion(epoch)
                     result['motion_epoch'] = epoch

@@ -1,4 +1,5 @@
-"""Rebuild the synthetic mobile dual-arm example (not a calibrated robot)."""
+"""Build a dual RM75-B reference preview; body and drives are uncalibrated."""
+import copy
 import json
 import math
 from pathlib import Path
@@ -8,7 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def build_demo():
-    robot = ET.Element('robot', name='OmindOS 移动双臂教学模型')
+    robot = ET.Element('robot', name='OmindOS 双七轴移动机器人')
+    ET.SubElement(robot, 'omindos_base', type='four_wheel_differential',
+                  **{role: role+'_wheel_joint' for role in ('left_front', 'right_front', 'left_rear', 'right_rear')})
     drives = {}
     colors = {'shell': '.77 .84 .89 1', 'dark': '.055 .085 .12 1',
               'metal': '.32 .42 .5 1', 'accent': '.08 .66 .8 1', 'rubber': '.025 .035 .045 1'}
@@ -44,11 +47,11 @@ def build_demo():
             visual(link, 'box', size, com, color)
         return link
 
-    def joint(name, parent, child, xyz, axis=(0, 1, 0), limits=(-2.6, 2.6), kind='revolute', effort=40, speed=1):
+    def joint(name, parent, child, xyz, axis=(0, 1, 0), limits=(-2.6, 2.6), kind='revolute', effort=40, speed=1, rpy=(0, 0, 0)):
         j = ET.SubElement(robot, 'joint', name=name, type=kind)
         ET.SubElement(j, 'parent', link=parent)
         ET.SubElement(j, 'child', link=child)
-        ET.SubElement(j, 'origin', xyz=vector(xyz), rpy='0 0 0')
+        ET.SubElement(j, 'origin', xyz=vector(xyz), rpy=vector(rpy))
         if kind != 'fixed':
             ET.SubElement(j, 'axis', xyz=vector(axis))
             ET.SubElement(j, 'limit', lower=str(limits[0]), upper=str(limits[1]), effort=str(effort), velocity=str(speed))
@@ -69,15 +72,15 @@ def build_demo():
             visual(wheel, 'box', (.10, .078, .015), color='shell')
             joint(name+'_joint', 'base', name, (x, sign*.295, .1), kind='continuous', effort=20, speed=5)
 
-    mount = body('waist_mount', 1.5, (.14, .14, .17), (0, 0, .085), draw=False)
-    visual(mount, 'cylinder', (.072, .17), (0, 0, .085), 'metal')
-    joint('waist', 'base', 'waist_mount', (0, 0, .3), axis=(0, 0, 1))
-    torso = body('torso', 5, (.17, .28, .44), (0, 0, .26))
+    mount = body('waist_mount', 1.5, (.14, .14, .36), (0, 0, .18), draw=False)
+    visual(mount, 'cylinder', (.072, .36), (0, 0, .18), 'metal')
+    joint('waist_mount_fixed', 'base', 'waist_mount', (0, 0, .3), kind='fixed')
+    torso = body('torso', 5, (.20, .18, .42), (0, 0, .25))
     visual(torso, 'cylinder', (.078, .26), color='metal', rpy=(math.pi/2, 0, 0))
     visual(torso, 'box', (.14, .48, .09), (0, 0, .465))
     visual(torso, 'box', (.012, .16, .22), (.09, 0, .30), 'dark')
     visual(torso, 'box', (.014, .12, .012), (.09, 0, .43), 'accent')
-    joint('waist_pitch', 'waist_mount', 'torso', (0, 0, .18), limits=(-.55, .55), effort=80, speed=.6)
+    joint('waist_pitch', 'waist_mount', 'torso', (.1, 0, .36), limits=(-.55, .55), effort=80, speed=.6)
     # Fixed sensor-style head: neck, rounded housing, visor and two optical windows.
     head = body('head', .8, (.16, .23, .16), (.005, 0, .12))
     visual(head, 'cylinder', (.029, .065), (0, 0, .018), 'metal')
@@ -91,13 +94,41 @@ def build_demo():
         visual(head, 'cylinder', (.031, .012), (.003, sign*.119, .119), 'metal', (math.pi/2, 0, 0))
     visual(head, 'box', (.011, .053, .007), (.087, 0, .069), 'accent')
     joint('head_mount', 'torso', 'head', (0, 0, .535), kind='fixed')
+    # Manufacturer kinematic chain and inertial data; only visuals are simplified.
+    source = ET.parse(ROOT/'config/robot_models/realman_rm75/RM75-B.urdf').getroot()
     for side, sign in [('left', 1), ('right', -1)]:
-        upper = body(side+'_upper', 1.2, (.07, .07, .36), (0, 0, -.18))
-        visual(upper, 'box', (.013, .074, .14), (.03, 0, -.17), 'dark')
-        joint(side+'_shoulder', 'torso', side+'_upper', (0, sign*.28, .48))
-        forearm = body(side+'_forearm', .8, (.06, .06, .28), (0, 0, -.14))
-        visual(forearm, 'box', (.064, .064, .045), (0, 0, -.25), 'dark')
-        joint(side+'_elbow', side+'_upper', side+'_forearm', (0, 0, -.36))
+        for original in source.findall('link'):
+            link = copy.deepcopy(original)
+            name = original.get('name')
+            link.set('name', side+'_'+name)
+            for item in list(link):
+                if item.tag in ('visual', 'collision'):
+                    link.remove(item)
+            robot.append(link)
+            outgoing = next((j for j in source.findall('joint') if j.find('parent').get('link') == name), None)
+            end = [float(v) for v in outgoing.find('origin').get('xyz').split()] if outgoing is not None else [0, 0, .025]
+            length = math.hypot(*end)
+            if length > .03:
+                orientation = (math.pi/2, 0, 0) if abs(end[1]) > .01 else (0, 0, 0)
+                visual(link, 'cylinder', (.041, length), [v/2 for v in end], rpy=orientation)
+                visual(link, 'cylinder', (.043, .025), [v*.85 for v in end], 'dark', orientation)
+            else:
+                visual(link, 'sphere', (.047,), color='metal')
+            visual(link, 'cylinder', (.048, .026), color='metal')
+            visual(link, 'box', (.012, .06, .026), (.044, 0, 0), 'accent')
+        for original in source.findall('joint'):
+            j = copy.deepcopy(original)
+            name = side+'_'+original.get('name')
+            j.set('name', name)
+            for tag in ('parent', 'child'):
+                node = j.find(tag); node.set('link', side+'_'+node.get('link'))
+            robot.append(j)
+            limit = j.find('limit')
+            drives[name] = dict(motor_model='DEMO-NOT-HARDWARE', reduction_ratio=10, direction=1,
+                                zero_offset_rad=0, torque_limit_nm=float(limit.get('effort'))*.8,
+                                velocity_limit_rad_s=1)
+        joint(side+'_arm_mount', 'torso', side+'_base_link', (0, sign*.1, .4),
+              kind='fixed', rpy=(-sign*math.pi/2, 0, 0))
         # Electric gripper palm with a mounting flange, motor cover and jaw cheeks.
         palm = body(side+'_hand', .42, (.080, .116, .072), (0, 0, -.045), 'shell')
         visual(palm, 'cylinder', (.037, .018), (0, 0, -.001), 'metal')
@@ -109,7 +140,7 @@ def build_demo():
             for bolt in (-1, 1):
                 visual(palm, 'cylinder', (.0035, .082), (0, bolt*.040, -.067 if cheek == 1 else -.086),
                        'dark', (0, math.pi/2, 0))
-        joint(side+'_wrist', side+'_forearm', side+'_hand', (0, 0, -.28))
+        joint(side+'_hand_mount', side+'_link_7', side+'_hand', (0, 0, 0), kind='fixed', rpy=(math.pi, 0, 0))
         for finger, direction in [('outer', 1), ('inner', -1)]:
             name = f'{side}_{finger}_finger'
             link = body(name, .09, (.044, .075, .155), (0, -direction*.024, -.080), draw=False)
@@ -128,7 +159,7 @@ def build_demo():
         body(side+'_tip', .01, (.006, .006, .006), (0, 0, 0), 'accent')
         joint(side+'_tool_fixed', side+'_hand', side+'_tip', (0, 0, -.23), kind='fixed')
     ET.indent(robot)
-    return {'robot_id': 'demo-dual-arm', 'kinematics': {'urdf_xml': ET.tostring(robot, encoding='unicode')},
+    return {'robot_id': 'demo-dual-rm75', 'kinematics': {'urdf_xml': ET.tostring(robot, encoding='unicode')},
             'dynamics': {'joints': drives}}
 
 

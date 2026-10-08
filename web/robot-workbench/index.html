@@ -8,8 +8,8 @@
 <div class="parameter-fields">
 <h2>模型与参数</h2><p class="muted">导入模型，在三维视图中检查调整。</p>
 <label class="file">导入 URDF / 完整配置<input id="import" type="file" accept=".urdf,.xml,.json"></label>
-<button id="example">加载移动双臂示例</button><p class="note">传感器式头部 · 双指夹爪 · 腰部俯仰<br>四轮底盘 · 合成教学模型，参数需按实机标定。</p>
-<label>机器人编号<input id="robot-id" value="demo-dual-arm" maxlength="64"></label>
+<button id="example">加载双七轴移动机器人</button><p class="note">双臂各7轴 + 腰部pitch = 15个主体关节<br>RM75-B关节结构；机身、夹爪与驱动参数待标定。</p>
+<label>机器人编号<input id="robot-id" value="demo-dual-rm75" maxlength="64"></label>
 <div class="tabs"><button id="joint-tab" aria-pressed="true">关节</button><button id="link-tab" aria-pressed="false">连杆</button></div>
 <label>选择部件<select id="part" aria-label="选择部件"></select></label>
 <div id="editor"></div>
@@ -27,8 +27,17 @@
 </section>
 <aside class="actions">
 <section class="emergency-controls" aria-label="软件急停">
-<button id="emergency-stop" class="emergency-stop">急停 <small>ESC</small></button>
-<div class="emergency-row"><span id="emergency-state" role="status">电脑端软件急停 · 真机未连接</span><button id="reset-stop" disabled>解除</button></div>
+<div class="emergency-buttons"><button id="emergency-stop" class="emergency-stop">急停 <small>ESC</small></button><button id="reset-stop" aria-describedby="reset-stop-note" disabled>复位</button></div>
+<div class="emergency-row"><span id="emergency-state" role="status">电脑端软件急停 · 真机未连接</span></div>
+<p id="reset-stop-note" class="note">复位只解除急停，不归零、不自动继续运动。</p>
+</section>
+<section class="chassis-controls" aria-label="底盘行走测试">
+<h2>四轮底盘试跑</h2><p id="chassis-info" class="note">等待底盘配置</p>
+<div class="fields base-fields"><label>峰值速度 / m/s<input id="drive-linear" type="number" min="0.01" max="0.5" step="0.01" value="0.15"></label><label>峰值转速 / °/s<input id="drive-angular" type="number" min="1" max="45" step="1" value="20"></label><label>时长 / 秒<input id="drive-duration" type="number" min="0.5" max="10" step="0.5" value="3"></label></div>
+<div class="sine-buttons"><button data-drive="forward" data-motion>前进</button><button data-drive="backward" data-motion>后退</button><button data-drive="left" data-motion>左转</button><button data-drive="right" data-motion>右转</button></div>
+<button id="chassis-stop">停车</button>
+<div id="wheel-speeds" class="wheel-speeds" aria-label="四轮转速"></div>
+<p class="note">每次试跑平滑起停，到时自动停车；轮速为预览计算值。</p>
 </section>
 <section class="motion-controls" aria-label="关节运动控制">
 <h2>单关节点动</h2>
@@ -37,7 +46,7 @@
 <h2 class="sine-title">正弦运动</h2>
 <div class="fields sine-fields"><label>振幅 / °<input id="sine-amplitude" type="number" min="0.1" max="90" step="0.1" value="5"></label><label>周期 / 秒<input id="sine-period" type="number" min="0.5" max="30" step="0.5" value="4"></label><label>周期数<input id="sine-cycles" type="number" min="1" max="10" step="1" value="2"></label></div>
 <div class="sine-buttons"><button data-sine="left" data-motion>左臂正弦</button><button data-sine="right" data-motion>右臂正弦</button><button data-sine="both" data-motion>双臂正弦</button><button data-sine="all" data-motion>全身正弦</button></div>
-<p id="sine-info" class="note">围绕当前姿态往复，完成后回到起点。</p>
+<p id="sine-info" class="note">全身仅控制主体关节；夹爪和轮轴单独控制。</p>
 <button id="stop" disabled>停止当前运动</button>
 <progress id="progress" max="1" value="0" aria-label="试运行进度"></progress>
 <p id="status" role="status" aria-live="polite">正在加载示例</p>
@@ -55,7 +64,7 @@
 <label>X / m<input id="base-x" type="number" min="-5" max="5" step="0.1" value="0" aria-label="底盘 X"></label>
 <label>Y / m<input id="base-y" type="number" min="-5" max="5" step="0.1" value="0" aria-label="底盘 Y"></label>
 <label>转向 / °<input id="base-yaw" type="number" min="-360" max="360" step="5" value="0" aria-label="底盘转向"></label>
-</div><p class="note">世界坐标位姿预览，不计算轮速和导航。</p>
+</div><p class="note">这里直接预览位姿；轮子与行走联动请用上方“四轮底盘试跑”。</p>
 <button id="reset-pose">姿态归零</button>
 </section></details><hr>
 <h2>试运行</h2><p class="muted">从零位（按限位约束）运动到当前目标姿态。</p>

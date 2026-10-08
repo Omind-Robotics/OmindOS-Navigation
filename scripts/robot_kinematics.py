@@ -135,9 +135,63 @@ def build_model(xml):
             raise ValueError("disconnected or cyclic URDF")
         ordered.extend(batch)
         reached.update(j["child"] for j in batch)
-    return {"name": root.get("name", "robot"), "root": base, "links": list(links.values()),
-            "joints": ordered, "warnings": list(dict.fromkeys(warnings)),
-            "scope": "kinematics_and_static_gravity"}
+    model = {"name": root.get("name", "robot"), "root": base, "links": list(links.values()),
+             "joints": ordered, "warnings": list(dict.fromkeys(warnings)),
+             "scope": "kinematics_and_static_gravity"}
+    model['wheel_base'] = wheel_base_model(root, model)
+    return model
+
+
+def wheel_base_model(root, model):
+    """Opt-in four-wheel differential reference; never infer a customer's drive type.
+
+    Wheel radius comes from the first (tire) cylinder visual. Track comes from
+    joint origins. Joint-axis sign is distinct from motor/gearbox direction.
+    """
+    declarations = root.findall('omindos_base')
+    if not declarations:
+        return None
+    roles = ('left_front', 'right_front', 'left_rear', 'right_rear')
+    config = declarations[0]
+    if (len(declarations) != 1 or len(config) or set(config.attrib) != {'type', *roles}
+            or config.get('type') != 'four_wheel_differential'):
+        raise ValueError('底盘联动仅支持显式配置的四轮差速参考模型。')
+    names = [config.get(role) for role in roles]
+    if len(set(names)) != 4:
+        raise ValueError('底盘需要四个不同的轮轴。')
+    joints = {j['name']: j for j in model['joints']}
+    links = {link['name']: link for link in model['links']}
+    wheels = {}
+    for role, name in zip(roles, names):
+        j = joints.get(name)
+        if j is None or j['type'] != 'continuous' or j['parent'] != model['root']:
+            raise ValueError('底盘轮轴必须是直接连接根连杆的 continuous 关节。')
+        axis = transform(j['origin'], j['axis'], True)
+        norm = math.hypot(*axis)
+        axis = [v/norm for v in axis]
+        if abs(axis[0]) > 1e-7 or abs(axis[2]) > 1e-7:
+            raise ValueError('四轮差速参考模型的轮轴必须平行于底盘 Y 轴。')
+        visuals = links[j['child']]['visuals']
+        tire = visuals[0] if visuals else None
+        if tire is None or tire['type'] != 'cylinder':
+            raise ValueError('轮连杆的第一个外形必须是轮胎圆柱。')
+        tire_axis = transform(j['origin'], transform(tire['transform'], [0, 0, 1], True), True)
+        if abs(abs(sum(a*b for a, b in zip(axis, tire_axis)))-1) > 1e-7:
+            raise ValueError('轮胎圆柱必须与轮轴同轴。')
+        if any(abs(tire['transform'][i][3]) > 1e-7 for i in range(3)):
+            raise ValueError('轮胎圆柱中心必须位于轮轴原点。')
+        y = j['origin'][1][3]
+        if (role.startswith('left') and y <= 0) or (role.startswith('right') and y >= 0):
+            raise ValueError('左轮须位于底盘 +Y，右轮须位于 -Y。')
+        wheels[name] = {'role': role, 'radius_m': tire['radius'], 'y_m': y,
+                        'axis_sign': 1 if axis[1] > 0 else -1}
+    left_y = wheels[names[0]]['y_m']
+    right_y = wheels[names[1]]['y_m']
+    if (abs(left_y + right_y) > 1e-7 or abs(wheels[names[2]]['y_m']-left_y) > 1e-7
+            or abs(wheels[names[3]]['y_m']-right_y) > 1e-7):
+        raise ValueError('四轮差速参考模型要求左右对称，且同侧前后轮的 Y 坐标相同。')
+    return {'type': 'four_wheel_differential', 'track_width_m': left_y-right_y,
+            'wheels': wheels, 'reference_only': True}
 
 
 def positions(model, values):
@@ -320,3 +374,71 @@ def sine_trial(payload):
             'peak_joint_velocity_rad_s': {n: 2*math.pi*actual.get(n, 0)/period for n in start},
             'scope': 'joint_sine_kinematics_and_static_gravity', 'runtime_applied': False, 'hardware_validated': False,
             'limitations': ['正弦仅作用于选定旋转关节，底盘平面位姿保持不变。', '没有碰撞、接触或动力学求解；起止速度未做真机控制整形。']}
+
+
+def wheel_trial(payload):
+    """A finite, smoothly started/stopped wheel-speed pulse and exact SE(2) odometry.
+
+    Differential-drive relations follow ros2_control diff_drive_controller:
+    left=(v-w*track/2)/r, right=(v+w*track/2)/r. No contact/friction solver.
+    """
+    if not isinstance(payload, dict) or set(payload) - {'profile', 'start', 'base_pose', 'linear_m_s', 'angular_rad_s', 'duration_s'}:
+        raise ValueError('expected profile, start, base_pose, linear_m_s, angular_rad_s and duration_s')
+    profile = payload.get('profile')
+    validate_parameters(profile)
+    model = build_model(profile['kinematics']['urdf_xml'])
+    chassis = model['wheel_base']
+    if chassis is None:
+        raise ValueError('当前模型未配置底盘轮型与四轮映射，不能试跑。')
+    start = positions(model, payload.get('start', {}))
+    base = base_position(payload.get('base_pose'))
+    linear = number(payload.get('linear_m_s', 0), 'linear_m_s')
+    angular = number(payload.get('angular_rad_s', 0), 'angular_rad_s')
+    duration = number(payload.get('duration_s', 3), 'duration_s')
+    if not .5 <= duration <= 10 or abs(linear) > .5 or abs(angular) > .8:
+        raise ValueError('底盘预览限定 0.5–10 秒、线速度 ±0.5 m/s、角速度 ±0.8 rad/s。')
+    drives = profile['dynamics']['joints']
+    rates = {n: (linear-angular*w['y_m'])/w['radius_m']*w['axis_sign']
+             for n, w in chassis['wheels'].items()}
+    for name, rate in rates.items():
+        if abs(rate) > drives[name]['velocity_limit_rad_s'] + 1e-10:
+            raise ValueError(name + ': wheel velocity exceeds drive limit；请降低底盘速度。')
+    # Recover body velocity from the four wheel rates, averaging each side.
+    side_speed = {side: sum(rates[n]*w['radius_m']*w['axis_sign']
+                           for n, w in chassis['wheels'].items() if w['role'].startswith(side))/2
+                  for side in ('left', 'right')}
+    v = (side_speed['right']+side_speed['left'])/2
+    omega = (side_speed['right']-side_speed['left'])/chassis['track_width_m']
+    count = math.ceil(duration*30/2)*2 + 1  # include the exact peak-speed sample
+    frames, peaks = [], {n: 0.0 for n in start}
+    for i in range(count):
+        u = i/(count-1)
+        gain = (1-math.cos(2*math.pi*u))/2
+        elapsed = duration*(u/2-math.sin(2*math.pi*u)/(4*math.pi))
+        if i in (0, count-1):
+            gain, elapsed = 0.0, duration*u/2
+        q = {n: q0+rates.get(n, 0)*elapsed for n, q0 in start.items()}
+        theta = omega*elapsed
+        half = theta/2
+        length = v*elapsed*(math.sin(half)/half if abs(half) > 1e-10 else 1.0)
+        current_base = {'x_m': base['x_m']+length*math.cos(base['yaw_rad']+half),
+                        'y_m': base['y_m']+length*math.sin(base['yaw_rad']+half),
+                        'yaw_rad': (base['yaw_rad']+theta+math.pi) % (2*math.pi)-math.pi}
+        if i == 0:
+            current_base = base.copy()
+        frame = pose(model, q, current_base)
+        frame.update(time_s=duration*u, wheel_velocity_rad_s={n: rate*gain for n, rate in rates.items()},
+                     base_velocity={'linear_m_s': v*gain, 'angular_rad_s': omega*gain},
+                     motor_positions_rad={n: (q[n]-drives[n]['zero_offset_rad'])*drives[n]['reduction_ratio']/drives[n]['direction'] for n in q})
+        for name, torque in frame['holding_torque_nm'].items():
+            peaks[name] = max(peaks[name], abs(torque))
+        frames.append(frame)
+    return {'model': model, 'frames': frames, 'duration_s': duration, 'motion_type': 'wheel_base',
+            'peak_joint_velocity_rad_s': {n: abs(rates.get(n, 0)) for n in start},
+            'peak_base_velocity': {'linear_m_s': abs(v), 'angular_rad_s': abs(omega)},
+            'peak_holding_torque_nm': peaks,
+            'gravity_limit_exceeded': [n for n in peaks if peaks[n] > drives[n]['torque_limit_nm']],
+            'scope': 'four_wheel_differential_reference_kinematics',
+            'runtime_applied': False, 'hardware_validated': False,
+            'limitations': ['四轮差速参考模型；不代表实机轮型，无侧移。',
+                            '不计算侧向滑移、轮地接触、牵引力、碰撞、平衡或导航。']}

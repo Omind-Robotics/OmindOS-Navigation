@@ -8,10 +8,11 @@ import threading
 import unittest
 import urllib.request
 import urllib.error
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from robot_kinematics import build_model, pose, trial, transform, jog_trial, sine_trial
+from robot_kinematics import build_model, pose, trial, transform, jog_trial, sine_trial, wheel_trial
 from robot_parameter_api import validate_parameters
 from robot_workbench import ThreadingHTTPServer, make_handler
 from workbench_state import WorkbenchState, MotionLocked
@@ -83,9 +84,31 @@ class KinematicsTests(unittest.TestCase):
     def test_demo_configuration_is_valid_and_full_trial_runs(self):
         data = json.loads((ROOT/'config/robot_profiles/workbench-demo.json').read_text())
         validate_parameters(data)
-        result = trial({'profile':data,'target':{'left_shoulder':-.5,'left_elbow':-.7},'duration_s':2})
-        self.assertEqual(len(result['model']['links']), 20)
-        self.assertEqual(len(result['frames'][-1]['positions']), 16)
+        result = trial({'profile':data,'target':{'left_joint_1':-.5,'left_joint_2':-.7},'duration_s':2})
+        self.assertEqual(len(result['model']['links']), 32)
+        self.assertEqual(len(result['frames'][-1]['positions']), 23)
+
+    def test_each_rm75_chain_preserves_seven_manufacturer_axes_and_inertias(self):
+        source = ET.parse(ROOT/'config/robot_models/realman_rm75/RM75-B.urdf').getroot()
+        demo = ET.fromstring(json.loads((ROOT/'config/robot_profiles/workbench-demo.json').read_text())['kinematics']['urdf_xml'])
+        for side in ('left', 'right'):
+            arm = [j for j in demo.findall('joint') if j.get('name').startswith(side+'_joint_')]
+            self.assertEqual(len(arm), 7)
+            for i in range(1, 8):
+                original = source.find(f"joint[@name='joint_{i}']")
+                actual = demo.find(f"joint[@name='{side}_joint_{i}']")
+                for tag in ('origin', 'axis', 'limit'):
+                    self.assertEqual(actual.find(tag).attrib, original.find(tag).attrib)
+                for tag in ('parent', 'child'):
+                    self.assertEqual(actual.find(tag).get('link'), side+'_'+original.find(tag).get('link'))
+                actual_link = demo.find(f"link[@name='{side}_link_{i}']")
+                original_link = source.find(f"link[@name='link_{i}']")
+                for tag in ('mass', 'inertia', 'origin'):
+                    self.assertEqual(actual_link.find('inertial/'+tag).attrib, original_link.find('inertial/'+tag).attrib)
+        body = [j for j in demo.findall('joint') if j.get('type') != 'fixed' and ('_joint_' in j.get('name') or j.get('name') == 'waist_pitch')]
+        self.assertEqual(len(body), 15)
+        self.assertIsNone(demo.find("joint[@name='waist']"))
+        self.assertEqual(demo.find("joint[@name='head_mount']").get('type'), 'fixed')
 
     def test_planar_base_transforms_entire_tree_without_changing_gravity(self):
         model = build_model(fixture()['kinematics']['urdf_xml'])
@@ -194,12 +217,12 @@ class MotionControlsTests(unittest.TestCase):
 
     def test_sine_holds_unselected_joints_and_clamps_amplitude_at_limits(self):
         data = json.loads((ROOT/'config/robot_profiles/workbench-demo.json').read_text())
-        result = sine_trial({'profile':data,'start':{'left_elbow':2.59,'right_elbow':.3},'joints':['left_elbow'],'amplitude_deg':5,'period_s':2,'cycles':1})
-        self.assertEqual(result['amplitude_limited_joints'], ['left_elbow'])
-        self.assertAlmostEqual(result['actual_amplitude_deg']['left_elbow'], math.degrees(.01))
+        result = sine_trial({'profile':data,'start':{'left_joint_2':2.2589,'right_joint_2':.3},'joints':['left_joint_2'],'amplitude_deg':5,'period_s':2,'cycles':1})
+        self.assertEqual(result['amplitude_limited_joints'], ['left_joint_2'])
+        self.assertAlmostEqual(result['actual_amplitude_deg']['left_joint_2'], math.degrees(.01))
         for frame in result['frames']:
-            self.assertLessEqual(frame['positions']['left_elbow'],2.6)
-            self.assertEqual(frame['positions']['right_elbow'],.3)
+            self.assertLessEqual(frame['positions']['left_joint_2'],2.2689)
+            self.assertEqual(frame['positions']['right_joint_2'],.3)
             self.assertEqual(frame['base_pose'], {'x_m':0,'y_m':0,'yaw_rad':0})
 
     def test_sine_rejects_bad_groups_parameters_and_excess_speed(self):
@@ -254,13 +277,89 @@ class MotionControlsTests(unittest.TestCase):
                     code,state=request('/v1/workbench-stop',{'engaged':True});self.assertEqual(code,200)
                     release.set();pending.join(5)
                 self.assertEqual(response[0][0],423)
-                for route in ('/v1/robot-preview','/v1/robot-jog','/v1/robot-sine'):
+                for route in ('/v1/robot-preview','/v1/robot-jog','/v1/robot-sine','/v1/robot-wheel-base'):
                     self.assertEqual(request(route,{})[0],423)
                 self.assertTrue(request('/v1/workbench-active-profile')[1]['emergency_stop'])
                 self.assertEqual(request('/v1/workbench-stop',{'engaged':False,'expected_epoch':state['motion_epoch']})[0],200)
                 self.assertEqual(request('/v1/robot-jog',{'joint':'hinge','direction':1})[0],200)
             finally:
                 release.set();server.shutdown();runner.join(5);server.server_close()
+
+
+class WheelBaseTests(unittest.TestCase):
+    def setUp(self):
+        self.data = json.loads((ROOT/'config/robot_profiles/workbench-demo.json').read_text())
+
+    def run_drive(self, **kwargs):
+        return wheel_trial({'profile': self.data, 'duration_s': 2, **kwargs})
+
+    def test_straight_motion_matches_wheel_circumference_and_starts_stops_at_rest(self):
+        for speed in (.2, -.2):
+            result = self.run_drive(linear_m_s=speed, start={'left_joint_2': .3})
+            end = result['frames'][-1]
+            self.assertAlmostEqual(end['base_pose']['x_m'], speed)
+            self.assertAlmostEqual(end['base_pose']['y_m'], 0)
+            for name in result['model']['wheel_base']['wheels']:
+                self.assertAlmostEqual(end['positions'][name], speed/.1)
+                self.assertEqual(result['frames'][0]['wheel_velocity_rad_s'][name], 0)
+                self.assertEqual(end['wheel_velocity_rad_s'][name], 0)
+            for frame in result['frames']:
+                self.assertEqual(frame['positions']['left_joint_2'], .3)
+            self.assertAlmostEqual(result['peak_base_velocity']['linear_m_s'], abs(speed))
+
+    def test_turning_signs_track_width_and_nonzero_start_pose(self):
+        for omega in (.4, -.4):
+            result = self.run_drive(angular_rad_s=omega, base_pose={'x_m': .3, 'y_m': -.4, 'yaw_rad': .2})
+            end = result['frames'][-1]
+            self.assertEqual(end['base_pose']['x_m'], .3)
+            self.assertEqual(end['base_pose']['y_m'], -.4)
+            self.assertAlmostEqual(end['base_pose']['yaw_rad'], .2+omega)
+            self.assertAlmostEqual(end['positions']['left_front_wheel_joint'], -omega*.295/.1)
+            self.assertAlmostEqual(end['positions']['right_rear_wheel_joint'], omega*.295/.1)
+
+    def test_arc_odometry_and_heading_are_not_world_axis_translation(self):
+        end = self.run_drive(linear_m_s=.2, angular_rad_s=.4)['frames'][-1]
+        self.assertAlmostEqual(end['base_pose']['x_m'], .5*math.sin(.4))
+        self.assertAlmostEqual(end['base_pose']['y_m'], .5*(1-math.cos(.4)))
+        end = self.run_drive(linear_m_s=.2, base_pose={'yaw_rad': math.pi/2})['frames'][-1]
+        self.assertAlmostEqual(end['base_pose']['x_m'], 0)
+        self.assertAlmostEqual(end['base_pose']['y_m'], .2)
+
+    def test_changed_radius_track_and_axis_sign_change_wheel_rates(self):
+        root = ET.fromstring(self.data['kinematics']['urdf_xml'])
+        root.find("link[@name='left_front_wheel']/visual/geometry/cylinder").set('radius', '.05')
+        root.find("joint[@name='right_front_wheel_joint']/axis").set('xyz', '0 -1 0')
+        for j in root.findall('joint'):
+            if '_wheel_joint' in j.get('name'):
+                xyz = j.find('origin').get('xyz').split();xyz[1] = '.4' if j.get('name').startswith('left') else '-.4'
+                j.find('origin').set('xyz', ' '.join(xyz))
+        self.data['kinematics']['urdf_xml'] = ET.tostring(root, encoding='unicode')
+        end = self.run_drive(linear_m_s=.1, angular_rad_s=.25)['frames'][-1]
+        self.assertAlmostEqual(end['positions']['left_front_wheel_joint'], 0)
+        self.assertAlmostEqual(end['positions']['right_front_wheel_joint'], -2)
+        self.assertAlmostEqual(end['positions']['right_rear_wheel_joint'], 2)
+        straight = self.run_drive(linear_m_s=.1)['frames'][-1]
+        self.assertAlmostEqual(straight['positions']['left_front_wheel_joint'], 2)
+
+    def test_limits_and_unsupported_base_rejected_before_playback(self):
+        for extra in ({'linear_m_s': .6}, {'angular_rad_s': .9}, {'duration_s': .1},
+                      {'duration_s': 11}, {'linear_m_s': float('nan')},
+                      {'linear_m_s': .5, 'angular_rad_s': .8},
+                      {'linear_m_s': .2, 'base_pose': {'x_m': 4.99}}):
+            with self.subTest(extra=extra), self.assertRaises(ValueError):
+                self.run_drive(**extra)
+        with self.assertRaisesRegex(ValueError, '未配置'):
+            wheel_trial({'profile': fixture()})
+        root = ET.fromstring(self.data['kinematics']['urdf_xml'])
+        root.find('omindos_base').set('type', 'mecanum')
+        with self.assertRaises(ValueError):
+            build_model(ET.tostring(root, encoding='unicode'))
+
+    def test_wheel_configuration_is_preserved_on_apply_and_restart(self):
+        with tempfile.TemporaryDirectory() as folder:
+            state = WorkbenchState(folder);state.apply(self.data)
+            restored = WorkbenchState(folder).active_profile()
+            self.assertEqual(wheel_trial({'profile': restored, 'linear_m_s': .1})['model']['wheel_base']['track_width_m'], .59)
 
 
 if __name__=='__main__':

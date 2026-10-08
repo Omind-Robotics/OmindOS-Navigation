@@ -35,6 +35,7 @@ async function api(path, data) {
 function stop(message) {
   motionTicket++;
   cancelAnimationFrame(animation); animation = null; $('stop').disabled = true;
+  updateWheelSpeeds();
   if (message) status(message);
 }
 function edited({refresh = true, config = true} = {}) {
@@ -50,7 +51,7 @@ async function refreshModel(fit = false) {
     if (rev !== revision) return;
     model = result.model; currentPose = result.pose; targets = {...result.pose.positions}; readyRevision = rev;
     $('model-name').textContent = model.name;
-    $('model-info').textContent = `${model.links.length} 个连杆 · ${Object.keys(targets).length} 个活动关节`;
+    updateModelInfo();
     $('warnings').textContent = model.warnings.join('；');
     syncQuickControls();
     if (fit) fitView(); draw();
@@ -73,7 +74,7 @@ async function importProfile(data, fromUrdf = false) {
   document.querySelectorAll('.base-fields input').forEach(input=>input.removeAttribute('aria-invalid'));
   $('robot-id').value = candidate.robot_id || ''; $('xml').value = candidate.kinematics.urdf_xml;
   $('dirty').textContent = '未保存'; $('model-name').textContent = model.name;
-  $('model-info').textContent = `${model.links.length} 个连杆 · ${Object.keys(targets).length} 个活动关节`;
+  updateModelInfo();
   $('warnings').textContent = model.warnings.join('；'); $('results').replaceChildren(); $('progress').value = 0;
   $('profile-id').value='';$('saved').textContent='参数保存在本机服务目录；旧版本保留。';
   $('apply-note').textContent='当前编辑配置尚未写入程序，点击写入后生效。';
@@ -101,10 +102,31 @@ function syncQuickControls() {
   syncJogControls(); updateMotionControls();
 }
 function armJoints(side){return (model?.joints||[]).filter(j=>j.type!=='fixed' && j.name.startsWith(side+'_') && !/wheel|finger|gripper|hand|waist|neck|head/i.test(j.name)).map(j=>j.name);}
+function jointGroups(){
+  const names=(model?.joints||[]).filter(j=>j.type!=='fixed').map(j=>j.name);
+  return {body:names.filter(n=>!/wheel|finger|gripper/i.test(n)),grippers:names.filter(n=>/finger|gripper/i.test(n)),wheels:names.filter(n=>/wheel/i.test(n))};
+}
+function updateModelInfo(){
+  const groups=jointGroups(),left=armJoints('left').length,right=armJoints('right').length;
+  $('model-info').textContent=`${groups.body.length} 个主体关节`+(left||right?` · 左臂 ${left} / 右臂 ${right}`:'')+(groups.grippers.length||groups.wheels.length?' · 夹爪与轮轴另列':'');
+  const base=model?.wheel_base;
+  $('chassis-info').textContent=base?`四轮差速参考模型 · 轮距 ${base.track_width_m.toFixed(3)} m · 实机轮型待确认`:'当前模型未配置四轮底盘，试跑不可用。';
+  updateWheelSpeeds();
+}
+function jointLabel(name){const wheel=name.match(/^(left|right)_(front|rear)_wheel_joint$/);if(wheel)return `${wheel[1]==='left'?'左':'右'}${wheel[2]==='front'?'前':'后'}轮`;const m=name.match(/^(left|right)_joint_(\d+)$/);return m?`${m[1]==='left'?'左臂':'右臂'} J${m[2]}`:name==='waist_pitch'?'腰部 pitch':name;}
+function updateWheelSpeeds(rates={}){
+  $('wheel-speeds').replaceChildren(...Object.keys(model?.wheel_base?.wheels||{}).map(name=>{
+    const row=document.createElement('div');row.className='metric';const label=document.createElement('span'),value=document.createElement('output');
+    label.textContent=jointLabel(name);value.dataset.wheel=name;value.textContent=((rates[name]||0)*30/Math.PI).toFixed(2)+' rpm';row.append(label,value);return row;
+  }));
+}
 function syncJogControls(){
-  const select=$('jog-joint'), names=(model?.joints||[]).filter(j=>j.type!=='fixed').map(j=>j.name);
+  const select=$('jog-joint'), groups=jointGroups(),names=Object.values(groups).flat();
   if([...select.options].map(o=>o.value).join('|')!==names.join('|')){
-    const previous=select.value;select.replaceChildren(...names.map(name=>{const option=document.createElement('option');option.value=name;option.textContent=name;return option;}));
+    const previous=select.value;select.replaceChildren(...Object.entries(groups).filter(([,items])=>items.length).map(([key,items])=>{
+      const group=document.createElement('optgroup');group.label={body:'主体关节',grippers:'夹爪',wheels:'底盘轮轴'}[key];
+      for(const name of items){const option=document.createElement('option');option.value=name;option.textContent=jointLabel(name);group.append(option);}return group;
+    }));
     if(names.includes(previous))select.value=previous;
   }
   updateJogAngle();
@@ -119,8 +141,9 @@ function updateMotionControls(){
     if(group==='left'||group==='right')button.disabled=locked||!armJoints(group).length;
     if(group==='both')button.disabled=locked||!armJoints('left').length||!armJoints('right').length;
   }
+  document.querySelectorAll('[data-drive]').forEach(button=>button.disabled=locked||!model?.wheel_base);
   $('reset-stop').disabled=!emergencyStop||safetyPending;
-  $('emergency-state').textContent=emergencyStop?'已急停 · 运动锁定，需手动解除':'电脑端软件急停 · 真机未连接';
+  $('emergency-state').textContent=emergencyStop?'已急停 · 运动锁定，需手动复位':'电脑端软件急停 · 真机未连接';
 }
 function freezePose(){
   if(!currentPose)return;targets={...currentPose.positions};baseTarget={...currentPose.base_pose};syncQuickControls();
@@ -142,7 +165,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();
 $('reset-stop').onclick=async()=>{
   if(safetyPending)return;const request=++safetyRequest;safetyPending=true;updateMotionControls();
   try{const state=await api('/v1/workbench-stop',{engaged:false,expected_epoch:motionEpoch});
-    if(request!==safetyRequest)return;motionEpoch=state.motion_epoch;emergencyStop=false;status('急停已解除 · 请重新选择并启动运动');
+    if(request!==safetyRequest)return;motionEpoch=state.motion_epoch;emergencyStop=false;status('已复位 · 急停已解除，请重新选择并启动运动');
   }catch(e){if(request===safetyRequest)status(e.message,true);}
   finally{if(request===safetyRequest){safetyPending=false;updateMotionControls();}}
 };
@@ -153,7 +176,7 @@ async function pollSafety(){
       if(state.emergency_stop&&!emergencyStop)latchStop('服务已急停 · 运动已锁定');
       else if(changed && !emergencyStop){stop();freezePose();status('程序状态已改变 · 本次运动已停止');}
     }
-  }catch(e){if(!emergencyStop)latchStop('服务连接中断 · 运动已停止，恢复后请手动解除');}
+  }catch(e){if(!emergencyStop)latchStop('服务连接中断 · 运动已停止，恢复后请手动复位');}
   finally{setTimeout(pollSafety,750);}
 }
 function quickJointUpdate(selected) {
@@ -204,7 +227,7 @@ function buildEditor() {
       const limit = ensure(node, 'limit'); const low = type === 'continuous' ? -Math.PI : Number(limit.getAttribute('lower'));
       const high = type === 'continuous' ? Math.PI : Number(limit.getAttribute('upper'));
       const label = document.createElement('label'); label.textContent = '目标关节角 / rad'; const out = document.createElement('output'); out.textContent = (targets[name] || 0).toFixed(3); label.append(out);
-      const slider = document.createElement('input'); slider.type = 'range'; slider.min = low; slider.max = high; slider.step = '0.001'; slider.value = targets[name] ?? 0; slider.setAttribute('aria-label','目标关节角');
+      const slider = document.createElement('input'); slider.type = 'range'; slider.min = low; slider.max = high; slider.step = 'any'; slider.value = targets[name] ?? 0; slider.setAttribute('aria-label','目标关节角');
       slider.addEventListener('input', () => { targets[name] = Number(slider.value); out.textContent = targets[name].toFixed(3); edited({config:false}); }); label.append(slider); $('editor').append(label);
       vectorFields($('editor'), '关节转轴', ensure(node,'axis'), 'xyz', '1 0 0');
       textBlock('关节限位（关节侧）', 'section-label');
@@ -215,8 +238,8 @@ function buildEditor() {
     textBlock('调整连接距离会改变机构运动学；几何尺寸、质心和惯量需分别核对。');
     vectorFields($('editor'), '连接坐标旋转 R/P/Y / rad', ensure(node,'origin'), 'rpy');
     if (type !== 'fixed') {
-      const dyn = ensure(node,'dynamics'); textBlock('物理阻尼与摩擦', 'section-label');
-      for (const [key,title] of [['damping','阻尼 / N·m·s/rad'],['friction','摩擦 / N·m']]) field($('editor'), title, dyn.getAttribute(key) || 0, v => dyn.setAttribute(key,v), {min:'0'});
+      const dyn = child(node,'dynamics'); textBlock('物理阻尼与摩擦', 'section-label');
+      for (const [key,title] of [['damping','阻尼 / N·m·s/rad'],['friction','摩擦 / N·m']]) field($('editor'), title, dyn?.getAttribute(key) || 0, v => ensure(node,'dynamics').setAttribute(key,v), {min:'0'});
       textBlock('电机与传动（按实际设备填写）', 'section-label');
       const drive = profile.dynamics.joints[name] || missingDrives(xml)[name];
       const setDrive = (key, value) => {drive[key] = value; profile.dynamics.joints[name] = drive;};
@@ -299,15 +322,24 @@ function report(result){
   if(result.gravity_limit_exceeded.length){const warn=document.createElement('p');warn.className='error';warn.textContent='静态重力负载超限：'+result.gravity_limit_exceeded.join('、');$('results').append(warn);}
 }
 async function guarded(fn){if(operation)return;operation=true;try{await fn();}catch(e){status(e.message,true);}finally{operation=false;}}
-async function loadExample(){await importProfile(await api('/example.json'));targets={...targets,waist_pitch:.12,left_shoulder:-.45,left_elbow:-.65,right_shoulder:-.3,right_elbow:-.75};for(const side of ['left','right'])for(const name of fingerNames(side))targets[name]=side==='left'?.4:.23;mode='joint';rebuildParts('waist_pitch');await refreshModel(true);status('教学示例已载入 · 双指夹爪、腰部俯仰、四轮底盘');}
+async function loadExample(){
+  await importProfile(await api('/example.json'));targets.waist_pitch=0;
+  for(const [side,q] of [['left',[1.57,1.30,-1.57,1.10,.10,.50,0]],['right',[-1.57,1.30,1.57,1.10,-.10,.50,0]]]){
+    q.forEach((v,i)=>targets[`${side}_joint_${i+1}`]=v);
+    for(const name of fingerNames(side))targets[name]=side==='left'?.4:.23;
+  }
+  mode='joint';rebuildParts('waist_pitch');await refreshModel(true);status('教学示例已载入 · 双臂各7轴 + 腰部pitch，夹爪与底盘独立控制');
+}
 async function motionReady(){
-  if(emergencyStop||safetyPending)throw Error('急停锁定中，请先手动解除。');
+  if(emergencyStop||safetyPending)throw Error('急停锁定中，请先手动复位。');
   if(animation){stop();freezePose();}
+  const ticket=motionTicket;
   clearTimeout(timer);if(readyRevision!==revision)await refreshModel(false);if(readyRevision!==revision)throw Error('模型参数有误，请先修正。');
-  if(emergencyStop||safetyPending)throw Error('急停锁定中，请先手动解除。');
+  if(ticket!==motionTicket)throw Error('运动已取消，请重新选择并启动。');
+  if(emergencyStop||safetyPending)throw Error('急停锁定中，请先手动复位。');
 }
 async function executeMotion(path,data,label){
-  stop();const rev=revision,ticket=motionTicket;status('正在计算运动轨迹和重力负载…');
+  stop();$('progress').value=0;const rev=revision,ticket=motionTicket;status('正在计算运动轨迹和重力负载…');
   const result=await api(path,data);
   if(rev!==revision||ticket!==motionTicket||emergencyStop||safetyPending||result.motion_epoch<motionEpoch)return;
   motionEpoch=result.motion_epoch;latestTrial=result;report(result);model=result.model;
@@ -321,20 +353,29 @@ async function executeMotion(path,data,label){
     if(ticket!==motionTicket||emergencyStop)return;
     // A frame timestamp can precede performance.now() when scheduled in the same frame.
     const elapsed=Math.max(0,(now-start)/1000),index=Math.min(result.frames.length-1,Math.floor(elapsed/result.duration_s*(result.frames.length-1)));
-    currentPose=result.frames[index];$('progress').value=Math.min(1,elapsed/result.duration_s);updateJogAngle();draw();
+    currentPose=result.frames[index];$('progress').value=Math.min(1,elapsed/result.duration_s);updateJogAngle();updateWheelSpeeds(currentPose.wheel_velocity_rad_s);draw();
     status(`${label} ${Math.min(elapsed,result.duration_s).toFixed(1)} / ${result.duration_s.toFixed(1)} 秒`);
     if(elapsed<result.duration_s)animation=requestAnimationFrame(tick);
     else{stop();freezePose();status(result.gravity_limit_exceeded.length?`${label}结束 · 发现静态重力负载超限`:`${label}完成 · 仅运动学预览`);}
   };animation=requestAnimationFrame(tick);
 }
 $('run').onclick=()=>guarded(async()=>{await motionReady();await executeMotion('/v1/robot-preview',{profile:payload(),target:targets,base_target:baseTarget,duration_s:numeric($('duration').value)},'运动学试运行');});
+for(const button of document.querySelectorAll('[data-drive]'))button.onclick=()=>guarded(async()=>{
+  await motionReady();
+  for(const id of ['drive-linear','drive-angular','drive-duration'])if(!$(id).checkValidity()||!$(id).value.trim())throw Error('请填写有效的底盘速度和试跑时长。');
+  const action=button.dataset.drive,linear=numeric($('drive-linear').value),angular=numeric($('drive-angular').value)*Math.PI/180;
+  await executeMotion('/v1/robot-wheel-base',{profile:payload(),start:currentPose.positions,base_pose:currentPose.base_pose,
+    linear_m_s:action==='forward'?linear:action==='backward'?-linear:0,
+    angular_rad_s:action==='left'?angular:action==='right'?-angular:0,duration_s:numeric($('drive-duration').value)},'底盘'+button.textContent);
+});
+$('chassis-stop').onclick=()=>{stop('已停车 · 保持当前位置和轮轴角度');freezePose();};
 $('jog-joint').onchange=()=>{mode='joint';rebuildParts($('jog-joint').value);draw();};
 for(const [id,direction] of [['jog-minus',-1],['jog-plus',1]])$(id).onclick=()=>guarded(async()=>{
   await motionReady();await executeMotion('/v1/robot-jog',{profile:payload(),start:currentPose.positions,joint:$('jog-joint').value,direction,base_pose:currentPose.base_pose},'单关节点动');
 });
 for(const button of document.querySelectorAll('[data-sine]'))button.onclick=()=>guarded(async()=>{
   await motionReady();const group=button.dataset.sine;
-  const joints=group==='all'?model.joints.filter(j=>j.type!=='fixed').map(j=>j.name):group==='both'?[...armJoints('left'),...armJoints('right')]:armJoints(group);
+  const joints=group==='all'?jointGroups().body:group==='both'?[...armJoints('left'),...armJoints('right')]:armJoints(group);
   await executeMotion('/v1/robot-sine',{profile:payload(),start:currentPose.positions,joints,amplitude_deg:numeric($('sine-amplitude').value),period_s:numeric($('sine-period').value),cycles:numeric($('sine-cycles').value),base_pose:currentPose.base_pose},button.textContent);
 });
 $('stop').onclick=()=>{stop('已停止预览 · 未发送真机指令');freezePose();};
@@ -366,6 +407,6 @@ guarded(async()=>{
   const saved=await api('/v1/workbench-active-profile');motionEpoch=saved.motion_epoch;
   if(saved.profile){await importProfile(saved.profile);$('profile-id').value=saved.active_profile_id;$('dirty').textContent='程序当前配置';$('apply-note').textContent='已加载上次写入程序的配置';status('已加载程序当前配置 · 可开始调试');}
   else await loadExample();
-  if(saved.emergency_stop)latchStop('服务已急停 · 请手动解除后再运动');
+  if(saved.emergency_stop)latchStop('服务已急停 · 请手动复位后再运动');
   updateMotionControls();pollSafety();
 });
