@@ -5,7 +5,7 @@ on:
     paths:
       - 'scripts/dm_mc02_protocol.py'
       - 'firmware/dm_mc02/**'
-      - 'tests/test_dm_mc02.py'
+      - 'tests/test_dm_mc02*.py'
       - 'release/control-preview/**'
       - '.github/workflows/arm64-dm-mc02.yml'
 permissions:
@@ -21,12 +21,14 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - run: python3 -m unittest discover -s tests -p test_dm_mc02.py -v
+      - run: python3 -m unittest discover -s tests -p 'test_dm_mc02*.py' -v
       - name: Compile portable core for Cortex-M7
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-arm-none-eabi
-          arm-none-eabi-gcc -std=c11 -Wall -Wextra -Werror -mcpu=cortex-m7 -mthumb -mfloat-abi=soft -ffreestanding -c firmware/dm_mc02/om_usb.c -o /tmp/om_usb.o
+          for module in om_usb om_cdc; do
+            arm-none-eabi-gcc -std=c11 -Wall -Wextra -Werror -mcpu=cortex-m7 -mthumb -mfloat-abi=soft -ffreestanding -c firmware/dm_mc02/$module.c -o /tmp/$module.o
+          done
   arm64:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
