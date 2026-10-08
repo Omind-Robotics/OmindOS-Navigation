@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "checks": {
+    "simulation_only_disarmed": true,
+    "walk_before_arm_rejected": true,
+    "explicit_arm": true,
+    "explicit_stand": true,
+    "standing_height": true,
+    "old_ros_stamp_rejected": true,
+    "explicit_walk": true,
+    "ROS_forward_motion": true,
+    "loss_of_command_balanced_hold": true,
+    "fresh_command_does_not_auto_resume": true,
+    "explicit_resume": true,
+    "operator_stop": true,
+    "estop": true,
+    "fault_latched": true,
+    "real_DDS_sensor_streams": true
+  },
+  "counts": {
+    "status": 708,
+    "joint_state": 708,
+    "imu": 708
+  },
+  "forward_displacement_m": 0.9704553210669445,
+  "minimum_upright_while_walking": 0.9854870191367049,
+  "hardware_tested": false,
+  "customer_RS04_dynamics_tested": false,
+  "scope": "ROS2_Humble_DDS_loopback_worker_pinned_MEVIUS2_MuJoCo"
+}

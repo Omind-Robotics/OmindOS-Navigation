@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "name": "RS04 mass sensitivity PD candidate",
+  "scope": "simulation_only",
+  "reference_commit": "4f09680bb575574377b903bbc971bdb2695d507b",
+  "policy_sha256": "392b4d3f30e856caedcb0ec25f125201e97b28795bc9342ee2fc1d8125656510",
+  "kp": [
+    50.0,
+    50.0,
+    50.0,
+    50.0,
+    50.0,
+    50.0,
+    50.0,
+    50.0,
+    50.0,
+    50.0,
+    50.0,
+    50.0
+  ],
+  "kd": [
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0,
+    3.0
+  ],
+  "hardware_validated": false,
+  "note": "Candidate for mass/inertia sensitivity tests, not a calibrated physical robot gain set."
+}
