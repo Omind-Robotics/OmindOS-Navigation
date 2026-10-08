@@ -22,8 +22,11 @@
 
 ## 集成顺序
 
-1. 使用上述固定工程。启用 STM32 HAL RNG 模块、提供正确 RNG 时钟和初始化句柄；
-   原 ALL 示例未提供 RNG 初始化，这一步必须单独补齐。
+1. 使用上述固定工程。它包含 HAL v1.11.1，但缺少 RNG 源文件和初始化。
+   从 STMicroelectronics/stm32h7xx-hal-driver 固定提交
+   `b716379524ba3549e4db11804889776ffeb239d1`（v1.11.1）
+   复制 Inc/Src 中 `stm32h7xx_hal_rng` 和 `stm32h7xx_hal_rng_ex` 的四个文件，
+   保留该依赖许可证，启用 HAL_RNG_MODULE_ENABLED；提供正确 RNG 时钟和初始化句柄。
 2. 把 `om_usb.c/h`、`om_cdc.c/h`、`om_stm32_usb.c/h` 加入自己的禁用运动工程，
    增加 HAL RNG 实现文件。关节参数与 digest 必须来自实际配置，不能拷贝测试夹具。
 3. USB 启动前调用 `om_stm32_usb_init(rng, digest, joints)`，失败则停止启动。
@@ -47,7 +50,8 @@ HAL 模拟覆盖成功收发、空 class、RNG 错误/全零、中断屏蔽恢�
 模拟测试不证明电气连接或真实 USB 时延。
 
 `python3 scripts/check_dm_mc02_stm32_usb.py` 在 CI 拉取固定厂商工程，
-使用真实头文件交叉编译接线层和生成的 CDC 回调文件。
+使用真实头文件及匹配的官方 HAL RNG 依赖，
+交叉编译接线层、生成的 CDC 回调与两个 RNG 实现文件。
 这是对象编译检查，不是完整链接、刷写或板卡验证。
 
 下一步仍需 RNG 时钟与板级启动工程、三路 CAN 只读接收及反馈回传，
