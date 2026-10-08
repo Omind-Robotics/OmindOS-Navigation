@@ -1,6 +1,8 @@
-# OmindOS 三维调参工作台 0.2.0-preview.4
+# OmindOS 三维调参工作台 0.2.0-preview.6
 
 电脑端预览发行版（Preview），用于调参、保存配置和运动预览。
+
+本版统一包含 PR #2 的工作台与二指夹爪、PR #3 的 ROS 2 预览界面与本机桥接、PR #6 的设备通信配置。与 preview.4 相比，桌面程序现在支持 `--runtime-url`，可连接独立运行的本机 ROS 2 预览服务。完整 ROS 2 节点未捆绑进桌面小包，使用方式与验收范围见 `ROS2.zh-CN.md`。
 
 ## 打开程序
 
@@ -37,5 +39,8 @@ DT-01 Pro 资料为双轮差速及前后脚轮；选择该设备的通信配置�
 
 `MANIFEST.json` 记录版本、文件校验摘要和构建信息；启动器会检查包完整性。命令行加 `--verify` 可单独校验并退出。`VALIDATION.json` 记录该平台可执行包的启动与接口验收结果。
 
+“ROS 2 保存并加载 / 试运行 / 停止”需要另行启动同一配置目录对应的 ROS 2 预览服务，并向工作台传入 `--runtime-url http://127.0.0.1:8086`。未配置或服务未启动时会明确显示未连接；本机调参、夹爪开合和运动学动画仍可使用。ROS 2 加载成功仅表示预览节点已加载，不表示真机驱动已接通。
+
 第三方许可证保留在 `LICENSES/` 和模型说明目录。已有导航运行包继续保留在 [0.2.0-preview.2](https://github.com/maganrobotics-boop/OmindOS-Navigation-Release/releases/tag/v0.2.0-preview.2)，本包不包含该导航 Docker 镜像。
+
 
