@@ -11,7 +11,7 @@
   };
   const controls = () => {
     $('runtime-load').disabled = busy || running;
-    $('runtime-run').disabled = busy || running || !lease;
+    $('runtime-run').disabled = busy || running || !lease || emergencyStop || safetyPending;
     $('runtime-stop').disabled = !lease;
   };
   const apply = result => {
@@ -43,6 +43,7 @@
     finally { busy = false; controls(); }
   }
   $('runtime-load').onclick = () => action(async () => {
+    if (emergencyStop || safetyPending) throw Error('急停锁定中，请先手动复位。');
     stop();
     const rev = revision;
     const registered = await api('/v1/robot-profiles',payload());
@@ -55,6 +56,7 @@
     apply(result);
   });
   $('runtime-run').onclick = () => action(async () => {
+    if (emergencyStop || safetyPending) throw Error('急停锁定中，请先手动复位。');
     stop();
     const rev = revision;
     const registered = await api('/v1/robot-profiles',payload());
@@ -70,17 +72,22 @@
     try { apply(await api('/v1/runtime/stop',{lease_token:lease})); }
     catch(e) { label(e.message,true); }
   };
-  $('run').addEventListener('click', event => {
+  document.querySelectorAll('[data-motion]').forEach(button => button.addEventListener('click', event => {
     if (running) {
       event.preventDefault(); event.stopImmediatePropagation();
       label('请先停止 ROS 2 预览，再启动本机运动学动画。',true);
     } else { showRuntimePose = false; }
-  },true);
+  },true));
+  $('emergency-stop').addEventListener('click', () => {
+    showRuntimePose = false;
+    if (lease) api('/v1/runtime/stop',{lease_token:lease}).then(apply).catch(e=>label(e.message,true));
+    controls();
+  });
   async function poll() {
     if (polling || busy) return;
     polling = true;
     try {
-      if (lease && running && revision !== boundRevision) {
+      if (lease && running && (revision !== boundRevision || emergencyStop || safetyPending)) {
         apply(await api('/v1/runtime/stop',{lease_token:lease}));
         label('参数或目标已修改，ROS 2 预览已停止。重新加载参数后可继续。');
       } else if (lease) {

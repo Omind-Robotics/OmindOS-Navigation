@@ -6,20 +6,24 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from robot_parameter_api import MAX_BYTES, ThreadingHTTPServer, make_handler as registry_handler
-from robot_kinematics import build_model, pose, trial
+from robot_kinematics import build_model, pose, trial, jog_trial, sine_trial, wheel_trial
+from workbench_state import WorkbenchState, MotionLocked
+from robot_connections import connection_catalog, validate_connections
 from robot_runtime_client import RuntimeClient
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = {"/": ("web/robot-workbench/index.html", "text/html; charset=utf-8"),
           "/workbench.js": ("web/robot-workbench/workbench.js", "text/javascript; charset=utf-8"),
           "/robot-scene.js": ("web/robot-workbench/robot-scene.js", "text/javascript; charset=utf-8"),
-          "/workbench.css": ("web/robot-workbench/workbench.css", "text/css; charset=utf-8"),
           "/runtime.js": ("web/robot-workbench/runtime.js", "text/javascript; charset=utf-8"),
+          "/workbench.css": ("web/robot-workbench/workbench.css", "text/css; charset=utf-8"),
           "/example.json": ("config/robot_profiles/workbench-demo.json", "application/json; charset=utf-8")}
 
 
 def make_handler(store_dir, runtime_url=None):
-    runtime = RuntimeClient(runtime_url) if runtime_url else None
+    runtime = WorkbenchState(store_dir)
+    ros_runtime = RuntimeClient(runtime_url) if runtime_url else None
+    ros_session = {'lease_token': None}
     class Handler(registry_handler(store_dir)):
         def end_headers(self):
             self.send_header("Cache-Control", "no-store")
@@ -40,8 +44,18 @@ def make_handler(store_dir, runtime_url=None):
             if not self.permitted():
                 return
             if self.path == '/v1/runtime/status':
-                code, body = runtime.request(self.path) if runtime else (503, {'error': 'ROS 2 preview not configured; start workbench with --runtime-url http://127.0.0.1:8086'})
+                code, body = ros_runtime.request(self.path) if ros_runtime else (503, {'error': 'ROS 2 preview not configured; use --runtime-url http://127.0.0.1:8086'})
                 return self.respond(code, body)
+            if self.path == '/v1/workbench-state':
+                return self.respond(200, runtime.snapshot())
+            if self.path == '/v1/connection-options':
+                return self.respond(200, connection_catalog())
+            if self.path == '/v1/workbench-active-profile':
+                try:
+                    with runtime.lock:
+                        return self.respond(200, {**runtime.snapshot(), 'profile': runtime.active_profile()})
+                except (ValueError, OSError):
+                    return self.respond(500, {'error': 'active workbench configuration unavailable'})
             asset = ASSETS.get(urlsplit(self.path).path)
             if asset:
                 try:
@@ -62,7 +76,8 @@ def make_handler(store_dir, runtime_url=None):
             if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
                 return self.respond(415, {"error": "Content-Type must be application/json"})
             runtime_route = self.path in ['/v1/runtime/' + op for op in ('load', 'run', 'stop', 'heartbeat')]
-            if self.path not in ("/v1/robot-model", "/v1/robot-preview") and not runtime_route:
+            if self.path not in ("/v1/robot-model", "/v1/robot-preview", '/v1/robot-jog', '/v1/robot-sine', '/v1/robot-wheel-base',
+                                 '/v1/workbench-active-profile', '/v1/workbench-stop') and not runtime_route:
                 return super().do_POST()
             try:
                 self.connection.settimeout(10)
@@ -74,16 +89,44 @@ def make_handler(store_dir, runtime_url=None):
                     raise ValueError("incomplete request")
                 payload = json.loads(raw)
                 if runtime_route:
-                    code, body = runtime.request(self.path, payload) if runtime else (503, {'error': 'ROS 2 preview is not configured'})
+                    with runtime.lock:
+                        if self.path == '/v1/runtime/run':
+                            runtime.check_motion()
+                        code, body = ros_runtime.request(self.path, payload) if ros_runtime else (503, {'error': 'ROS 2 preview is not configured'})
+                        if code == 200 and self.path == '/v1/runtime/load':
+                            ros_session['lease_token'] = body.get('lease_token')
                     return self.respond(code, body)
-                if self.path == "/v1/robot-model":
-                    if not isinstance(payload, dict) or set(payload) - {"urdf_xml", "positions"} or "urdf_xml" not in payload:
-                        raise ValueError("expected urdf_xml and optional positions")
+                if self.path == '/v1/workbench-active-profile':
+                    result = runtime.apply(payload)
+                elif self.path == '/v1/workbench-stop':
+                    with runtime.lock:
+                        result = runtime.set_stop(payload)
+                        if payload['engaged'] and ros_runtime and ros_session['lease_token']:
+                            code, body = ros_runtime.request('/v1/runtime/stop', ros_session)
+                            result['ros_preview_stop_confirmed'] = code == 200
+                            if code != 200:
+                                result['ros_preview_stop_error'] = body.get('error', 'stop not confirmed')
+                elif self.path == "/v1/robot-model":
+                    if not isinstance(payload, dict) or set(payload) - {"urdf_xml", "positions", "base_pose", "connections"} or "urdf_xml" not in payload:
+                        raise ValueError("expected urdf_xml and optional positions/base_pose")
+                    if 'connections' in payload:
+                        validate_connections(payload['connections'])
                     model = build_model(payload["urdf_xml"])
-                    result = {"model": model, "pose": pose(model, payload.get("positions", {}))}
+                    result = {"model": model, "pose": pose(model, payload.get("positions", {}), payload.get('base_pose'))}
                 else:
-                    result = trial(payload)
+                    epoch = runtime.check_motion()
+                    if isinstance(payload, dict) and 'profile' not in payload:
+                        profile = runtime.active_profile()
+                        if profile is None:
+                            raise ValueError('请先将参数写入程序，或提供完整 profile。')
+                        payload = {**payload, 'profile': profile}
+                    function = {'/v1/robot-preview': trial, '/v1/robot-jog': jog_trial, '/v1/robot-sine': sine_trial, '/v1/robot-wheel-base': wheel_trial}[self.path]
+                    result = function(payload)
+                    runtime.check_motion(epoch)
+                    result['motion_epoch'] = epoch
                 self.respond(200, result)
+            except MotionLocked as e:
+                self.respond(423, {'error': str(e), **runtime.snapshot()})
             except (ValueError, TypeError, OverflowError, RecursionError) as e:
                 self.respond(400, {"error": str(e)})
             except OSError:

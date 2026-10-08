@@ -28,7 +28,7 @@ class RuntimeTests(unittest.TestCase):
         return result
 
     def start_preview(self,duration=3):
-        target=self.core.q.copy(); target['left_elbow']=.4
+        target=self.core.q.copy(); target['left_joint_4']=.4
         return self.core.command('run',{'profile_id':self.id,'lease_token':self.token,'target':target,'duration_s':duration})
 
     def heartbeat(self):
@@ -41,10 +41,10 @@ class RuntimeTests(unittest.TestCase):
         self.start_preview()
         self.now+=1; self.heartbeat(); self.core.tick()
         result=self.core.snapshot()
-        self.assertAlmostEqual(result['pose']['positions']['left_elbow'],.4*(1/3)**2*(3-2/3))
-        drive=self.profile['dynamics']['joints']['left_elbow']
-        self.assertAlmostEqual(result['motor_positions_rad']['left_elbow'],(self.core.q['left_elbow']-drive['zero_offset_rad'])*drive['reduction_ratio']/drive['direction'])
-        self.assertNotEqual(result['pose']['joint_positions']['left_wrist'],self.load_pose()['joint_positions']['left_wrist'])
+        self.assertAlmostEqual(result['pose']['positions']['left_joint_4'],.4*(1/3)**2*(3-2/3))
+        drive=self.profile['dynamics']['joints']['left_joint_4']
+        self.assertAlmostEqual(result['motor_positions_rad']['left_joint_4'],(self.core.q['left_joint_4']-drive['zero_offset_rad'])*drive['reduction_ratio']/drive['direction'])
+        self.assertNotEqual(result['pose']['joint_positions']['left_joint_7'],self.load_pose()['joint_positions']['left_joint_7'])
         restarted=ProfileRuntime(self.folder.name)
         self.assertEqual(restarted.snapshot()['state'],'UNLOADED')
         self.assertFalse(restarted.snapshot()['runtime_applied'])
@@ -76,7 +76,7 @@ class RuntimeTests(unittest.TestCase):
         self.start_preview(2)
         for _ in range(4): self.now+=.5; self.heartbeat()
         self.assertEqual(self.core.state,'READY')
-        self.assertAlmostEqual(self.core.q['left_elbow'],.4)
+        self.assertAlmostEqual(self.core.q['left_joint_4'],.4)
         self.assertTrue(all(abs(v)<1e-12 for v in self.core.velocity.values()))
 
     def test_different_version_and_session_require_reload(self):
@@ -102,7 +102,7 @@ class RuntimeTests(unittest.TestCase):
 
     def test_target_names_and_values_validated(self):
         self.load()
-        for target in ({},{'bad_joint':0},{**self.core.q,'left_elbow':float('nan')},{**self.core.q,'left_elbow':100}):
+        for target in ({},{'bad_joint':0},{**self.core.q,'left_joint_4':float('nan')},{**self.core.q,'left_joint_4':100}):
             with self.assertRaises(ValueError):
                 self.core.command('run',{'profile_id':self.id,'lease_token':self.token,'target':target,'duration_s':2})
         self.assertEqual(self.core.state,'READY')
