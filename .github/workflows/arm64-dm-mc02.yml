@@ -34,7 +34,7 @@ jobs:
       - name: Verify final image and perform a MuJoCo step
         run: |
           mkdir -p arm64-artifact
-          docker run --rm --entrypoint /opt/omindos-runtime/bin/python -e PYTHONPATH=/opt/omindos/scripts -v "$PWD/release/control-preview/check_arm64.py:/tmp/check_arm64.py:ro" omindos/control-arm64:candidate /tmp/check_arm64.py | tee arm64-artifact/VALIDATION.json
+          docker run --rm --entrypoint /ros_entrypoint.sh -e PYTHONPATH=/opt/omindos/scripts -v "$PWD/release/control-preview/check_arm64.py:/tmp/check_arm64.py:ro" omindos/control-arm64:candidate /opt/omindos-runtime/bin/python /tmp/check_arm64.py | tee arm64-artifact/VALIDATION.json
           docker image inspect --format '{{.Id}}' omindos/control-arm64:candidate > arm64-artifact/IMAGE_ID.txt
           docker save omindos/control-arm64:candidate | gzip -1 > arm64-artifact/omindos-control-linux-arm64.image.tar.gz
           cd arm64-artifact
