@@ -82,7 +82,7 @@ class KinematicsTests(unittest.TestCase):
         data = json.loads((ROOT/'config/robot_profiles/workbench-demo.json').read_text())
         validate_parameters(data)
         result = trial({'profile':data,'target':{'left_shoulder':-.5,'left_elbow':-.7},'duration_s':2})
-        self.assertEqual(len(result['model']['links']), 19)
+        self.assertEqual(len(result['model']['links']), 20)
         self.assertEqual(len(result['frames'][-1]['positions']), 16)
 
     def test_planar_base_transforms_entire_tree_without_changing_gravity(self):
@@ -125,6 +125,7 @@ class KinematicsTests(unittest.TestCase):
         self.assertEqual(pitched['link_transforms']['base'], closed['link_transforms']['base'])
         self.assertEqual(pitched['link_transforms']['left_front_wheel'], closed['link_transforms']['left_front_wheel'])
         self.assertNotEqual(pitched['link_transforms']['left_hand'], closed['link_transforms']['left_hand'])
+        self.assertNotEqual(pitched['link_transforms']['head'], closed['link_transforms']['head'])
         joint = next(j for j in model['joints'] if j['name']=='waist_pitch')
         self.assertEqual(joint['axis'], [0,1,0])
 

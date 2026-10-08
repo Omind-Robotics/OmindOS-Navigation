@@ -24,7 +24,7 @@ const root = path.resolve(__dirname,'..');
     await page.goto(url);
     await page.waitForFunction(()=>document.getElementById('status').textContent.includes('教学示例'));
     if(process.env.REQUIRE_WEBGL==='1')assert.equal(await page.locator('#scene').getAttribute('data-renderer'),'webgl');
-    assert.match(await page.locator('#model-info').textContent(),/19 个连杆 · 16 个活动关节/);
+    assert.match(await page.locator('#model-info').textContent(),/20 个连杆 · 16 个活动关节/);
     checks.push('demo_loaded');
     await page.locator('#pitch').fill('20');
     await page.waitForFunction(()=>readyRevision===revision && Math.abs(currentPose.positions.waist_pitch-20*Math.PI/180)<.001);
@@ -102,6 +102,23 @@ const root = path.resolve(__dirname,'..');
     await page.evaluate(()=>document.querySelectorAll('aside').forEach(el=>el.scrollTop=0));
     const shots=process.env.WORKBENCH_SCREENSHOT_DIR;
     if(shots){fs.mkdirSync(shots,{recursive:true});await page.screenshot({path:path.join(shots,'robot-workbench-desktop.png'),fullPage:true});}
+    if(shots && await page.evaluate(()=>Boolean(sceneEngine))){
+      const savedView=await page.evaluate(()=>structuredClone(view));
+      await page.evaluate(()=>{
+        view.center=trans(currentPose.link_transforms.left_hand,[0,0,-.115]);view.span=.38;view.zoom=1;
+        for(const [name,link] of sceneEngine.links)link.group.visible=['left_hand','left_outer_finger','left_inner_finger'].includes(name);
+        for(const joint of sceneEngine.joints.values())joint.group.visible=false;
+        document.querySelector('.part-caption').style.visibility='hidden';
+        sceneEngine.floor.visible=false;sceneEngine.grid.visible=false;draw();
+      });
+      await page.locator('#scene').screenshot({path:path.join(shots,'robot-workbench-gripper-detail.png')});
+      await page.evaluate(saved=>{
+        view=saved;for(const link of sceneEngine.links.values())link.group.visible=true;
+        for(const joint of sceneEngine.joints.values())joint.group.visible=true;
+        document.querySelector('.part-caption').style.visibility='';
+        sceneEngine.floor.visible=true;sceneEngine.grid.visible=true;draw();
+      },savedView);
+    }
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'desktop horizontal overflow');
     await page.setViewportSize({width:390,height:844});
     await page.locator('#scene').scrollIntoViewIfNeeded();

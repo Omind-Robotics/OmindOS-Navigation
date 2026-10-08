@@ -92,7 +92,9 @@ function syncQuickControls() {
       $(side+'-gripper-value').textContent=Math.abs(values[0]-values[1])>.5?'单指已调':Math.round(values[0])+'%';
     }
   }
-  $('base-x').value=baseTarget.x_m;$('base-y').value=baseTarget.y_m;$('base-yaw').value=Number((baseTarget.yaw_rad*180/Math.PI).toFixed(3));
+  for(const [id,value] of [['base-x',baseTarget.x_m],['base-y',baseTarget.y_m],['base-yaw',Number((baseTarget.yaw_rad*180/Math.PI).toFixed(3))]]){
+    const input=$(id);if(document.activeElement!==input && input.getAttribute('aria-invalid')!=='true')input.value=value;
+  }
 }
 function quickJointUpdate(selected) {
   mode='joint';rebuildParts(selected);edited({config:false});syncQuickControls();
