@@ -72,4 +72,4 @@ or validate quadruped gait, balance, or physical stopping.
 
 ## 四足闭环控制与 RS04 驱动（开发预览）
 
-新增 MEVIUS2 姿态/关节反馈策略、浮动机身 MuJoCo 验证及 ROS 2 运动接口。默认采用 [通用关节目标角度接口](docs/JOINT_POSITION_INTERFACE.zh-CN.md)，由仿真关节执行闭环；原 ROBSTRIDE04 SocketCAN 扭矩驱动保留为显式对照测试。板卡型号尚未绑定，RS04 实机驱动及客户整机步态、平衡仍待验收。本增量在开发 PR #4 中；不代表当前公开下载包已经包含四足控制。见 [接入说明](docs/QUADRUPED_RS04_RUNTIME.zh-CN.md) 与 [通用接口验证记录](docs/validation/joint-position-20261008.md)。
+新增 MEVIUS2 姿态/关节反馈策略、浮动机身 MuJoCo 验证及 ROS 2 运动接口。默认采用 [通用关节目标角度接口](docs/JOINT_POSITION_INTERFACE.zh-CN.md)，由仿真关节执行闭环；原 ROBSTRIDE04 SocketCAN 扭矩驱动保留为显式对照测试。用户已确认控制板为 [DM-MC02](docs/DM_MC02_INTEGRATION.zh-CN.md)，板卡适配尚未实现，RS04 实机驱动及客户整机步态、平衡仍待验收。本增量在开发 PR #4 中；不代表当前公开下载包已经包含四足控制。见 [接入说明](docs/QUADRUPED_RS04_RUNTIME.zh-CN.md) 与 [通用接口验证记录](docs/validation/joint-position-20261008.md)。

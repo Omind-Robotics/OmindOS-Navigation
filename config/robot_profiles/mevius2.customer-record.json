@@ -2,7 +2,7 @@
   "schema_version": 1,
   "record_type": "customer_robot_configuration_record",
   "robot_id": null,
-  "profile_revision": 2,
+  "profile_revision": 3,
   "reference": {
     "repository": "https://github.com/haraduka/mevius2",
     "commit": "4f09680bb575574377b903bbc971bdb2695d507b",
@@ -182,6 +182,11 @@
       "date": "2026-10-08",
       "source": "user instruction: continue with generic joint angle interface",
       "note": "Host sends joint position targets; actuator closes loop. Board transport remains unconfirmed. Prior reference directions removed from customer calibration fields."
+    },
+    {
+      "date": "2026-10-08",
+      "source": "user identification: dm-mc02; procurement screenshot 01-1000091659.jpg",
+      "note": "Board model confirmed by user. Procurement items recorded as planned equipment only. DM-MC02 firmware, host protocol, installed devices, joint calibration and hardware acceptance remain unverified."
     }
   ],
   "validation": {
@@ -200,10 +205,49 @@
       "base_link_imu"
     ],
     "board_vendor_hint": "DAMIAO",
-    "board_model": null,
+    "board_model": "DM-MC02",
+    "board_model_source": "user identification on 2026-10-08",
+    "board_firmware_version": null,
+    "proposed_board_role": "joint_position_gateway_with_local_watchdog",
+    "proposed_host_transport": "USB_CDC",
+    "proposed_motor_transport": "classic_CAN_29bit_extended",
     "host_board_protocol": null,
     "motor_protocol": null,
     "hardware_adapter_ready": false,
-    "address_mapping_status": "proposal_only_not_calibrated"
+    "address_mapping_status": "proposal_only_not_calibrated",
+    "integration_note": "docs/DM_MC02_INTEGRATION.zh-CN.md",
+    "vendor_reference": {
+      "repository": "https://github.com/dmBots/DM-MC02",
+      "commit": "d65a3688981405dc205f628f1a026bde8cf8303e",
+      "manual": "manual/达妙科技DM-MC-Board02电机开发板使用说明书V1.1.pdf",
+      "manual_sha256": "9fbc4cc2175301632c3bdf74800b26490480da93fe2210ebbc49769a9bc1eab2"
+    }
+  },
+  "procurement_reference": {
+    "source": "user procurement screenshot 01-1000091659.jpg, 2026-10-08",
+    "status": "planned_equipment_not_installation_confirmation",
+    "currency": "CNY",
+    "items": [
+      {
+        "description": "mid-360-S + 一分三线 + 电源 + 铝合金保护罩（截图末尾截断）",
+        "quantity": 2,
+        "unit_price": 3799,
+        "subtotal": 7598
+      },
+      {
+        "description": "Gemini336L 深度相机，角度可调支架",
+        "quantity": 2,
+        "unit_price": 2600,
+        "subtotal": 5200
+      },
+      {
+        "description": "Jetson ORIN NX 16GB Super 128G 固态（截图末尾截断）",
+        "quantity": 1,
+        "unit_price": 8299,
+        "subtotal": 8299
+      }
+    ],
+    "listed_total": 21097,
+    "installation_verified": false
   }
 }
