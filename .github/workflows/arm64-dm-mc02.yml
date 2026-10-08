@@ -36,6 +36,8 @@ jobs:
           docker save omindos/control-arm64:candidate | gzip -1 > arm64-artifact/omindos-control-linux-arm64.image.tar.gz
           cd arm64-artifact
           sha256sum omindos-control-linux-arm64.image.tar.gz > SHA256SUMS-image.txt
+      - name: Package launcher, config, licenses and verified image
+        run: python3 release/control-preview/package_arm64_candidate.py
       - name: Save private candidate, not a public hardware release
         uses: actions/upload-artifact@v4
         with:

@@ -55,7 +55,7 @@ Python 3.10、CPU PyTorch、MuJoCo 和二十个编译业务模块，检查 ELF A
 ROS 导入、CPU 运算、MuJoCo 一步，以及业务源码/客户私有记录未进入最终镜像。
 候选镜像和检查报告保存在私有 Actions artifact，不自动发布公开 Release。
 构建成功仍不代表 Jetson 实测完成；CUDA、TensorRT、JetPack 与载板 USB 配置未验收。
-原 x86_64 preview.5 发行包保持不变，ARM64 的客户启动器与完整安装验收尚待补齐。
+原 x86_64 preview.5 发行包保持不变。候选打包包含 ARM64 启动器、镜像身份与 SHA256 校验、配置和许可；完整 Jetson 安装验收仍待现场完成。
 
 ## 现场验收顺序
 
