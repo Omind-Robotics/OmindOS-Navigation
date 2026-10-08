@@ -10,7 +10,7 @@ import webbrowser
 
 import robot_workbench
 
-VERSION = '0.2.0-preview.4'
+VERSION = '0.2.0-preview.6'
 ROOT = Path(__file__).resolve().parent if '__compiled__' in globals() else Path(__file__).resolve().parents[1]
 
 
@@ -26,6 +26,7 @@ def main():
     parser = argparse.ArgumentParser(description='OmindOS desktop workbench ' + VERSION)
     parser.add_argument('--port', type=int, default=8085)
     parser.add_argument('--store', type=Path, default=Path.home() / 'OmindOS' / 'workbench-configurations')
+    parser.add_argument('--runtime-url', help='Optional localhost ROS 2 joint-preview API; use the same configuration store')
     parser.add_argument('--no-browser', action='store_true')
     parser.add_argument('--verify', action='store_true')
     args = parser.parse_args()
@@ -41,12 +42,13 @@ def main():
         return
     robot_workbench.ROOT = ROOT
     try:
-        server = robot_workbench.ThreadingHTTPServer(('127.0.0.1', args.port), robot_workbench.make_handler(args.store))
+        server = robot_workbench.ThreadingHTTPServer(('127.0.0.1', args.port), robot_workbench.make_handler(args.store, args.runtime_url))
     except (OSError, ValueError) as error:
         raise SystemExit('Cannot start workbench. Check the port and store directory: ' + str(error)) from error
     url = f'http://127.0.0.1:{server.server_port}/'
     print('OmindOS workbench ' + VERSION + ': ' + url, flush=True)
     print('Configurations: ' + str(args.store.resolve()), flush=True)
+    print('ROS 2 preview: ' + (args.runtime_url or 'not configured (local kinematic preview remains available)'), flush=True)
     print('Keep this window open. Press Ctrl+C to stop.', flush=True)
     if not args.no_browser:
         timer = threading.Timer(0.5, lambda: webbrowser.open(url))
@@ -62,4 +64,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 

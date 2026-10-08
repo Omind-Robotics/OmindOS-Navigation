@@ -15,7 +15,7 @@ import urllib.request
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.2.0-preview.4'
+VERSION = '0.2.0-preview.6'
 
 
 def main():
@@ -36,11 +36,11 @@ def main():
                '--report=' + str(output / 'private-compilation-report.xml'),
                '--include-module=robot_workbench', '--include-module=robot_parameter_api',
                '--include-module=robot_kinematics', '--include-module=workbench_state',
-               '--include-module=robot_connections']
+               '--include-module=robot_connections', '--include-module=robot_runtime_client']
     if windows:
         command += ['--msvc=latest', '--windows-console-mode=force',
                     '--company-name=OriginMind', '--product-name=OmindOS Workbench',
-                    '--file-version=0.2.0.4', '--product-version=0.2.0.4']
+                    '--file-version=0.2.0.6', '--product-version=0.2.0.6']
     command.append(str(ROOT / 'scripts/workbench_desktop.py'))
     subprocess.run(command, cwd=ROOT, env=env, check=True)
     package = output / ('omindos-workbench-' + VERSION + '-' + target)
@@ -59,6 +59,7 @@ def main():
                     str(ROOT / 'web/robot-workbench/workbench.js'),
                     str(package / 'web/robot-workbench/workbench.js')], cwd=ROOT, check=True)
     shutil.copyfile(ROOT / 'release/workbench/README.zh-CN.md', package / 'README.zh-CN.md')
+    shutil.copyfile(ROOT / 'release/workbench/ROS2.zh-CN.md', package / 'ROS2.zh-CN.md')
     python_version = platform.python_version()
     with urllib.request.urlopen('https://raw.githubusercontent.com/python/cpython/v' + python_version + '/LICENSE', timeout=60) as response:
         (package / 'LICENSES/Python.txt').write_bytes(response.read())
@@ -72,7 +73,8 @@ def main():
                 'compiler': 'Nuitka ' + importlib.metadata.version('Nuitka'),
                 'source_commit': os.environ.get('GITHUB_SHA', subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()),
                 'release_stage': 'desktop-preview', 'backend_source_included': False,
-                'ros_required': False, 'runtime_applied': False, 'hardware_validated': False,
+                'ros_required': False, 'ros_runtime_bundled': False, 'ros_bridge_included': True,
+                'runtime_applied': False, 'hardware_validated': False,
                 'files': {str(p.relative_to(package)).replace(os.sep, '/'): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted(package.rglob('*')) if p.is_file()}}
     # Refuse business source, bytecode, development reports and source maps.
@@ -108,4 +110,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 

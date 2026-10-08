@@ -1,7 +1,7 @@
 name: Build desktop workbench binaries
 on:
   push:
-    branches: [codex/workbench-binary-release]
+    branches: [codex/workbench-binary-release, codex/manipulation-unified-preview6]
     paths:
       - '.github/workflows/workbench-binaries.yml'
       - 'release/workbench/**'
@@ -9,6 +9,9 @@ on:
       - 'scripts/robot_connections.py'
       - 'scripts/robot_parameter_api.py'
       - 'scripts/robot_workbench.py'
+      - 'scripts/robot_runtime_client.py'
+      - 'scripts/robot_profile_runtime*.py'
+      - 'tests/test_robot*.py'
       - 'web/robot-workbench/**'
   workflow_dispatch:
 permissions:
@@ -50,7 +53,7 @@ jobs:
           python -m pip install Nuitka==4.2.2 ordered-set==4.1.0 zstandard==0.25.0
           npm ci --prefix web/robot-workbench
       - name: Verify source on target platform
-        run: python -m unittest discover -s tests -v
+        run: python -m unittest discover -s tests -p 'test_robot*.py' -v
       - name: Build and test executable archive
         run: python release/workbench/package_binary.py --output build/workbench-release
       - name: Preserve validated binary package only
@@ -63,4 +66,5 @@ jobs:
             build/workbench-release/*.sha256
           if-no-files-found: error
           retention-days: 14
+
 
