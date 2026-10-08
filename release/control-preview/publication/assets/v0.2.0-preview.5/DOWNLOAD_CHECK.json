@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "url": "https://omindos.cn/downloads/navigation/v0.2.0-preview.5/omindos-control-preview-0.2.0-preview.5-linux-amd64.tar",
+  "public_head_status": 200,
+  "public_bytes": 820449280,
+  "origin_full_sha256": "276b666a8fee186ba839c30bda8676baba4125a7c9e51408f07ed596cc9db5cc",
+  "public_range_checks": [
+    {
+      "status": "PASS",
+      "offset": 0,
+      "bytes": 65536,
+      "sha256": "026d0dbf1b5359bd666cdb45a54492caea0f8570b7cdd9e69c4192920b2d0883"
+    },
+    {
+      "status": "PASS",
+      "offset": 410224640,
+      "bytes": 65536,
+      "sha256": "47b2a502e00729efc2c7e2251e01df6faf69c6e20b92f84462ecdb9886835c22"
+    },
+    {
+      "status": "PASS",
+      "offset": 820383744,
+      "bytes": 65536,
+      "sha256": "82669214bd9b6003f796c48fd83f1fa02fbd6df2d4ec7b568493e70b4fe03cb2"
+    }
+  ],
+  "public_full_transfer_verified": false,
+  "method": "full origin file SHA-256 plus HTTPS HEAD and first/middle/last byte-range comparison"
+}

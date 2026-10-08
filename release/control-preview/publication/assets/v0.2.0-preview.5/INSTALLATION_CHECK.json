@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "checks": [
+    "archive_fresh_extraction",
+    "image_sha256",
+    "image_reload",
+    "launcher_version",
+    "fresh_workbench_http",
+    "runtime_browser_asset_included",
+    "default_workbench_does_not_start_ros_preview"
+  ],
+  "version": "0.2.0-preview.5",
+  "docker": "29.8.1",
+  "host_python_required": false,
+  "hardware_tested": false
+}

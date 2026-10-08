@@ -1,0 +1,58 @@
+name: Publish compiled control preview 5
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-v0.2.0-preview.5.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: publish-v0.2.0-preview.5
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      VERSION: v0.2.0-preview.5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate compiled-release evidence
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('assets/v0.2.0-preview.5')
+          summary=json.loads((root/'RELEASE_SUMMARY.json').read_text())
+          validation=json.loads((root/'VALIDATION.json').read_text())
+          install=json.loads((root/'INSTALLATION_CHECK.json').read_text())
+          download=json.loads((root/'DOWNLOAD_CHECK.json').read_text())
+          assert summary['sha256']=='276b666a8fee186ba839c30bda8676baba4125a7c9e51408f07ed596cc9db5cc'
+          assert summary['bytes']==820449280
+          assert summary['backend_source_included'] is False and summary['hardware_validated'] is False
+          assert validation['status']==install['status']==download['status']=='PASS'
+          assert validation['compiled_python_regression_tests']==110
+          assert validation['ros_profile_checks']==9 and validation['ros_workbench_browser_checks']==10
+          assert validation['dynamics_scenarios']==4 and validation['quadruped_ros_checks']==18
+          assert validation['native_audit']['native_modules']==19
+          assert download['origin_full_sha256']==summary['sha256']
+          assert download['public_head_status']==200 and download['public_bytes']==summary['bytes']
+          assert len(download['public_range_checks'])==3 and all(x['status']=='PASS' for x in download['public_range_checks'])
+          assert all(p.suffix in ('.json','.txt','.md') for p in root.iterdir())
+          PY
+      - name: Publish immutable preview entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo 'Release already exists; refusing to overwrite it.'
+            exit 1
+          fi
+          gh release create "$VERSION" assets/v0.2.0-preview.5/* \
+            --target "$GITHUB_SHA" --prerelease \
+            --title 'OmindOS 0.2.0-preview.5 · Linux 编译控制预览' \
+            --notes-file assets/v0.2.0-preview.5/RELEASE_NOTES.md

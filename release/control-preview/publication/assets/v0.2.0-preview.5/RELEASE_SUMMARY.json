@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0-preview.5",
+  "platform": "linux/amd64",
+  "distribution": "compiled_control_preview",
+  "source_commit": "df829a312dd571e19a3f0d65dcdc2b576f6d4a6d",
+  "image_id": "sha256:5fb43c0a3be2960f41cb06f22d8efa3db4a86b06b014f6eb60ec0f7f68b13fbb",
+  "image_sha256": "caba4fdbd39ac5fde5a5bfee245ed7a974f075ceb0429cbd96e0d721d7ae0d05",
+  "image_bytes": 820037537,
+  "backend_source_included": false,
+  "hardware_validated": false,
+  "jetson_arm64_included": false,
+  "model": "original_MEVIUS2",
+  "model_commit": "4f09680bb575574377b903bbc971bdb2695d507b",
+  "private_customer_record_included": false,
+  "filename": "omindos-control-preview-0.2.0-preview.5-linux-amd64.tar",
+  "bytes": 820449280,
+  "sha256": "276b666a8fee186ba839c30bda8676baba4125a7c9e51408f07ed596cc9db5cc",
+  "download_url": "https://omindos.cn/downloads/navigation/v0.2.0-preview.5/omindos-control-preview-0.2.0-preview.5-linux-amd64.tar",
+  "publication_status": "approved_preview",
+  "accepted_image_ids": [
+    "sha256:5fb43c0a3be2960f41cb06f22d8efa3db4a86b06b014f6eb60ec0f7f68b13fbb",
+    "sha256:6cc7131e39c4f94272eb609cc53fa5f8b8b4fcaf1d407d5c72676171221a03c3"
+  ]
+}
