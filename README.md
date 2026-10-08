@@ -36,3 +36,11 @@ The development preview uses one navigation core and selectable `wheeled_diff`,
 It adds a guarded simulation command boundary; it is not a hardware release,
 a quadruped gait controller, or evidence that the C++ hardware stack is validated.
 Existing v0.1 tags and published assets are unchanged.
+
+## Unified customer release work
+
+The next customer version keeps one core for quadruped, differential, and
+omnidirectional bases, with quadruped integration first. See
+[客户版接入检查与交付范围](docs/UNIFIED_CUSTOMER_RELEASE.zh-CN.md).
+The configuration checker is available now; hardware adapters and physical
+acceptance remain pending. This does not promote the preview to a hardware release.
