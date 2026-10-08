@@ -13,6 +13,9 @@ permissions:
 concurrency:
   group: arm64-dm-mc02-${{ github.ref }}
   cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
 jobs:
   protocol:
     runs-on: ubuntu-24.04

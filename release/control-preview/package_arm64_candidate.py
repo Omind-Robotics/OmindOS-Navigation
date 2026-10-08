@@ -7,6 +7,13 @@ import subprocess
 import tarfile
 
 root = Path('arm64-artifact')
+validation = json.loads((root/'VALIDATION.json').read_text())
+assert validation['platform'] == 'linux/arm64'
+for gate in ('native_module_imports', 'ros2_import', 'torch_cpu', 'mujoco_step'):
+    assert validation.get(gate) is True, 'Missing validation gate: '+gate
+assert validation.get('backend_source_included') is False
+assert validation.get('customer_records_included') is False
+assert validation.get('motor_output_enabled') is False
 package = root/'omindos-control-arm64-candidate'
 package.mkdir()
 shutil.copy2('release/control-preview/omindos-arm64', package/'omindos')
