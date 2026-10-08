@@ -27,6 +27,9 @@ See docs/OMINDOS_V0_1.md.
 
 ## Unified wheeled / quadruped preview
 
+[Published 0.2.0-preview.1: download and installation](https://github.com/maganrobotics-boop/OmindOS-Navigation-Release/releases/tag/v0.2.0-preview.1)
+— [发行记录](docs/UNIFIED_RELEASE.zh-CN.md).
+
 The development preview uses one navigation core and selectable `wheeled_diff`,
 `wheeled_omni`, and `quadruped` body-velocity profiles. See
 [统一平台预览说明（中文）](docs/UNIFIED_PLATFORM_PREVIEW.zh-CN.md).
