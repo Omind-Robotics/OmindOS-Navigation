@@ -53,3 +53,11 @@ The customer quadruped is designed with reference to MEVIUS2; the original
 model/policy passed a short stand/walk/stop simulation. ROS 2 locomotion integration,
 the customer-specific model and physical acceptance remain pending.
 This does not promote the preview to a hardware release.
+
+### Robot tuning workbench
+
+The [local 3D tuning workbench](docs/ROBOT_WORKBENCH.zh-CN.md) loads URDF,
+edits robot/drive parameters, computes forward kinematics and fixed-base static
+gravity loads, previews velocity-limited joint trajectories, and saves versioned
+profiles. Start with `python3 scripts/robot_workbench.py --store ./robot-configurations`.
+This is a kinematic preview, not collision, balance, full dynamics or hardware acceptance.
