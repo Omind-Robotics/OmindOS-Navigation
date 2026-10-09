@@ -1,0 +1,39 @@
+name: DM-MC02 complete observer firmware
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'firmware/dm_mc02/**'
+      - 'scripts/*dm_mc02*.py'
+      - 'tests/test_dm_mc02*.py'
+      - '.github/workflows/dm-mc02-bench.yml'
+permissions:
+  contents: read
+concurrency:
+  group: dm-mc02-bench-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  observer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ARM GCC and newlib
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libnewlib-arm-none-eabi
+      - name: Run protocol and observer rejection tests
+        run: python3 -m unittest discover -s tests -p 'test_dm_mc02*.py' -v
+      - name: Full link, inspect vectors and forbid CAN transmit
+        run: python3 scripts/build_dm_mc02_bench.py --output-dir dm-mc02-bench
+      - name: Repeat build and compare flash bytes
+        run: |
+          python3 scripts/build_dm_mc02_bench.py --output-dir dm-mc02-bench-repeat
+          cmp dm-mc02-bench/dm-mc02-observer.bin dm-mc02-bench-repeat/dm-mc02-observer.bin
+          cmp dm-mc02-bench/dm-mc02-observer.hex dm-mc02-bench-repeat/dm-mc02-observer.hex
+      - name: Store untested board candidate and complete build evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: dm-mc02-observer-unverified-hardware
+          path: dm-mc02-bench/
+          retention-days: 30

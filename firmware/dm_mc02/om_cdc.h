@@ -26,6 +26,8 @@ typedef struct {
  * All callbacks must then target this instance for its entire lifetime. */
 int om_cdc_init(om_cdc *, om_cdc_io, const uint8_t nonce[16],
                 const uint8_t digest[32], const om_joint *);
+int om_cdc_init_observer(om_cdc *, om_cdc_io, const uint8_t nonce[16],
+                        const uint8_t digest[32], const om_joint *);
 /* ISR callbacks enqueue/copy only. No parser or transmit runs in an ISR. */
 void om_cdc_receive(om_cdc *, const uint8_t *, size_t);
 void om_cdc_tx_complete(om_cdc *);

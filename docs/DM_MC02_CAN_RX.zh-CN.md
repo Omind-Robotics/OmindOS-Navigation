@@ -1,3 +1,5 @@
+最新进展（2026-10-09）：独立只读观察目标现已通过完整 ARM GCC 链接并生成 ELF/HEX/BIN，见 [DM_MC02_FIRMWARE.zh-CN.md](DM_MC02_FIRMWARE.zh-CN.md)。真实板卡仍未验收。下文保留 PR #10 通信模块阶段的历史边界与协议说明。
+
 # DM-MC02 三路 CAN 只读接收与 USB 状态回传
 
 2026-10-08，基线 `5244ece498fb628226a66d4214116288dc0f4e04`（PR #9）。

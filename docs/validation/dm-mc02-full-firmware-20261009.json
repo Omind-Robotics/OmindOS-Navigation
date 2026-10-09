@@ -1,0 +1,59 @@
+{
+  "vendor_commit": "d65a3688981405dc205f628f1a026bde8cf8303e",
+  "hal_rng_commit": "b716379524ba3549e4db11804889776ffeb239d1",
+  "freertos_gcc_port_commit": "88e32327e975ddde97c390bc5b6c1f8e7d9d239e",
+  "compiler": "arm-none-eabi-gcc (15:13.2.rel1-2) 13.2.1 20231009",
+  "cpu_flags": [
+    "-mcpu=cortex-m7",
+    "-mthumb",
+    "-mfpu=fpv5-d16",
+    "-mfloat-abi=hard"
+  ],
+  "objects": 44,
+  "complete_firmware_link": true,
+  "undefined_symbols": [],
+  "flashable_format_generated": true,
+  "hardware_tested": false,
+  "board_flash_authorized_or_performed": false,
+  "bootloader_offset_verified": false,
+  "flash_base": "0x08000000",
+  "flash_image_bytes": 31392,
+  "msp_reserved_bytes": 8192,
+  "axi_static_bytes": 29128,
+  "bench_task_stack_bytes": 16384,
+  "vectors_checked": 179,
+  "strong_irq_handlers": [
+    "FDCAN1_IT0_IRQHandler",
+    "FDCAN1_IT1_IRQHandler",
+    "FDCAN2_IT0_IRQHandler",
+    "FDCAN2_IT1_IRQHandler",
+    "FDCAN3_IT0_IRQHandler",
+    "FDCAN3_IT1_IRQHandler",
+    "OTG_HS_IRQHandler",
+    "TIM23_IRQHandler",
+    "SVC_Handler",
+    "PendSV_Handler",
+    "SysTick_Handler"
+  ],
+  "forbidden_linked_symbols": [],
+  "can_mode": "BUS_MONITORING; no data TX or ACK; TX allocation=0 from first init",
+  "motion_target_codec_linked": false,
+  "configuration_sha256": "c8414196769758edad1a4c71ee2bb88c593754ef5677d194cf176a1887cd4cad",
+  "usb_lpm_enabled": false,
+  "usb_dma_enabled": false,
+  "largest_retained_function_stack_bytes": 248,
+  "stack_runtime_high_water_verified": false,
+  "routing_verified_on_hardware": false,
+  "checksums": {
+    "dm-mc02-observer.elf": "aa268dc34da5e0f889d8dedda5c9598d4545648b8e35ca3aca5b76d66f777e3f",
+    "dm-mc02-observer.hex": "66996f78875be484c31662b98a13ad19f747f48f9f555efc740165b518947e83",
+    "dm-mc02-observer.bin": "736e19dd709d38b19933b3ae874fa03ee03c184da804e3b197536b71671452ec"
+  },
+  "repeat_build_identical": {
+    "elf": true,
+    "hex": true,
+    "bin": true
+  },
+  "unit_tests_passed": 47,
+  "source_baseline": "71fa3cba600a6f9ad8845c8417e32082764b66d3"
+}

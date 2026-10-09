@@ -50,8 +50,8 @@ static int submit(void *context, const uint8_t *data, size_t length) {
     return result;
 }
 
-int om_stm32_usb_init(RNG_HandleTypeDef *rng, const uint8_t digest[32],
-                      const om_joint *joints) {
+static int init(RNG_HandleTypeDef *rng, const uint8_t digest[32],
+                      const om_joint *joints, int observer) {
     /* USB and all callbacks must be stopped during this call. */
     if (attempted) return -1;
     attempted = 1;
@@ -63,10 +63,23 @@ int om_stm32_usb_init(RNG_HandleTypeDef *rng, const uint8_t digest[32],
         if (HAL_RNG_GenerateRandomNumber(rng, &word) != HAL_OK) return -1;
         for (unsigned k = 0; k < 4; ++k) nonce[4*i+k] = (uint8_t)(word >> (8*k));
     }
-    if (om_cdc_init(&transport, (om_cdc_io){NULL, enter, leave, submit},
-                    nonce, digest, joints)) return -1;
+    om_cdc_io io={NULL, enter, leave, submit};
+#ifdef OM_BENCH_OBSERVER_ONLY
+    (void)observer;
+    int result=om_cdc_init_observer(&transport,io,nonce,digest,joints);
+#else
+    int result=observer ? om_cdc_init_observer(&transport,io,nonce,digest,joints)
+                        : om_cdc_init(&transport,io,nonce,digest,joints);
+#endif
+    if(result) return -1;
     ready = 1;
     return 0;
+}
+int om_stm32_usb_init(RNG_HandleTypeDef *rng,const uint8_t digest[32],const om_joint *joints) {
+    return init(rng,digest,joints,0);
+}
+int om_stm32_usb_init_observer(RNG_HandleTypeDef *rng,const uint8_t digest[32],const om_joint *joints) {
+    return init(rng,digest,joints,1);
 }
 void om_stm32_usb_receive(const uint8_t *data, size_t length) {
     if (ready) om_cdc_receive(&transport, data, length);
