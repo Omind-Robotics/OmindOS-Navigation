@@ -174,6 +174,17 @@ class NavigationSimulation:
         count = max(1, math.ceil(math.dist(a,b)/min(.02,self.res/4)))
         return all(self.clear(a[0]+(b[0]-a[0])*i/count, a[1]+(b[1]-a[1])*i/count) for i in range(count+1))
 
+    def arm_environment_clear(self, boxes):
+        self.check()
+        for center,rotation,half in boxes:
+            # Conservative XY disks enclosing each oriented box. OccupancyGrid
+            # has no height: occupied/unknown cells are treated as full columns.
+            horizontal_half=np.abs(rotation[:2,:])@half
+            radius=float(np.linalg.norm(horizontal_half))
+            if not self.clear(float(center[0]),float(center[1]),radius):
+                return False
+        return True
+
     def step(self, dt):
         self.check()
         if not 0 < dt <= .1:
@@ -323,7 +334,7 @@ class NavigationJobs:
                         job['status'] = 'manipulation_planning'
                         task = self.planning.submit({'profile':sim.profile,'start':sim.q,
                             'base_pose':sim.base,'mapping':sim.mapping,'obstacles':sim.obstacles,
-                            'mode':'object','translation_m':manipulation['translation_m']})
+                            'mode':'object','translation_m':manipulation['translation_m']},sim.arm_environment_clear)
                         job['arm_task_id'] = task['task_id']
                 if manipulation is not None:
                     while True:

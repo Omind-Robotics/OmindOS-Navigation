@@ -166,6 +166,7 @@ class ProfileRobot:
             self.obstacles.append((pos, np.eye(3), size/2))
         self.last_collision = None
         self.cache = None
+        self.environment_guard = None
 
     def world(self, q):
         self.check()
@@ -205,6 +206,9 @@ class ProfileRobot:
                 if overlap(box, obstacle):
                     self.last_collision = [self.shapes[i][0], f'obstacle_{k+1}']
                     return False
+        if self.environment_guard is not None and not self.environment_guard(boxes):
+            self.last_collision = ['robot', 'navigation_map']
+            return False
         return True
 
 
@@ -266,12 +270,13 @@ def joint_path(robot, start, goal, seed=7):
     raise PlanningFailure('在当前计算预算内未找到完整无碰撞路径。')
 
 
-def plan(payload, check):
+def plan(payload, check, environment_guard=None):
     allowed = {'profile','start','base_pose','mapping','obstacles','mode','target','translation_m','rotation_deg'}
     if not isinstance(payload,dict) or set(payload)-allowed or payload.get('mode') not in ('joint','object'):
         raise ValueError('expected joint or object planning request')
     robot = ProfileRobot(payload['profile'], payload.get('start', {}), payload.get('base_pose'),
                          payload.get('mapping',default_mapping()), payload.get('obstacles',[]), check)
+    robot.environment_guard = environment_guard
     start = [robot.start[n] for n in robot.names]
     details = {}
     if payload['mode'] == 'joint':
@@ -310,6 +315,7 @@ def plan(payload, check):
     return {'model':robot.model,'frames':frames,'duration_s':6,'motion_type':'planned',
             'joint_names':robot.names,'positions_rad':samples,'validated_samples':len(samples),
             'collision_geometry':'conservative_oriented_boxes','collision_check':'sampled',
+            'navigation_map_checked':environment_guard is not None,
             'excluded_self_pairs':[list(p) for p in sorted(robot.exclusions)],
             'scope':'fixed_base_kinematics_planning_sampled_collision','timed':False,
             'playback_duration_s':6,'hardware_validated':False,'hardware_executed':False,
@@ -326,7 +332,7 @@ class PlanningJobs:
     def __init__(self,state):
         self.state=state; self.lock=threading.RLock(); self.job=None
 
-    def submit(self,payload):
+    def submit(self,payload,environment_guard=None):
         epoch=self.state.check_motion()
         with self.lock:
             if self.job and self.job['status']=='running':
@@ -343,7 +349,7 @@ class PlanningJobs:
                 raise PlanningFailure('规划超过 60 秒计算预算。')
         def run():
             try:
-                result=plan(copy.deepcopy(payload),check); check()
+                result=plan(copy.deepcopy(payload),check,environment_guard); check()
                 with self.lock:
                     # Linearize completion against stop/config mutations.
                     with self.state.lock:

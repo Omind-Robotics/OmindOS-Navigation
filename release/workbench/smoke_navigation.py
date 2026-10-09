@@ -66,10 +66,12 @@ def main():
                     assert nav['drive_type']==kind and nav['parking_confirmed'] and nav['stable_stop_s']>=.6
                     assert all(abs(v)<1e-9 for v in nav['cmd_vel'].values())
                     assert arm['validated_samples']>1 and arm['max_tcp_position_error_m']<=.001
+                    assert arm['navigation_map_checked']
                     assert all(f['base_pose']==nav['base_pose'] for f in arm['frames'])
                     measurements.append({'drive_type':kind,'base_pose':nav['base_pose'],'stable_stop_s':nav['stable_stop_s'],'arm_samples':arm['validated_samples'],'max_tcp_error_m':arm['max_tcp_position_error_m']})
                     checks.append(kind+'_arrival_parking_then_actual_runtime2')
                 checks+=['concurrent_arm_and_jog_blocked','zero_command_and_observed_stop','fixed_base_during_arm_planning']
+                checks.append('imported_map_guard_present_in_arm_planning')
                 request('/v1/workbench-active-profile',profile)
                 stale=request('/v1/navigation-task/'+result['task_id']);assert stale['status']=='canceled' and stale['result'] is None
                 checks.append('parameter_epoch_invalidates_completed_task')

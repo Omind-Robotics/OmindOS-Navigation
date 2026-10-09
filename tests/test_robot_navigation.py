@@ -114,6 +114,15 @@ class NavigationTests(unittest.TestCase):
         data=self.payload();data['manipulation']={'translation_m':[1,0,0]}
         with self.assertRaises(ValueError):NavigationSimulation(data,lambda:None)
 
+    def test_occupied_grid_columns_guard_arm_motion_at_every_height(self):
+        import numpy as np
+        data=self.payload();grid=[0]*10000;grid[50*100+80]=100
+        data['config']['map']['data']=grid
+        sim=NavigationSimulation(data,lambda:None)
+        self.assertTrue(sim.arm_environment_clear([(np.array([0,0,1]),np.eye(3),np.full(3,.02))]))
+        for z in (.1,1,10):
+            self.assertFalse(sim.arm_environment_clear([(np.array([3.05,.05,z]),np.eye(3),np.full(3,.02))]))
+
     def test_original_platform_guard_rejects_stale_feedback(self):
         guard=PlatformGuard(PlatformProfile('test','omnidirectional',.25,.25,.6),enabled=True)
         for source in ('plan','pose','odom'):guard.observe(source,True,1)
@@ -146,6 +155,7 @@ class NavigationTests(unittest.TestCase):
                 time.sleep(.05)
             self.assertEqual(result['status'],'succeeded',result)
             self.assertTrue(all(f['base_pose']==result['navigation']['base_pose'] for f in result['result']['frames']))
+            self.assertTrue(result['result']['navigation_map_checked'])
             self.assertFalse(result['result']['hardware_executed'])
 
     def test_tab_disconnect_aborts_navigation(self):
