@@ -1,0 +1,10 @@
+{
+  "filename": "omindos-workbench-reference-update.tar.gz",
+  "bytes": 4781725,
+  "sha256": "4a4f32b4e595fae89b87f3f6140e1f17ee7d44783ce15108df5993b8b09fdf00",
+  "status": "PASS",
+  "compiled_modules": 16,
+  "compiled_regression_tests": 79,
+  "reference_asset_tests": 3,
+  "source_commit": "b8b96c56c8df1222a1cfe93c8b984d8bb1fb947b"
+}
