@@ -95,6 +95,12 @@ setup(name='omindos-workbench-update',ext_modules=cythonize(
  script_args=['build_ext','--build-lib',str(out/'scripts'),'--build-temp','/build/objects','-j','2'])
 for f in (out/'scripts').glob('*.so'):subprocess.run(['strip','--strip-unneeded',str(f)],check=True)
 for folder in ['config','web','tests','release']:shutil.copytree(root/folder,out/folder)
+# The API fixture used an explicit source-file loader. Point the copied fixture
+# at the compiled module while leaving the repository's source tests unchanged.
+api_test=out/'tests/test_robot_parameter_api.py'
+source_loader='SPEC = importlib.util.spec_from_file_location("robot_api", ROOT / "scripts/robot_parameter_api.py")\\nAPI = importlib.util.module_from_spec(SPEC)\\nSPEC.loader.exec_module(API)'
+assert source_loader in api_test.read_text()
+api_test.write_text(api_test.read_text().replace(source_loader,"import sys\\nsys.path.insert(0,str(ROOT/'scripts'))\\nimport robot_parameter_api as API\\nassert API.__file__.endswith('.so')"))
 assert len(list((out/'scripts').glob('*.so')))==len(names)
 '''.replace('names=MODULES','names='+repr(MODULES))
     (context / 'compile.py').write_text(compiler)
@@ -109,8 +115,12 @@ RUN /opt/omindos-runtime/bin/python -m unittest discover -s /build/native-app/te
     (context / 'Dockerfile').write_text(dockerfile)
     builder = 'omindos/reference-workbench-build:' + VERSION
     with (OUT / 'compiled-validation.log').open('w') as log:
-        result = subprocess.run(['docker','build','--progress','plain','-t',builder,str(context)],stdout=log,stderr=subprocess.STDOUT)
-    if result.returncode:
+        process = subprocess.Popen(['docker','build','--network=host','--progress','plain','-t',builder,str(context)],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+        for line in process.stdout:
+            log.write(line)
+            print(line,end='',flush=True)
+        returncode = process.wait()
+    if returncode:
         print((OUT / 'compiled-validation.log').read_text()[-18000:],flush=True)
         raise RuntimeError('Compiled update build or tests failed')
     logtext = (OUT / 'compiled-validation.log').read_text()
