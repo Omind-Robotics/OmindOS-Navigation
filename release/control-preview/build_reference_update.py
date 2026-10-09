@@ -95,6 +95,8 @@ setup(name='omindos-workbench-update',ext_modules=cythonize(
  script_args=['build_ext','--build-lib',str(out/'scripts'),'--build-temp','/build/objects','-j','2'])
 for f in (out/'scripts').glob('*.so'):subprocess.run(['strip','--strip-unneeded',str(f)],check=True)
 for folder in ['config','web','tests','release']:shutil.copytree(root/folder,out/folder)
+# Resource checksum helpers stay in private test fixtures, never in the payload.
+shutil.copy2(root/'scripts/fetch_mevius2_workbench.py',out/'tests/fetch_mevius2_workbench.py')
 # The API fixture used an explicit source-file loader. Point the copied fixture
 # at the compiled module while leaving the repository's source tests unchanged.
 api_test=out/'tests/test_robot_parameter_api.py'
@@ -105,7 +107,7 @@ assert len(list((out/'scripts').glob('*.so')))==len(names)
 '''.replace('names=MODULES','names='+repr(MODULES))
     (context / 'compile.py').write_text(compiler)
     dockerfile = f'''FROM {image}
-RUN /opt/omindos-runtime/bin/python -m pip install --no-cache-dir Cython==3.0.12 setuptools==75.8.2 wheel==0.45.1 numpy==1.26.4 scipy==1.14.1
+RUN /opt/omindos-runtime/bin/python -m pip install --no-cache-dir --only-binary=:all: --timeout 30 --retries 2 --index-url https://pypi.org/simple Cython==3.0.12 setuptools==75.8.2 wheel==0.45.1 numpy==1.26.4 scipy==1.14.1
 COPY source /build/source
 COPY compile.py /build/compile.py
 RUN /opt/omindos-runtime/bin/python /build/compile.py
