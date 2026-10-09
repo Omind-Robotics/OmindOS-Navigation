@@ -7,7 +7,8 @@ const {chromium} = require('playwright');
 (async () => {
   const output = process.argv[2] || 'docs/media/quadruped-reference';
   fs.mkdirSync(output, {recursive:true});
-  const browser = await chromium.launch({headless:true, args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  const browser = await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_EXECUTABLE || undefined,
+    args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   try {
     const page = await browser.newPage({viewport:{width:1800,height:1120},deviceScaleFactor:1});
     page.setDefaultTimeout(20000);
@@ -39,7 +40,7 @@ const {chromium} = require('playwright');
     assert.deepEqual(errors,[]);assert.deepEqual(meshFailures,[]);
     const metadata={stage:'source-workbench-preview',hardware_validated:false,installer_updated:false,
       upstream_commit:'4f09680bb575574377b903bbc971bdb2695d507b',source_commit:process.env.GITHUB_SHA,
-      viewport:{width:1800,height:1120},title:await page.title(),mesh_loaded:13,mesh_failed:0,
+      viewport:{width:1800,height:1120},browser:browser.version(),title:await page.title(),mesh_loaded:13,mesh_failed:0,
       active_joints:12,page_errors:errors,mesh_request_errors:meshFailures,
       checks:['complete_mesh_webgl_render','12_joints','quadruped_only_controls','apply_configuration','point_one_degree_jog','stop_latches_motion']};
     fs.writeFileSync(path.join(output,'CAPTURE.json'),JSON.stringify(metadata,null,2)+'\n');
