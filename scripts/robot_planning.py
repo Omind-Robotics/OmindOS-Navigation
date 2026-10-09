@@ -106,6 +106,7 @@ class ProfileRobot:
         root = ET.fromstring(profile['kinematics']['urdf_xml'])
         self.shapes = []
         for link in root.findall('link'):
+            check()
             name = link.get('name')
             geometries = link.findall('collision') or link.findall('visual')
             if not geometries:
@@ -134,8 +135,11 @@ class ProfileRobot:
                     raise ValueError('Collision dimensions must be positive')
                 local = np.array(origin(geometry)); local[:3, 3] += local[:3, :3] @ center
                 self.shapes.append((name, local, half))
+                if len(self.shapes) > 256:
+                    raise ValueError('规划碰撞模型最多支持 256 个几何包围盒。')
         self.pairs, self.exclusions = [], set()
         for i, (a, _, _) in enumerate(self.shapes):
+            check()
             for k in range(i+1, len(self.shapes)):
                 b = self.shapes[k][0]
                 ga, gb = groups[a], groups[b]
@@ -188,7 +192,9 @@ class ProfileRobot:
         for name, local, half in self.shapes:
             t = world[name] @ local
             boxes.append((t[:3,3], t[:3,:3], half))
-        for i, k in self.pairs:
+        for index,(i, k) in enumerate(self.pairs):
+            if index % 128 == 0:
+                self.check()
             if overlap(boxes[i], boxes[k]):
                 self.last_collision = [self.shapes[i][0], self.shapes[k][0]]
                 return False
@@ -206,6 +212,8 @@ def joint_path(robot, start, goal, seed=7):
     step = .01
     def edge(a, b):
         count = max(1, math.ceil(float(np.max(np.abs(b-a))) / step))
+        if count > 1000:
+            raise PlanningFailure('关节边超过 1000 样本预算。')
         return [a + (b-a)*u/count for u in range(1, count+1)]
     def checked(a, b):
         return all(robot.clear(q) for q in edge(a, b))
