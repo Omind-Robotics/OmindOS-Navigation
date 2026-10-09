@@ -1,0 +1,43 @@
+name: Transfer verified Ubuntu installer in bounded parts
+on:
+  push:
+    branches: [codex/ubuntu-reference-installer-20261009]
+    paths: ['.github/workflows/export-verified-ubuntu.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  transfer:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          repository: Omind-Robotics/OmindOS-Navigation
+          run-id: 37952326798
+          name: ubuntu-navigation-preview7-verified
+          github-token: ${{ github.token }}
+          path: verified
+      - name: Authenticate final package and split transfer bytes
+        run: |
+          cd verified
+          echo '7f48bffff4c144f89d8f159c4eceec678f070b30948456ae60c984fefff07f4d  omindos-navigation-0.2.0-preview.7-ubuntu-amd64.tar' | sha256sum -c -
+          split -b 350M -d omindos-navigation-0.2.0-preview.7-ubuntu-amd64.tar package.part
+          cat package.part00 package.part01 | sha256sum
+          mkdir metadata
+          cp *.json *.png SHA256SUMS-release.txt metadata/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-preview7-part00
+          path: verified/package.part00
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-preview7-part01
+          path: verified/package.part01
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-preview7-metadata
+          path: verified/metadata/
+          compression-level: 0
