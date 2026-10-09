@@ -25,7 +25,8 @@ const {chromium} = require('playwright');
     await page.locator('#part').selectOption('FL_hip_joint');
     await page.locator('#fit').click();
     await page.waitForTimeout(800);
-    await page.screenshot({path:path.join(output,'workbench.png')});
+    console.log('Complete reference model rendered; capturing viewport');
+    await page.screenshot({path:path.join(output,'workbench.png'),timeout:60000});
     // Check configuration use and an actual point-one-degree preview after capturing the clean state.
     await page.locator('#apply-program').click();
     await page.waitForFunction(()=>document.querySelector('#apply-note').textContent.includes('已'));

@@ -102,8 +102,8 @@ def main():
                 'release_stage': 'geometric-workbench', 'backend_source_included': False,
                 'planning_kernel_source': 'Omind-Robotics/OmindOS-Manipulation@cbe8caf13921002e463355c6a2982e900640c7e0',
                 'planning_kernel_sha256': hashlib.sha256((ROOT/'scripts/dual_task_planner.py').read_bytes()).hexdigest(),
-                'coupled_waist_dual_arm_planning': True,
-                'navigation_integrated':True, 'navigation_drive_types':['differential','omnidirectional'],
+                'coupled_waist_dual_arm_planning': args.variant == 'manipulation',
+                'navigation_integrated':args.variant == 'manipulation', 'navigation_drive_types':['differential','omnidirectional'] if args.variant == 'manipulation' else [],
                 'navigation_kernel_source':'Omind-Robotics/OmindOS-Navigation@3293dfc83e32b8e56f1f185b80e19e56a2fe600d:src/nav3d_native/nav3d_native/algorithms.py',
                 'navigation_kernel_sha256':hashlib.sha256((ROOT/'scripts/navigation_kernel.py').read_bytes()).hexdigest(),
                 'navigation_guard_sha256':hashlib.sha256((ROOT/'scripts/navigation_guard.py').read_bytes()).hexdigest(),
@@ -114,8 +114,11 @@ def main():
                 'ros_required': False, 'ros_runtime_bundled': False, 'ros_bridge_included': True,
                 'runtime_applied': False, 'hardware_validated': False,
                 'dynamics_simulation_bundled': False, 'torch_bundled': False, 'mujoco_bundled': False,
-                'manufacturer_meshes_bundled': 8, 'dual_arm_mesh_instances': 16,
-                'cooperative_demo_duration_s': 35, 'contact_dynamics_validated': False,
+                'manufacturer_meshes_bundled': 8,
+                'quadruped_reference_meshes_bundled': 13 if args.variant == 'quadruped' else 0,
+                'quadruped_reference_commit': '4f09680bb575574377b903bbc971bdb2695d507b' if args.variant == 'quadruped' else None,
+                'dual_arm_mesh_instances': 16 if args.variant == 'manipulation' else 0,
+                'cooperative_demo_duration_s': 35 if args.variant == 'manipulation' else None, 'contact_dynamics_validated': False,
                 'files': {str(p.relative_to(package)).replace(os.sep, '/'): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted(package.rglob('*')) if p.is_file()}}
     # Refuse business source, bytecode, development reports and source maps.
@@ -161,6 +164,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 

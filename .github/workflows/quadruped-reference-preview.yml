@@ -48,6 +48,7 @@ jobs:
           from quadruped_variant import prepare
           prepare(Path('build/quadruped-preview'), Path('.').resolve())
           PY
+          python release/workbench/smoke_binary.py build/quadruped-preview/scripts/workbench_desktop.py --variant quadruped --source --report build/source-smoke.json
           python build/quadruped-preview/scripts/robot_workbench.py --store build/clean-preview-store --port 8085 >build/workbench.log 2>&1 &
           for attempt in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:8085/ >/dev/null; then break; fi
@@ -59,6 +60,7 @@ jobs:
           NODE_PATH: ${{ github.workspace }}/build/capture/node_modules
         run: node scripts/capture_quadruped_reference.cjs docs/media/quadruped-reference
       - name: Preserve preview evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu-quadruped-reference-ui

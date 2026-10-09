@@ -17,7 +17,7 @@ export class RobotScene {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.02;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.VSMShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.scene = new THREE.Scene();
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, .01, 1000);
     this.camera.up.set(0, 0, 1);
@@ -33,7 +33,7 @@ export class RobotScene {
     ambient.position.set(0, 0, 3); this.scene.add(ambient);
     this.key = new THREE.DirectionalLight(0xfff5e9, 2.1);
     this.key.castShadow = true;
-    this.key.shadow.mapSize.set(2048, 2048);
+    this.key.shadow.mapSize.set(1024, 1024);
     this.key.shadow.bias = -.0002;
     this.key.shadow.normalBias = .008;
     this.key.shadow.radius = 5;
