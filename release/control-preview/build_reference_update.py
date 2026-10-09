@@ -47,8 +47,22 @@ def main():
     image_archive = package / 'runtime.image.tar.gz'
     run('sha256sum','-c','SHA256SUMS-image.txt',cwd=package)
     run('docker','load','-i',str(image_archive))
-    image_id = subprocess.check_output(['docker','image','inspect','--format','{{.Id}}',image],text=True).strip()
-    assert image_id in (package / 'IMAGE_ID.txt').read_text().splitlines()
+    inspected = json.loads(subprocess.check_output(['docker','image','inspect',image],text=True))[0]
+    image_id = inspected['Id']
+    with tarfile.open(image_archive, 'r:gz') as t:
+        exported_manifest = json.load(t.extractfile('manifest.json'))
+        assert len(exported_manifest) == 1 and image in exported_manifest[0]['RepoTags']
+        config_bytes = t.extractfile(exported_manifest[0]['Config']).read()
+        config = json.loads(config_bytes)
+    # Docker's containerd store may expose a manifest ID instead of the legacy
+    # configuration ID. Authenticate the pinned archive, exact layer chain and
+    # runtime configuration rather than trusting one engine-specific ID format.
+    assert inspected['RootFS']['Layers'] == config['rootfs']['diff_ids']
+    assert inspected['Architecture'] == config['architecture'] == 'amd64'
+    assert inspected['Os'] == config['os'] == 'linux'
+    for key in ['Env','Entrypoint','Cmd','WorkingDir','User','Labels']:
+        assert (inspected['Config'].get(key) or None) == (config['config'].get(key) or None), key
+    print(json.dumps({'verified_base_image':image_id,'exported_config_sha256':hashlib.sha256(config_bytes).hexdigest()}),flush=True)
     sys.path.insert(0,str(ROOT / 'release/workbench'))
     from quadruped_variant import prepare
     payload = OUT / 'payload'
@@ -95,7 +109,10 @@ RUN /opt/omindos-runtime/bin/python -m unittest discover -s /build/native-app/te
     (context / 'Dockerfile').write_text(dockerfile)
     builder = 'omindos/reference-workbench-build:' + VERSION
     with (OUT / 'compiled-validation.log').open('w') as log:
-        subprocess.run(['docker','build','--progress','plain','-t',builder,str(context)],check=True,stdout=log,stderr=subprocess.STDOUT)
+        result = subprocess.run(['docker','build','--progress','plain','-t',builder,str(context)],stdout=log,stderr=subprocess.STDOUT)
+    if result.returncode:
+        print((OUT / 'compiled-validation.log').read_text()[-18000:],flush=True)
+        raise RuntimeError('Compiled update build or tests failed')
     logtext = (OUT / 'compiled-validation.log').read_text()
     assert re.search(r'Ran 79 tests.*?OK',logtext,re.S) and re.search(r'Ran 3 tests.*?OK',logtext,re.S)
     container = subprocess.check_output(['docker','create',builder],text=True).strip()
