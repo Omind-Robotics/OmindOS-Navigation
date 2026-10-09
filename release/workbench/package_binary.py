@@ -15,7 +15,7 @@ import urllib.request
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.2.0-preview.6'
+VERSION = '0.2.0-preview.7'
 
 
 def main():
@@ -47,7 +47,7 @@ def main():
     if windows:
         command += ['--msvc=latest', '--windows-console-mode=force',
                     '--company-name=OriginMind', '--product-name=OmindOS Workbench',
-                    '--file-version=0.2.0.6', '--product-version=0.2.0.6']
+                    '--file-version=0.2.0.7', '--product-version=0.2.0.7']
     command.append(str(ROOT / 'scripts/workbench_desktop.py'))
     subprocess.run(command, cwd=ROOT, env=env, check=True)
     package = output / (product + '-' + args.version + '-' + target)
