@@ -8,7 +8,7 @@
 <div class="parameter-fields">
 <h2>模型与参数</h2><p class="muted">导入模型，在三维视图中检查调整。</p>
 <label class="file">导入 URDF / 完整配置<input id="import" type="file" accept=".urdf,.xml,.json"></label>
-<button id="example">加载双七轴移动机器人</button><p class="note">双臂各7轴 + 腰部pitch = 15个主体关节<br>RM75-B关节结构；机身、夹爪与驱动参数待标定。</p>
+<button id="example">加载双七轴移动机器人</button><p class="note">双臂各7轴 + 腰部pitch = 15个主体关节<br>RM75-B关节结构；可按客户硬件设置模型与参数。</p>
 <label>机器人编号<input id="robot-id" value="demo-dual-rm75" maxlength="64"></label>
 <details id="connections-panel">
 <summary>设备通信 <span class="connection-badge">可稍后选择</span></summary>
@@ -33,7 +33,7 @@
 <div class="view-controls"><button data-view="iso">立体</button><button data-view="front">正面</button><button data-view="side">侧面</button><button id="fit">适合窗口</button><button data-focus="left">左夹爪</button><button data-focus="right">右夹爪</button></div>
 <p class="hint">拖动旋转 · 滚轮缩放 · 点击选择部件</p>
 <div id="warnings" class="notice" role="status"></div>
-<details class="reference-photo"><summary>外观与参数来源</summary><img src="/mda1-reference.webp" alt="用户提供的移动双臂机器人外观参考"><p class="note">机械臂：厂家 RM75-B 网格与 URDF。机身配色参考照片，安装尺寸待标定。照片为灵巧手；本工作台保留原双指夹爪参考模型。四轮差速底盘为演示配置。</p></details>
+<details class="reference-photo"><summary>外观与参数来源</summary><img src="/mda1-reference.webp" alt="用户提供的移动双臂机器人外观参考"><p class="note">机械臂：厂家 RM75-B 网格与 URDF。机身配色参考照片；安装尺寸、质量惯量与驱动参数可按客户硬件设置。内置双指夹爪和四轮差速底盘采用参考配置，可通过模型与参数编辑适配客户硬件。</p></details>
 <div class="scope">关节运动学 · 底盘平面位姿 · 静态重力负载<br>不包含轮地接触、碰撞、平衡和完整动力学仿真</div>
 </section>
 <aside class="actions">
@@ -46,7 +46,7 @@
 <h2>双臂协同演示</h2><p class="note">接近 → 对齐 → 夹爪开合 → 抬升 → 连续行进</p>
 <button id="cooperative-demo" class="primary" data-motion>播放连续演示 · 35 秒</button>
 <p id="sequence-phase" role="status">按当前姿态开始，结束后保持位置。</p>
-<p class="note">参考轨迹 · 双指夹爪与四轮底盘待标定。未计算抓取接触力。</p>
+<p class="note">参考轨迹 · 内置双指夹爪与四轮底盘参数可按硬件配置。未计算抓取接触力。</p>
 </section>
 <section class="chassis-controls" aria-label="底盘行走测试">
 <h2>四轮底盘试跑</h2><p id="chassis-info" class="note">等待底盘配置</p>
