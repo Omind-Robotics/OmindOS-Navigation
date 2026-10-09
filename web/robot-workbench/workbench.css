@@ -196,3 +196,31 @@ body[data-estop=true] #emergency-state { font-weight: 700; color: #a72c32; }
   textarea { font-size: 16px; }
   footer { font-size: 14px; }
 }
+
+
+/* Verified MDA1 model viewer; controls retain preview.7 readable type sizes. */
+.scene-options { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:10px 0; }
+.scene-options button { min-height:40px; padding:6px 10px; font-size:14px; }
+.scene-options button[aria-pressed=true] { background:#d9eef5; border-color:#8bb8c9; }
+#stage-stop { display:none; }
+.cooperative-controls { border:1px solid #b8d7e1; background:#f0f8fb; padding:16px; border-radius:12px; margin:16px 0 22px; }
+.cooperative-controls button { width:100%; }
+#sequence-phase { font-size:16px; color:#185773; margin:12px 0 0; }
+.reference-photo { margin:8px 0; font-size:14px; color:#486174; }
+.reference-photo img { float:left; width:80px; max-height:110px; object-fit:contain; margin:8px 14px 8px 0; }
+.reference-photo p { overflow:hidden; }
+.view-controls { flex-wrap:wrap; }
+.view-controls button { font-size:14px; min-height:36px; padding:6px 9px; }
+body.expanded-view main { display:block; height:calc(100dvh - 96px); min-height:560px; }
+body.expanded-view .parameters, body.expanded-view .actions, body.expanded-view footer { display:none; }
+body.expanded-view .viewport { height:100%; }
+body.expanded-view #stage-stop { display:block; }
+body.expanded-view .reference-photo, body.expanded-view .scope, body.expanded-view .hint { display:none; }
+body[data-estop=true] #stage-stop { background:#701d23; }
+@media (min-width:1200px) { .viewport { padding:18px; } .stage-toolbar { margin-top:12px; } .scope { margin-top:10px; } }
+@media (max-width:600px) { .scene-options button { font-size:14px; } .cooperative-controls { margin:12px 0; } }
+
+body.expanded-view .scene-options #stage-stop { display:inline-block; width:auto; min-width:88px; }
+
+.scene-hud { position:absolute; top:8px; left:12px; z-index:2; display:flex; flex-direction:column; pointer-events:none; color:#305569; font-size:14px; gap:3px; background:#ffffffcf; padding:8px 12px; border-radius:8px; }
+.scene-hud strong { font-size:16px; }

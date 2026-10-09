@@ -7,6 +7,8 @@ from urllib.parse import urlsplit
 
 from robot_parameter_api import MAX_BYTES, ThreadingHTTPServer, make_handler as registry_handler
 from robot_kinematics import build_model, pose, trial, jog_trial, sine_trial, wheel_trial
+from robot_assets import MESH_ASSETS
+from robot_sequence import sequence_trial
 from workbench_state import WorkbenchState, MotionLocked
 from robot_connections import connection_catalog, validate_connections
 from robot_runtime_client import RuntimeClient
@@ -17,6 +19,8 @@ ASSETS = {"/": ("web/robot-workbench/index.html", "text/html; charset=utf-8"),
           "/robot-scene.js": ("web/robot-workbench/robot-scene.js", "text/javascript; charset=utf-8"),
           "/runtime.js": ("web/robot-workbench/runtime.js", "text/javascript; charset=utf-8"),
           "/workbench.css": ("web/robot-workbench/workbench.css", "text/css; charset=utf-8"),
+          "/cooperative-demo.json": ("web/robot-workbench/cooperative-demo.json", "application/json; charset=utf-8"),
+          "/mda1-reference.webp": ("web/robot-workbench/mda1-reference.webp", "image/webp"),
           "/example.json": ("config/robot_profiles/workbench-demo.json", "application/json; charset=utf-8")}
 
 
@@ -56,6 +60,18 @@ def make_handler(store_dir, runtime_url=None):
                         return self.respond(200, {**runtime.snapshot(), 'profile': runtime.active_profile()})
                 except (ValueError, OSError):
                     return self.respond(500, {'error': 'active workbench configuration unavailable'})
+            mesh = MESH_ASSETS.get(urlsplit(self.path).path)
+            if mesh:
+                try:
+                    data = (ROOT / mesh).read_bytes()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/octet-stream")
+                    self.send_header("Content-Length", str(len(data)))
+                    self.end_headers()
+                    self.wfile.write(data)
+                except OSError:
+                    self.respond(404, {"error": "approved mesh unavailable"})
+                return
             asset = ASSETS.get(urlsplit(self.path).path)
             if asset:
                 try:
@@ -76,7 +92,7 @@ def make_handler(store_dir, runtime_url=None):
             if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
                 return self.respond(415, {"error": "Content-Type must be application/json"})
             runtime_route = self.path in ['/v1/runtime/' + op for op in ('load', 'run', 'stop', 'heartbeat')]
-            if self.path not in ("/v1/robot-model", "/v1/robot-preview", '/v1/robot-jog', '/v1/robot-sine', '/v1/robot-wheel-base',
+            if self.path not in ("/v1/robot-model", "/v1/robot-preview", '/v1/robot-jog', '/v1/robot-sine', '/v1/robot-wheel-base', '/v1/robot-sequence',
                                  '/v1/workbench-active-profile', '/v1/workbench-stop') and not runtime_route:
                 return super().do_POST()
             try:
@@ -120,7 +136,7 @@ def make_handler(store_dir, runtime_url=None):
                         if profile is None:
                             raise ValueError('请先将参数写入程序，或提供完整 profile。')
                         payload = {**payload, 'profile': profile}
-                    function = {'/v1/robot-preview': trial, '/v1/robot-jog': jog_trial, '/v1/robot-sine': sine_trial, '/v1/robot-wheel-base': wheel_trial}[self.path]
+                    function = {'/v1/robot-preview': trial, '/v1/robot-jog': jog_trial, '/v1/robot-sine': sine_trial, '/v1/robot-wheel-base': wheel_trial, '/v1/robot-sequence': sequence_trial}[self.path]
                     result = function(payload)
                     runtime.check_motion(epoch)
                     result['motion_epoch'] = epoch
@@ -153,3 +169,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

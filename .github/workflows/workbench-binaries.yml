@@ -1,7 +1,7 @@
 name: Build desktop workbench binaries
 on:
   push:
-    branches: [codex/workbench-binary-release, codex/manipulation-unified-preview6]
+    branches: [main, codex/workbench-binary-release, codex/manipulation-unified-preview6]
     paths:
       - '.github/workflows/workbench-binaries.yml'
       - 'release/workbench/**'
@@ -9,6 +9,12 @@ on:
       - 'scripts/robot_connections.py'
       - 'scripts/robot_parameter_api.py'
       - 'scripts/robot_workbench.py'
+      - 'scripts/robot_assets.py'
+      - 'scripts/robot_sequence.py'
+      - 'scripts/robot_kinematics.py'
+      - 'scripts/workbench_state.py'
+      - 'config/robot_models/realman_rm75/**'
+      - 'config/robot_profiles/workbench-demo.json'
       - 'scripts/robot_runtime_client.py'
       - 'scripts/robot_profile_runtime*.py'
       - 'tests/test_robot*.py'
@@ -27,8 +33,6 @@ jobs:
         include:
           - os: ubuntu-22.04
             target: linux-x64
-          - os: windows-2022
-            target: windows-x64
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     env:
@@ -66,5 +70,6 @@ jobs:
             build/workbench-release/*.sha256
           if-no-files-found: error
           retention-days: 14
+
 
 

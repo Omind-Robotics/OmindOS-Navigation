@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmindOS · 机器人调参工作台</title><link rel="stylesheet" href="/workbench.css"><script defer src="/workbench.js"></script><script defer src="/runtime.js"></script></head>
 <body>
-<header><div><b>OmindOS</b><span>机器人调参工作台</span></div><span class="badge">运动学预览版</span></header>
+<header><div><b>OmindOS</b><span>机器人调参工作台</span></div><span class="badge">三维交互验证版 · 运动学</span></header>
 <main>
 <aside class="parameters">
 <div class="parameter-fields">
@@ -10,7 +10,7 @@
 <label class="file">导入 URDF / 完整配置<input id="import" type="file" accept=".urdf,.xml,.json"></label>
 <button id="example">加载双七轴移动机器人</button><p class="note">双臂各7轴 + 腰部pitch = 15个主体关节<br>RM75-B关节结构；机身、夹爪与驱动参数待标定。</p>
 <label>机器人编号<input id="robot-id" value="demo-dual-rm75" maxlength="64"></label>
-<details id="connections-panel" open>
+<details id="connections-panel">
 <summary>设备通信 <span class="connection-badge">可稍后选择</span></summary>
 <label>设备<select id="connection-device" aria-label="通信设备"></select></label>
 <label>通信方式<select id="connection-protocol" aria-label="通信方式"></select></label>
@@ -27,11 +27,13 @@
 </aside>
 <section class="viewport" aria-label="机器人三维预览">
 <div class="viewbar"><div><h1 id="model-name">机器人模型</h1><p class="muted" id="model-info">等待加载</p></div><span class="badge" id="dirty">未保存</span></div>
-<div class="stage-toolbar"><span>三维模型预览</span><div class="render-modes" role="group" aria-label="显示样式"><button id="solid-view" aria-pressed="true">实体</button><button id="wireframe-view" aria-pressed="false">线框</button></div></div>
-<div class="canvas-stage"><canvas id="scene" aria-label="按 URDF 正向运动学计算的机器人三维视图；拖动旋转，点击选择关节或连杆"></canvas><div class="part-caption"><span id="selected-kind">当前关节</span><strong id="selected-part">—</strong></div></div>
-<div class="view-controls"><button data-view="iso">立体</button><button data-view="front">正面</button><button data-view="side">侧面</button><button id="fit">适合窗口</button></div>
+<div class="stage-toolbar"><span id="mesh-status" role="status">本地模型加载中</span><div class="render-modes" role="group" aria-label="显示样式"><button id="solid-view" aria-pressed="true">实体</button><button id="wireframe-view" aria-pressed="false">线框</button></div></div>
+<div class="canvas-stage"><div class="scene-hud"><strong id="scene-phase">交互预览</strong><span id="scene-base">参考参数 · 运动学</span></div><canvas id="scene" aria-label="按 URDF 正向运动学计算的机器人三维视图；拖动旋转，点击选择关节或连杆"></canvas><div class="part-caption"><span id="selected-kind">当前关节</span><strong id="selected-part">—</strong></div></div>
+<div class="scene-options"><button id="expand-view" aria-pressed="false">扩大视图</button><button id="follow-base" aria-pressed="false">跟随底盘</button><button id="tool-trails" aria-pressed="true">工具轨迹</button><button id="stage-stop" class="emergency-stop">急停</button></div>
+<div class="view-controls"><button data-view="iso">立体</button><button data-view="front">正面</button><button data-view="side">侧面</button><button id="fit">适合窗口</button><button data-focus="left">左夹爪</button><button data-focus="right">右夹爪</button></div>
 <p class="hint">拖动旋转 · 滚轮缩放 · 点击选择部件</p>
 <div id="warnings" class="notice" role="status"></div>
+<details class="reference-photo"><summary>外观与参数来源</summary><img src="/mda1-reference.webp" alt="用户提供的移动双臂机器人外观参考"><p class="note">机械臂：厂家 RM75-B 网格与 URDF。机身配色参考照片，安装尺寸待标定。照片为灵巧手；本工作台保留原双指夹爪参考模型。四轮差速底盘为演示配置。</p></details>
 <div class="scope">关节运动学 · 底盘平面位姿 · 静态重力负载<br>不包含轮地接触、碰撞、平衡和完整动力学仿真</div>
 </section>
 <aside class="actions">
@@ -39,6 +41,12 @@
 <div class="emergency-buttons"><button id="emergency-stop" class="emergency-stop">急停 <small>ESC</small></button><button id="reset-stop" aria-describedby="reset-stop-note" disabled>复位</button></div>
 <div class="emergency-row"><span id="emergency-state" role="status">电脑端软件急停 · 真机未连接</span></div>
 <p id="reset-stop-note" class="note">复位只解除急停，不归零、不自动继续运动。</p>
+</section>
+<section class="cooperative-controls" aria-label="双臂协同演示">
+<h2>双臂协同演示</h2><p class="note">接近 → 对齐 → 夹爪开合 → 抬升 → 连续行进</p>
+<button id="cooperative-demo" class="primary" data-motion>播放连续演示 · 35 秒</button>
+<p id="sequence-phase" role="status">按当前姿态开始，结束后保持位置。</p>
+<p class="note">参考轨迹 · 双指夹爪与四轮底盘待标定。未计算抓取接触力。</p>
 </section>
 <section class="chassis-controls" aria-label="底盘行走测试">
 <h2>四轮底盘试跑</h2><p id="chassis-info" class="note">等待底盘配置</p>
@@ -94,3 +102,4 @@
 </main>
 <footer>导入模型 → 调整参数 → 运动学试运行 → 保存配置</footer>
 </body></html>
+

@@ -195,6 +195,7 @@ function updateMotionControls(){
     if(group==='both')button.disabled=locked||!armJoints('left').length||!armJoints('right').length;
   }
   document.querySelectorAll('[data-drive]').forEach(button=>button.disabled=locked||!model?.wheel_base);
+  $('cooperative-demo').disabled=locked||armJoints('left').length!==7||armJoints('right').length!==7||!model?.wheel_base;
   $('reset-stop').disabled=!emergencyStop||safetyPending;
   $('emergency-state').textContent=emergencyStop?'已急停 · 运动锁定，需手动复位':'电脑端软件急停 · 真机未连接';
 }
@@ -314,7 +315,7 @@ function buildEditor() {
       textBlock(`外形 ${index+1} · ${g.tagName}`, 'section-label');
       if (g.tagName === 'box') vectorFields($('editor'),'外形尺寸 / m',g,'size');
       else if (['sphere','cylinder'].includes(g.tagName)) { field($('editor'),'半径 / m',g.getAttribute('radius'),v=>g.setAttribute('radius',v),{min:'0'}); if(g.tagName==='cylinder') field($('editor'),'长度 / m',g.getAttribute('length'),v=>g.setAttribute('length',v),{min:'0'}); }
-      else textBlock('Mesh 当前以关节骨架替代显示。');
+      else textBlock('厂家网格保持原连杆坐标；未知资源以骨架显示。');
       vectorFields($('editor'),'外形相对连杆偏移 / m',ensure(visual,'origin'),'xyz');
     });
     textBlock('外形尺寸只改变显示几何；关节连接距离在“关节”页调整。');
@@ -345,8 +346,11 @@ function fitView(poses=[currentPose]){
   view.center=lo.map((x,i)=>(x+hi[i])/2);view.span=Math.max(.15,...lo.map((x,i)=>hi[i]-x))*1.45;view.zoom=1;
 }
 function draw(){
+  $('scene-phase').textContent=currentPose?.phase||'交互预览';
+  if(currentPose)$('scene-base').textContent=`底盘 X ${currentPose.base_pose.x_m.toFixed(2)} m · Y ${currentPose.base_pose.y_m.toFixed(2)} m · 转向 ${(currentPose.base_pose.yaw_rad*180/Math.PI).toFixed(1)}° · 参考运动学`;
   $('selected-kind').textContent = mode === 'joint' ? '当前关节' : '当前连杆';
   $('selected-part').textContent = $('part').value || '—';
+  if(view.follow && currentPose){view.center[0]=view.followOffset[0]+currentPose.base_pose.x_m;view.center[1]=view.followOffset[1]+currentPose.base_pose.y_m;}
   if(sceneEngine){sceneEngine.render(model,currentPose,view,mode,$('part').value);return;}
   drawWireframe();
 }
@@ -405,17 +409,31 @@ async function executeMotion(path,data,label){
     fitView([result.frames[0],result.frames[Math.round(step/4)],result.frames[Math.round(3*step/4)]]);
     $('sine-info').textContent=result.amplitude_limited_joints.length?'限位已缩小振幅：'+result.amplitude_limited_joints.join('、'):'围绕当前姿态往复，完成后回到起点。';
   }else if(result.motion_type!=='jog')fitView([result.frames[0],result.frames.at(-1)]);
+  sceneEngine?.resetToolPaths();
+  if(view.follow)view.followOffset=[view.center[0]-currentPose.base_pose.x_m,view.center[1]-currentPose.base_pose.y_m];
   const start=performance.now();$('stop').disabled=false;
   const tick=now=>{
     if(ticket!==motionTicket||emergencyStop)return;
     // A frame timestamp can precede performance.now() when scheduled in the same frame.
-    const elapsed=Math.max(0,(now-start)/1000),index=Math.min(result.frames.length-1,Math.floor(elapsed/result.duration_s*(result.frames.length-1)));
-    currentPose=result.frames[index];$('progress').value=Math.min(1,elapsed/result.duration_s);updateJogAngle();updateWheelSpeeds(currentPose.wheel_velocity_rad_s);draw();
+    const elapsed=Math.max(0,(now-start)/1000);
+    let low=0,high=result.frames.length-1;
+    while(low<high){const mid=Math.ceil((low+high)/2);if(result.frames[mid].time_s<=elapsed)low=mid;else high=mid-1;}
+    const index=low;
+    const frame=result.frames[index],next=result.frames[Math.min(index+1,result.frames.length-1)];
+    const fraction=next.time_s>frame.time_s?Math.max(0,Math.min(1,(elapsed-frame.time_s)/(next.time_s-frame.time_s))):0;
+    currentPose=sceneEngine?sceneEngine.interpolatePose(model,frame,next,fraction):frame;
+    if(result.phases)$('sequence-phase').textContent=frame.phase;
+    $('progress').value=Math.min(1,elapsed/result.duration_s);updateJogAngle();updateWheelSpeeds(currentPose.wheel_velocity_rad_s);draw();
     status(`${label} ${Math.min(elapsed,result.duration_s).toFixed(1)} / ${result.duration_s.toFixed(1)} 秒`);
     if(elapsed<result.duration_s)animation=requestAnimationFrame(tick);
     else{stop();freezePose();status(result.gravity_limit_exceeded.length?`${label}结束 · 发现静态重力负载超限`:`${label}完成 · 仅运动学预览`);}
   };animation=requestAnimationFrame(tick);
 }
+$('cooperative-demo').onclick=()=>guarded(async()=>{
+  await motionReady(); const demo=await api('/cooperative-demo.json');
+  await executeMotion('/v1/robot-sequence',{profile:payload(),start:currentPose.positions,base_pose:currentPose.base_pose,
+    segments:demo.segments,reference_signature:demo.reference_signature},'双臂协同演示');
+});
 $('run').onclick=()=>guarded(async()=>{await motionReady();await executeMotion('/v1/robot-preview',{profile:payload(),target:targets,base_target:baseTarget,duration_s:numeric($('duration').value)},'运动学试运行');});
 for(const button of document.querySelectorAll('[data-drive]'))button.onclick=()=>guarded(async()=>{
   await motionReady();
@@ -451,7 +469,15 @@ $('import').onchange=()=>guarded(async()=>{const file=$('import').files[0];if(!f
 $('apply-xml').onclick=()=>guarded(async()=>{const candidate=payload();candidate.kinematics.urdf_xml=$('xml').value;const doc=parse(candidate.kinematics.urdf_xml),missing=missingDrives(doc);candidate.dynamics.joints=Object.fromEntries(Object.keys(missing).map(n=>[n,candidate.dynamics.joints[n]||missing[n]]));await importProfile(candidate);});
 $('robot-id').onchange=()=>edited();$('part').onchange=()=>{buildEditor();draw();};
 $('joint-tab').onclick=()=>{mode='joint';rebuildParts();draw();};$('link-tab').onclick=()=>{mode='link';rebuildParts();draw();};
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{view.yaw=b.dataset.view==='front'?Math.PI/2:b.dataset.view==='side'?0:.75;view.pitch=b.dataset.view==='iso'?.48:0;draw();});$('fit').onclick=()=>{fitView();draw();};
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{view.yaw=b.dataset.view==='front'?Math.PI/2:b.dataset.view==='side'?0:.75;view.pitch=b.dataset.view==='iso'?.48:0;draw();});$('fit').onclick=()=>{view.follow=false;$('follow-base').setAttribute('aria-pressed','false');fitView();draw();};
+$('expand-view').onclick=()=>{const active=document.body.classList.toggle('expanded-view');$('expand-view').textContent=active?'恢复面板':'扩大视图';$('expand-view').setAttribute('aria-pressed',String(active));draw();};
+$('stage-stop').onclick=engageStop;
+$('follow-base').onclick=()=>{view.follow=!view.follow;view.followOffset=[view.center[0]-currentPose.base_pose.x_m,view.center[1]-currentPose.base_pose.y_m];$('follow-base').setAttribute('aria-pressed',String(view.follow));draw();};
+$('tool-trails').onclick=()=>{if(sceneEngine){sceneEngine.showTrails=!sceneEngine.showTrails;$('tool-trails').setAttribute('aria-pressed',String(sceneEngine.showTrails));draw();}};
+document.querySelectorAll('[data-focus]').forEach(button=>button.onclick=()=>{
+  const t=currentPose?.link_transforms[button.dataset.focus+'_hand'];if(!t)return;
+  view.follow=false;$('follow-base').setAttribute('aria-pressed','false');view.center=t.slice(0,3).map(r=>r[3]);view.span=.65;view.zoom=1;draw();
+});
 $('solid-view').onclick=()=>{if(sceneEngine)sceneEngine.wireframe=false;$('solid-view').setAttribute('aria-pressed','true');$('wireframe-view').setAttribute('aria-pressed','false');draw();};
 $('wireframe-view').onclick=()=>{if(sceneEngine)sceneEngine.wireframe=true;$('solid-view').setAttribute('aria-pressed','false');$('wireframe-view').setAttribute('aria-pressed','true');draw();};
 let drag;const canvas=$('scene');canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY};canvas.setPointerCapture(e.pointerId);});
@@ -464,7 +490,8 @@ guarded(async()=>{
     const option=document.createElement('option');option.value=key;option.textContent=spec.label+' · '+spec.model;$('connection-device').append(option);
   }
   $('connection-device').value='chassis';renderConnections();
-  try{const {RobotScene}=await import('/robot-scene.js');sceneEngine=new RobotScene(canvas);}
+  try{const {RobotScene}=await import('/robot-scene.js');sceneEngine=new RobotScene(canvas);
+    sceneEngine.onAssetsChanged=stats=>{$('mesh-status').textContent=stats.requested?`厂家网格 ${stats.loaded} / ${stats.requested}`+(stats.failed?' · 部分失败，显示骨架':' · 本地加载'):'三维实体预览';canvas.dataset.meshLoaded=String(stats.loaded);canvas.dataset.meshFailed=String(stats.failed);};}
   catch(error){console.warn('实体渲染不可用，使用兼容线框视图。',error);canvas.dataset.renderer='canvas2d';$('solid-view').disabled=true;$('solid-view').setAttribute('aria-pressed','false');$('wireframe-view').setAttribute('aria-pressed','true');}
   new ResizeObserver(draw).observe(canvas);
   const saved=await api('/v1/workbench-active-profile');motionEpoch=saved.motion_epoch;
@@ -473,4 +500,5 @@ guarded(async()=>{
   if(saved.emergency_stop)latchStop('服务已急停 · 请手动复位后再运动');
   updateMotionControls();pollSafety();
 });
+
 

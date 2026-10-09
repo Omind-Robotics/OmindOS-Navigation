@@ -15,7 +15,7 @@ import urllib.request
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.2.0-preview.7'
+VERSION = '0.2.0-preview.8'
 
 
 def main():
@@ -43,21 +43,25 @@ def main():
                '--report=' + str(output / 'private-compilation-report.xml'),
                '--include-module=robot_workbench', '--include-module=robot_parameter_api',
                '--include-module=robot_kinematics', '--include-module=workbench_state',
+               '--include-module=robot_assets', '--include-module=robot_sequence',
                '--include-module=robot_connections', '--include-module=robot_runtime_client']
     if windows:
         command += ['--msvc=latest', '--windows-console-mode=force',
                     '--company-name=OriginMind', '--product-name=OmindOS Workbench',
-                    '--file-version=0.2.0.7', '--product-version=0.2.0.7']
+                    '--file-version=0.2.0.8', '--product-version=0.2.0.8']
     command.append(str(ROOT / 'scripts/workbench_desktop.py'))
     subprocess.run(command, cwd=ROOT, env=env, check=True)
     package = output / (product + '-' + args.version + '-' + target)
     shutil.copytree(build / 'workbench_desktop.dist', package)
     paths = ['web/robot-workbench/index.html', 'web/robot-workbench/workbench.css',
-             'web/robot-workbench/robot-scene.js', 'web/robot-workbench/runtime.js', 'config/robot_profiles/workbench-demo.json',
+             'web/robot-workbench/robot-scene.js', 'web/robot-workbench/runtime.js', 'web/robot-workbench/cooperative-demo.json',
+             'web/robot-workbench/mda1-reference.webp', 'config/robot_profiles/workbench-demo.json',
              'LICENSES/Three-MIT.txt', 'LICENSES/OpenSSL-3-Apache-2.0.txt',
              'LICENSES/Workbench-Runtime-NOTICE.txt', 'LICENSES/bzip2-LICENSE.txt',
              'LICENSES/XZ-COPYING.txt', 'config/robot_models/realman_rm75/LICENSE',
              'config/robot_models/realman_rm75/UPSTREAM_LICENSE', 'config/robot_models/realman_rm75/NOTICE.md']
+    paths += ['config/robot_models/realman_rm75/meshes/' + p.name
+              for p in sorted((ROOT/'config/robot_models/realman_rm75/meshes').iterdir()) if p.is_file()]
     for name in paths:
         destination = package / name
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -86,6 +90,8 @@ def main():
                 'ros_required': False, 'ros_runtime_bundled': False, 'ros_bridge_included': True,
                 'runtime_applied': False, 'hardware_validated': False,
                 'dynamics_simulation_bundled': False, 'torch_bundled': False, 'mujoco_bundled': False,
+                'manufacturer_meshes_bundled': 8, 'dual_arm_mesh_instances': 16,
+                'cooperative_demo_duration_s': 35, 'contact_dynamics_validated': False,
                 'files': {str(p.relative_to(package)).replace(os.sep, '/'): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted(package.rglob('*')) if p.is_file()}}
     # Refuse business source, bytecode, development reports and source maps.
@@ -121,6 +127,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
