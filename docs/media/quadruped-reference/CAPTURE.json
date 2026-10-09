@@ -3,11 +3,12 @@
   "hardware_validated": false,
   "installer_updated": false,
   "upstream_commit": "4f09680bb575574377b903bbc971bdb2695d507b",
-  "source_commit": "b6c6ce279fcf6de4031b403344e8416c9471bbac",
+  "source_commit": "c5ae9ff40d6edd763d1418755822d8478b9c9dcf",
   "viewport": {
     "width": 1800,
     "height": 1120
   },
+  "browser": "154.0.8037.97",
   "title": "OmindOS · 机器人调参工作台",
   "mesh_loaded": 13,
   "mesh_failed": 0,
