@@ -63,7 +63,7 @@ def make_handler(store_dir, runtime_url=None):
             mesh = MESH_ASSETS.get(urlsplit(self.path).path)
             if mesh:
                 try:
-                    data = mesh.read_bytes()
+                    data = (ROOT / mesh).read_bytes()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/octet-stream")
                     self.send_header("Content-Length", str(len(data)))

@@ -89,6 +89,33 @@ def main():
             assert applied['hardware_connected'] is False
             if args.variant == 'manipulation':
                 checks.append('connection_options_and_independent_drafts_saved_without_connecting')
+                # Load every allowlisted STL from the actual package root, not the source checkout.
+                import hashlib
+                import struct
+                choreography = request(base, '/cooperative-demo.json')
+                recipe = {k: choreography[k] for k in ('reference_signature', 'segments')}
+                assert len(request(base, '/mda1-reference.webp')) > 1000
+                for name in ('base_link.STL', *(f'link_{i}.STL' for i in range(1, 8))):
+                    mesh = request(base, '/meshes/rm75/' + name)
+                    assert len(mesh) == 84 + 50 * struct.unpack_from('<I', mesh, 80)[0]
+                    if not args.source:
+                        assert hashlib.sha256(mesh).hexdigest() == json.loads(
+                            (executable.parent / 'MANIFEST.json').read_text(encoding='utf-8'))['files'][
+                                'config/robot_models/realman_rm75/meshes/' + name]
+                model = request(base, '/v1/robot-model', {'urdf_xml': profile['kinematics']['urdf_xml']})
+                assert sum(g.get('url') is not None for link in model['model']['links']
+                           for g in link['visuals'] if g['type'] == 'mesh') == 16
+                sequence = request(base, '/v1/robot-sequence', recipe)
+                assert sequence['duration_s'] == 35 and len(sequence['frames']) > 1000
+                assert not sequence['runtime_applied'] and not sequence['contact_dynamics_validated']
+                arc = [f for f in sequence['frames'] if 18 < f['time_s'] < 24]
+                assert arc[-1]['base_pose']['x_m'] > arc[0]['base_pose']['x_m']
+                assert arc[-1]['positions']['waist_pitch'] != arc[0]['positions']['waist_pitch']
+                independent = min(sequence['frames'], key=lambda f: abs(f['time_s'] - 25.5))
+                assert independent['positions']['left_outer_finger_joint'] > .5
+                assert independent['positions']['right_outer_finger_joint'] < .1
+                checks += ['eight_packaged_manufacturer_stls_and_sixteen_model_instances',
+                           '35_second_dual_arm_gripper_and_base_sequence_without_contact_physics']
                 for velocity, angular, expected in ((.15,0,.225),(-.15,0,-.225),(0,.4,.6),(0,-.4,-.6)):
                     result = request(base,'/v1/robot-wheel-base',{'linear_m_s':velocity,'angular_rad_s':angular,'duration_s':3})
                     assert not result['runtime_applied']
@@ -112,6 +139,13 @@ def main():
             applied = request(base,'/v1/workbench-active-profile',profile)
             assert applied['emergency_stop'] and not applied['hardware_connected']
             checks.append('saving_connection_selection_preserves_emergency_stop')
+            if args.variant == 'manipulation':
+                try:
+                    request(base, '/v1/robot-sequence', recipe)
+                    raise AssertionError('Stopped server accepted cooperative sequence')
+                except urllib.error.HTTPError as error:
+                    assert error.code == 423
+                checks.append('estop_rejects_cooperative_sequence')
             try:
                 request(base,'/v1/robot-jog',{'joint': next(iter(profile['dynamics']['joints'])), 'direction':1})
                 raise AssertionError('Stopped server accepted motion')
@@ -216,6 +250,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 

@@ -15,7 +15,7 @@ import urllib.request
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.2.0-mda1-candidate.1'
+VERSION = '0.2.0-preview.8'
 
 
 def main():
@@ -48,7 +48,7 @@ def main():
     if windows:
         command += ['--msvc=latest', '--windows-console-mode=force',
                     '--company-name=OriginMind', '--product-name=OmindOS Workbench',
-                    '--file-version=0.2.0.7', '--product-version=0.2.0.7']
+                    '--file-version=0.2.0.8', '--product-version=0.2.0.8']
     command.append(str(ROOT / 'scripts/workbench_desktop.py'))
     subprocess.run(command, cwd=ROOT, env=env, check=True)
     package = output / (product + '-' + args.version + '-' + target)
@@ -90,6 +90,8 @@ def main():
                 'ros_required': False, 'ros_runtime_bundled': False, 'ros_bridge_included': True,
                 'runtime_applied': False, 'hardware_validated': False,
                 'dynamics_simulation_bundled': False, 'torch_bundled': False, 'mujoco_bundled': False,
+                'manufacturer_meshes_bundled': 8, 'dual_arm_mesh_instances': 16,
+                'cooperative_demo_duration_s': 35, 'contact_dynamics_validated': False,
                 'files': {str(p.relative_to(package)).replace(os.sep, '/'): hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted(package.rglob('*')) if p.is_file()}}
     # Refuse business source, bytecode, development reports and source maps.
