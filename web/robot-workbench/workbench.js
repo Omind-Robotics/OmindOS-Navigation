@@ -172,7 +172,7 @@ function updateModelInfo(){
   $('chassis-info').textContent=base?`四轮差速参考模型 · 轮距 ${base.track_width_m.toFixed(3)} m · 实机轮型待确认`:'当前模型未配置四轮底盘，试跑不可用。';
   updateWheelSpeeds();
 }
-function jointLabel(name){const wheel=name.match(/^(left|right)_(front|rear)_wheel_joint$/);if(wheel)return `${wheel[1]==='left'?'左':'右'}${wheel[2]==='front'?'前':'后'}轮`;const m=name.match(/^(left|right)_joint_(\d+)$/);return m?`${m[1]==='left'?'左臂':'右臂'} J${m[2]}`:name==='waist_pitch'?'腰部 pitch':name;}
+function jointLabel(name){const leg=name.match(/^(FR|FL|BR|BL)_(collar|hip|knee)_joint$/);if(leg)return ({FR:'右前腿',FL:'左前腿',BR:'右后腿',BL:'左后腿'}[leg[1]])+' · '+({collar:'外展',hip:'髋关节',knee:'膝关节'}[leg[2]]);const wheel=name.match(/^(left|right)_(front|rear)_wheel_joint$/);if(wheel)return `${wheel[1]==='left'?'左':'右'}${wheel[2]==='front'?'前':'后'}轮`;const m=name.match(/^(left|right)_joint_(\d+)$/);return m?`${m[1]==='left'?'左臂':'右臂'} J${m[2]}`:name==='waist_pitch'?'腰部 pitch':name;}
 function updateWheelSpeeds(rates={}){
   $('wheel-speeds').replaceChildren(...Object.keys(model?.wheel_base?.wheels||{}).map(name=>{
     const row=document.createElement('div');row.className='metric';const label=document.createElement('span'),value=document.createElement('output');
@@ -389,7 +389,12 @@ async function guarded(fn){if(operation)return;operation=true;try{await fn();}ca
 async function loadExample(){
   await importProfile(await api('/example.json'));
   if(!model.joints.some(j=>j.name==='waist_pitch')){
-    mode='joint';rebuildParts();await refreshModel(true);status('四足教学示例已载入 · 12关节；示意参数，非实机标定');return;
+    const names = ['FR','FL','BR','BL'].flatMap(leg=>['collar','hip','knee'].map(part=>`${leg}_${part}_joint`));
+    if(profile.robot_id==='mevius2-reference' && names.every(name=>model.joints.some(j=>j.name===name))){
+      // Standing reference pose from the pinned MEVIUS2 customer record; display only.
+      for(const name of names)targets[name]=name.includes('_hip_')?.7:name.includes('_knee_')?-1.2:0;
+    }
+    mode='joint';rebuildParts();await refreshModel(true);status('四足参考模型已载入 · 客户电机方向与零位尚未标定');return;
   }
   targets.waist_pitch=0;
   for(const [side,q] of [['left',[1.57,1.30,-1.57,1.10,.10,.50,0]],['right',[-1.57,1.30,1.57,1.10,-.10,.50,0]]]){
@@ -597,7 +602,7 @@ guarded(async()=>{
   }
   $('connection-device').value='chassis';renderConnections();
   try{const {RobotScene}=await import('/robot-scene.js');sceneEngine=new RobotScene(canvas);
-    sceneEngine.onAssetsChanged=stats=>{$('mesh-status').textContent=stats.requested?`厂家网格 ${stats.loaded} / ${stats.requested}`+(stats.failed?' · 部分失败，显示骨架':' · 本地加载'):'三维实体预览';canvas.dataset.meshLoaded=String(stats.loaded);canvas.dataset.meshFailed=String(stats.failed);};}
+    sceneEngine.onAssetsChanged=stats=>{$('mesh-status').textContent=stats.requested?`模型网格 ${stats.loaded} / ${stats.requested}`+(stats.failed?' · 部分失败，显示骨架':' · 本地加载'):'三维实体预览';canvas.dataset.meshLoaded=String(stats.loaded);canvas.dataset.meshFailed=String(stats.failed);};}
   catch(error){console.warn('实体渲染不可用，使用兼容线框视图。',error);canvas.dataset.renderer='canvas2d';$('solid-view').disabled=true;$('solid-view').setAttribute('aria-pressed','false');$('wireframe-view').setAttribute('aria-pressed','true');}
   new ResizeObserver(draw).observe(canvas);
   const saved=await api('/v1/workbench-active-profile');motionEpoch=saved.motion_epoch;
@@ -606,5 +611,6 @@ guarded(async()=>{
   if(saved.emergency_stop)latchStop('服务已急停 · 请手动复位后再运动');
   updateMotionControls();pollSafety();
 });
+
 
 
