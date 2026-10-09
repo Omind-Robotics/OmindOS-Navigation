@@ -35,7 +35,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu-navigation-preview7-verified
-          path: build/ubuntu-full-installer/distribution/*.*
+          path: |
+            build/ubuntu-full-installer/distribution/*.tar
+            build/ubuntu-full-installer/distribution/*.json
+            build/ubuntu-full-installer/distribution/*.png
+            build/ubuntu-full-installer/distribution/SHA256SUMS-release.txt
           compression-level: 0
           if-no-files-found: error
       - name: Preserve startup diagnosis and browser evidence
