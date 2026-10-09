@@ -1,0 +1,37 @@
+name: Compile Ubuntu reference workbench update
+on:
+  push:
+    branches: [codex/ubuntu-reference-installer-20261009]
+    paths: ['release/control-preview/build_reference_update.py', '.github/workflows/ubuntu-reference-installer.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  compile:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build compiled update against the verified full runtime
+        run: python release/control-preview/build_reference_update.py
+      - name: Preserve compiled update only
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-reference-compiled-update
+          path: |
+            build/ubuntu-reference-update/omindos-workbench-reference-update.tar.gz
+            build/ubuntu-reference-update/UPDATE_SUMMARY.json
+          if-no-files-found: error
+      - name: Save validated binary transfer in private branch
+        run: |
+          mkdir -p release/compiled-update
+          cp build/ubuntu-reference-update/omindos-workbench-reference-update.tar.gz release/compiled-update/
+          cp build/ubuntu-reference-update/UPDATE_SUMMARY.json release/compiled-update/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add release/compiled-update/
+          git commit -m 'build: preserve validated compiled Ubuntu workbench update'
+          git push origin HEAD:${{ github.ref_name }}
