@@ -1,0 +1,69 @@
+{
+  "status": "PASS",
+  "checks": [
+    "16 manufacturer mesh instances loaded locally",
+    "emergency stop cancels sequence and rejects server replay (423)",
+    "reset holds pose with no automatic restart",
+    "communication edit/apply/reload retained without hardware connection",
+    "35 second cooperative sequence actually computed by live local API",
+    "390px mobile layout has no horizontal overflow"
+  ],
+  "errors": [],
+  "sample": {
+    "duration": 35,
+    "phases": [
+      {
+        "label": "准备姿态 · 平滑起动",
+        "start_s": 0,
+        "end_s": 6
+      },
+      {
+        "label": "双臂协同接近",
+        "start_s": 6,
+        "end_s": 9
+      },
+      {
+        "label": "左右工具同步对齐",
+        "start_s": 9,
+        "end_s": 12
+      },
+      {
+        "label": "双夹爪同步合拢 · 参考开合",
+        "start_s": 12,
+        "end_s": 14
+      },
+      {
+        "label": "双臂协同抬升",
+        "start_s": 14,
+        "end_s": 18
+      },
+      {
+        "label": "底盘行进与转弯 · 双臂连续调整",
+        "start_s": 18,
+        "end_s": 24
+      },
+      {
+        "label": "左夹爪独立张开",
+        "start_s": 24,
+        "end_s": 25.5
+      },
+      {
+        "label": "右夹爪独立张开",
+        "start_s": 25.5,
+        "end_s": 27
+      },
+      {
+        "label": "双臂协同回位",
+        "start_s": 27,
+        "end_s": 31
+      },
+      {
+        "label": "连续动作结束 · 保持姿态",
+        "start_s": 31,
+        "end_s": 35
+      }
+    ],
+    "frames": 1053,
+    "contact": false
+  }
+}

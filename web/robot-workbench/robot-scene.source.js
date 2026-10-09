@@ -1,6 +1,7 @@
 // Bundled locally with three@0.180.0. See THIRD_PARTY.md for reproduction.
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {STLLoader} from 'three/addons/loaders/STLLoader.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 
 const zAxis = new THREE.Vector3(0, 0, 1);
@@ -14,7 +15,7 @@ export class RobotScene {
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.12;
+    this.renderer.toneMappingExposure = 1.02;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.VSMShadowMap;
     this.scene = new THREE.Scene();
@@ -28,25 +29,32 @@ export class RobotScene {
     this.environment = pmrem.fromScene(room, .06);
     this.scene.environment = this.environment.texture;
     room.dispose(); pmrem.dispose();
-    const ambient = new THREE.HemisphereLight(0xe9f4ff, 0x475269, 2.2);
+    const ambient = new THREE.HemisphereLight(0xe9f4ff, 0x475269, 1.3);
     ambient.position.set(0, 0, 3); this.scene.add(ambient);
-    this.key = new THREE.DirectionalLight(0xfff5e9, 3.2);
+    this.key = new THREE.DirectionalLight(0xfff5e9, 2.1);
     this.key.castShadow = true;
-    this.key.shadow.mapSize.set(1024, 1024);
+    this.key.shadow.mapSize.set(2048, 2048);
     this.key.shadow.bias = -.0002;
     this.key.shadow.normalBias = .008;
     this.key.shadow.radius = 5;
     this.key.shadow.blurSamples = 8;
     this.scene.add(this.key, this.key.target);
-    const fill = new THREE.DirectionalLight(0xbddcff, 1.3);
+    const fill = new THREE.DirectionalLight(0xbddcff, .8);
     fill.position.set(3, 2, 4); this.scene.add(fill);
-    this.floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShadowMaterial({opacity:.24}));
+    this.floor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShadowMaterial({opacity:.16}));
     this.floor.receiveShadow = true; this.scene.add(this.floor);
     this.grid = new THREE.GridHelper(1, 12, 0xc4cfd8, 0xdde4e9);
     this.grid.rotation.x = Math.PI / 2;
     this.grid.material.transparent = true; this.grid.material.opacity = .25;
     this.scene.add(this.grid);
     this.links = new Map(); this.joints = new Map();
+    this.meshCache = new Map(); this.meshLoader = new STLLoader(); this.generation = 0;
+    this.meshStats = {requested:0, loaded:0, failed:0}; this.onAssetsChanged = null;
+    this.toolPaths = new Map(); this.showTrails = true;
+    for (const [side, color] of [['left',0x178da9],['right',0xec8a32]]) {
+      const path = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({color, transparent:true, opacity:.7}));
+      path.userData.points = []; this.scene.add(path); this.toolPaths.set(side,path);
+    }
     this.modelKey = ''; this.lastModel = null; this.resources = [];
     this.wireframe = false;
     canvas.dataset.renderer = 'webgl';
@@ -57,6 +65,7 @@ export class RobotScene {
   own(resource) {this.resources.push(resource); return resource;}
 
   rebuild(model) {
+    this.generation++; this.meshStats = {requested:0, loaded:0, failed:0};
     this.robot.clear(); this.resources.forEach(resource => resource.dispose()); this.resources = [];
     this.links.clear(); this.joints.clear();
     this.shell = this.own(new THREE.MeshStandardMaterial({color:0xdde5ea, roughness:.3, metalness:.35, envMapIntensity:1.05}));
@@ -76,9 +85,10 @@ export class RobotScene {
       const meshes = [];
       for (const g of link.visuals) {
         let geometry;
-        if (g.type === 'box') geometry = new RoundedBoxGeometry(...g.size, 3, Math.min(...g.size)*.12);
+        if (g.type === 'box') geometry = new RoundedBoxGeometry(...g.size, 3, Math.min(...g.size)*(/head/.test(link.name) ? .42 : /base|torso/.test(link.name) ? .24 : .12));
         else if (g.type === 'sphere') geometry = new THREE.SphereGeometry(g.radius, 32, 20);
         else if (g.type === 'cylinder') {geometry = new THREE.CylinderGeometry(g.radius, g.radius, g.length, 32); geometry.rotateX(Math.PI/2);}
+        else if (g.type === 'mesh' && g.url) {this.loadMesh(g, link.name, group, meshes); continue;}
         else continue;
         const dark = link.name === model.root || /hand|tip|tool|wheel|finger/i.test(link.name);
         const material = g.color ? this.own(new THREE.MeshStandardMaterial({
@@ -104,7 +114,7 @@ export class RobotScene {
       const rim = new THREE.Mesh(ring, this.dark);
       rim.scale.setScalar(size*1.04); rim.position.z = size*1.12;
       rim.userData = {name:joint.name, type:'joint'};
-      group.add(cap, rim); this.robot.add(group); this.joints.set(joint.name, {group, cap, rim, joint});
+      group.add(cap, rim); this.robot.add(group); this.joints.set(joint.name, {group, cap, rim, joint, manufacturer: /^(left|right)_joint_[1-7]$/.test(joint.name) && model.links.find(l=>l.name===joint.child)?.visuals.some(g=>g.type==='mesh' && g.url)});
     }
     // Retain a structural guide for links whose mesh resources are unavailable.
     const edges = model.joints.filter(joint => !this.links.get(joint.parent).meshes.length || !this.links.get(joint.child).meshes.length);
@@ -112,7 +122,7 @@ export class RobotScene {
     const geometry = this.own(new THREE.BufferGeometry()); geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     this.skeleton = new THREE.LineSegments(geometry, this.own(new THREE.LineBasicMaterial({color:0x6ba3b6})));
     this.skeleton.userData.edges = edges; this.robot.add(this.skeleton);
-    this.stageNeedsFit = true;
+    this.stageNeedsFit = true; this.onAssetsChanged?.({...this.meshStats});
   }
 
   render(model, pose, view, mode, selectedName) {
@@ -136,21 +146,28 @@ export class RobotScene {
         mesh.material = mode === 'link' && selectedName === name ? this.selected : mesh.userData.material;
       }
     }
-    for (const [name, {group, cap, rim, joint}] of this.joints) {
+    for (const [name, {group, cap, rim, joint, manufacturer}] of this.joints) {
       group.position.fromArray(pose.joint_positions[name]);
       const world = matrix(pose.link_transforms[joint.child]);
       const direction = new THREE.Vector3(...joint.axis).transformDirection(world).normalize();
       group.quaternion.setFromUnitVectors(zAxis, direction);
       const selected = mode === 'joint' && name === selectedName;
+      group.visible = !manufacturer || selected;
       cap.material = selected ? this.jointHighlight : this.jointMaterial;
       cap.renderOrder = selected ? 2 : 0;
       rim.material = selected ? this.ringMaterial : this.dark;
+    }
+    const edges = model.joints.filter(j => !this.links.get(j.parent).meshes.length || !this.links.get(j.child).meshes.length);
+    if(edges.length !== this.skeleton.userData.edges.length) {
+      this.skeleton.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(edges.length*6),3));
+      this.skeleton.userData.edges = edges;
     }
     const positions = this.skeleton.geometry.attributes.position;
     this.skeleton.userData.edges.forEach((joint, i) => {
       positions.setXYZ(i*2, ...pose.link_transforms[joint.parent].slice(0,3).map(row => row[3]));
       positions.setXYZ(i*2+1, ...pose.joint_positions[joint.name]);
     }); positions.needsUpdate = true; this.skeleton.geometry.computeBoundingSphere();
+    this.updateToolPaths(pose);
     this.robot.updateMatrixWorld(true);
     if (this.stageNeedsFit) {
       this.bounds.setFromObject(this.robot);
@@ -175,8 +192,68 @@ export class RobotScene {
     this.renderer.render(this.scene, this.camera);
   }
 
+  loadMesh(g, name, group, meshes) {
+    // Server URL is an allowlisted same-origin asset, never a filename from an imported file.
+    if (!/^\/meshes\/rm75\/(base_link|link_[1-7])\.STL$/.test(g.url)) return;
+    const generation = this.generation; this.meshStats.requested++;
+    if (!this.meshCache.has(g.url)) {
+      this.meshCache.set(g.url, this.meshLoader.loadAsync(g.url).then(geometry => {
+        geometry.computeVertexNormals(); geometry.computeBoundingBox(); return geometry;
+      }).catch(error => {this.meshCache.delete(g.url); throw error;}));
+    }
+    this.meshCache.get(g.url).then(geometry => {
+      if(generation !== this.generation) return;
+      const rgba = g.color || [1,1,1,1];
+      const material = this.own(new THREE.MeshStandardMaterial({color:new THREE.Color().setRGB(...rgba.slice(0,3)),
+        roughness:.32, metalness:.16, envMapIntensity:.85, opacity:rgba[3], transparent:rgba[3]<1}));
+      const mesh = new THREE.Mesh(geometry,material);
+      mesh.matrixAutoUpdate = false; mesh.matrix.copy(matrix(g.transform).multiply(new THREE.Matrix4().makeScale(...g.scale)));
+      mesh.userData = {name, type:'link', material}; mesh.castShadow = mesh.receiveShadow = true;
+      group.add(mesh); meshes.push(mesh); this.meshStats.loaded++; this.stageNeedsFit = true;
+      this.onAssetsChanged?.({...this.meshStats}); this.lastArgs && this.render(...this.lastArgs);
+    }).catch(() => {
+      if(generation !== this.generation) return;
+      this.meshStats.failed++; this.onAssetsChanged?.({...this.meshStats});
+    });
+  }
+
+  interpolatePose(model, a, b, u) {
+    // Recompute exact URDF FK at interpolated joint angles, rather than blending link endpoints.
+    const positions = Object.fromEntries(Object.keys(a.positions).map(n=>[n,a.positions[n]+(b.positions[n]-a.positions[n])*u]));
+    const base = Object.fromEntries(Object.keys(a.base_pose).map(n=>[n,a.base_pose[n]+(b.base_pose[n]-a.base_pose[n])*u]));
+    // wheel_trial wraps yaw; use the shortest adjacent difference across +/-pi.
+    base.yaw_rad = a.base_pose.yaw_rad + Math.atan2(Math.sin(b.base_pose.yaw_rad-a.base_pose.yaw_rad),Math.cos(b.base_pose.yaw_rad-a.base_pose.yaw_rad))*u;
+    const world = {[model.root]:new THREE.Matrix4().makeRotationZ(base.yaw_rad).setPosition(base.x_m,base.y_m,0)};
+    const joint_positions = {}, centers_of_mass = {};
+    for(const j of model.joints) {
+      const pivot = world[j.parent].clone().multiply(matrix(j.origin));
+      joint_positions[j.name] = new THREE.Vector3().setFromMatrixPosition(pivot).toArray();
+      world[j.child] = pivot.multiply(new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(...j.axis).normalize(),positions[j.name]||0));
+    }
+    const link_transforms = Object.fromEntries(Object.entries(world).map(([n,t])=>[n,[0,1,2,3].map(i=>[0,1,2,3].map(k=>t.elements[k*4+i]))]));
+    for(const l of model.links) centers_of_mass[l.name] = new THREE.Vector3(...l.com).applyMatrix4(world[l.name]).toArray();
+    return {...a, positions, base_pose:base, joint_positions, centers_of_mass, link_transforms,
+      time_s:a.time_s+(b.time_s-a.time_s)*u,
+      wheel_velocity_rad_s:Object.fromEntries(Object.keys(a.wheel_velocity_rad_s||{}).map(n=>[n,a.wheel_velocity_rad_s[n]+((b.wheel_velocity_rad_s||{})[n]-a.wheel_velocity_rad_s[n])*u]))};
+  }
+
+  resetToolPaths() {
+    for(const path of this.toolPaths.values()) {path.userData.points=[]; path.geometry.setFromPoints([]);}
+  }
+  updateToolPaths(pose) {
+    for(const [side,path] of this.toolPaths) {
+      const t=pose.link_transforms[side+'_tip']; path.visible=this.showTrails && !!t;
+      if(!t || !this.showTrails) continue;
+      const point=new THREE.Vector3(t[0][3],t[1][3],t[2][3]),points=path.userData.points;
+      if(!points.length || points.at(-1).distanceTo(point)>.004) {
+        points.push(point); if(points.length>160)points.shift(); path.geometry.setFromPoints(points);
+      }
+    }
+  }
+
   pick(x, y) {
     this.raycaster.setFromCamera(new THREE.Vector2(x/this.canvas.clientWidth*2-1, 1-y/this.canvas.clientHeight*2), this.camera);
     return this.raycaster.intersectObject(this.robot, true).find(hit => hit.object.userData.type)?.object.userData || null;
   }
 }
+

@@ -13,8 +13,8 @@ def build_demo():
     ET.SubElement(robot, 'omindos_base', type='four_wheel_differential',
                   **{role: role+'_wheel_joint' for role in ('left_front', 'right_front', 'left_rear', 'right_rear')})
     drives = {}
-    colors = {'shell': '.77 .84 .89 1', 'dark': '.055 .085 .12 1',
-              'metal': '.32 .42 .5 1', 'accent': '.08 .66 .8 1', 'rubber': '.025 .035 .045 1'}
+    colors = {'shell': '.91 .93 .94 1', 'dark': '.055 .085 .12 1',
+              'metal': '.32 .42 .5 1', 'accent': '1 .31 .045 1', 'rubber': '.025 .035 .045 1'}
     for name, rgba in colors.items():
         ET.SubElement(ET.SubElement(robot, 'material', name=name), 'color', rgba=rgba)
 
@@ -59,8 +59,8 @@ def build_demo():
             drives[name] = dict(motor_model='DEMO-NOT-HARDWARE', reduction_ratio=10, direction=1,
                                 zero_offset_rad=0, torque_limit_nm=effort*.8, velocity_limit_rad_s=speed)
 
-    base = body('base', 12, (.62, .54, .17), (0, 0, .185), 'dark')
-    visual(base, 'box', (.57, .50, .035), (0, 0, .282), 'shell')
+    base = body('base', 12, (.62, .54, .17), (0, 0, .185), 'shell')
+    visual(base, 'box', (.62, .54, .035), (0, 0, .282), 'shell')
     visual(base, 'box', (.012, .30, .014), (.315, 0, .225), 'accent')
     visual(base, 'box', (.014, .45, .035), (-.313, 0, .14), 'rubber')
     for end, x in [('front', .22), ('rear', -.22)]:
@@ -73,49 +73,29 @@ def build_demo():
             joint(name+'_joint', 'base', name, (x, sign*.295, .1), kind='continuous', effort=20, speed=5)
 
     mount = body('waist_mount', 1.5, (.14, .14, .36), (0, 0, .18), draw=False)
-    visual(mount, 'cylinder', (.072, .36), (0, 0, .18), 'metal')
+    visual(mount, 'box', (.14, .16, .36), (0, 0, .18), 'metal')
     joint('waist_mount_fixed', 'base', 'waist_mount', (0, 0, .3), kind='fixed')
-    torso = body('torso', 5, (.20, .18, .42), (0, 0, .25))
+    torso = body('torso', 5, (.20, .28, .42), (0, 0, .25))
     visual(torso, 'cylinder', (.078, .26), color='metal', rpy=(math.pi/2, 0, 0))
     visual(torso, 'box', (.14, .48, .09), (0, 0, .465))
     visual(torso, 'box', (.012, .16, .22), (.09, 0, .30), 'dark')
-    visual(torso, 'box', (.014, .12, .012), (.09, 0, .43), 'accent')
+    visual(torso, 'box', (.017, .19, .035), (.105, 0, .43), 'accent')
     joint('waist_pitch', 'waist_mount', 'torso', (.1, 0, .36), limits=(-.55, .55), effort=80, speed=.6)
-    # Fixed sensor-style head: neck, rounded housing, visor and two optical windows.
-    head = body('head', .8, (.16, .23, .16), (.005, 0, .12))
+    # Photo-inspired surface finish only. Fixed head; existing mounting frames retained.
+    head = body('head', .8, (.16, .23, .19), (.005, 0, .12))
     visual(head, 'cylinder', (.029, .065), (0, 0, .018), 'metal')
-    visual(head, 'cylinder', (.045, .014), (0, 0, -.007), 'dark')
-    visual(head, 'box', (.012, .15, .074), (.087, 0, .126), 'dark')
-    for sign in (-1, 1):
-        visual(head, 'cylinder', (.037, .012), (.087, sign*.075, .126), 'dark', (0, math.pi/2, 0))
-        visual(head, 'cylinder', (.020, .008), (.097, sign*.053, .128), 'metal', (0, math.pi/2, 0))
-        visual(head, 'cylinder', (.014, .010), (.103, sign*.053, .128), 'accent', (0, math.pi/2, 0))
-        visual(head, 'cylinder', (.007, .011), (.106, sign*.053, .128), 'dark', (0, math.pi/2, 0))
-        visual(head, 'cylinder', (.031, .012), (.003, sign*.119, .119), 'metal', (math.pi/2, 0, 0))
-    visual(head, 'box', (.011, .053, .007), (.087, 0, .069), 'accent')
+    visual(head, 'box', (.017, .135, .050), (.091, 0, .146), 'dark')
+    visual(head, 'box', (.019, .110, .032), (.097, 0, .146), 'metal')
     joint('head_mount', 'torso', 'head', (0, 0, .535), kind='fixed')
-    # Manufacturer kinematic chain and inertial data; only visuals are simplified.
+    # Manufacturer kinematic chain and inertial data; visual and collision meshes are preserved.
     source = ET.parse(ROOT/'config/robot_models/realman_rm75/RM75-B.urdf').getroot()
     for side, sign in [('left', 1), ('right', -1)]:
         for original in source.findall('link'):
             link = copy.deepcopy(original)
             name = original.get('name')
             link.set('name', side+'_'+name)
-            for item in list(link):
-                if item.tag in ('visual', 'collision'):
-                    link.remove(item)
+            # Preserve manufacturer visuals/collisions and local mesh coordinates.
             robot.append(link)
-            outgoing = next((j for j in source.findall('joint') if j.find('parent').get('link') == name), None)
-            end = [float(v) for v in outgoing.find('origin').get('xyz').split()] if outgoing is not None else [0, 0, .025]
-            length = math.hypot(*end)
-            if length > .03:
-                orientation = (math.pi/2, 0, 0) if abs(end[1]) > .01 else (0, 0, 0)
-                visual(link, 'cylinder', (.041, length), [v/2 for v in end], rpy=orientation)
-                visual(link, 'cylinder', (.043, .025), [v*.85 for v in end], 'dark', orientation)
-            else:
-                visual(link, 'sphere', (.047,), color='metal')
-            visual(link, 'cylinder', (.048, .026), color='metal')
-            visual(link, 'box', (.012, .06, .026), (.044, 0, 0), 'accent')
         for original in source.findall('joint'):
             j = copy.deepcopy(original)
             name = side+'_'+original.get('name')
@@ -168,3 +148,4 @@ if __name__ == '__main__':
     from robot_parameter_api import validate_parameters
     validate_parameters(data)
     (ROOT/'config/robot_profiles/workbench-demo.json').write_text(json.dumps(data, ensure_ascii=False, indent=2)+'\n')
+

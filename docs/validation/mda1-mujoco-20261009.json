@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "mujoco_version": "3.3.7",
+  "imported_dof": 23,
+  "bodies_including_world": 33,
+  "mesh_assets": 8,
+  "inertia_min_eigenvalue": 6e-08,
+  "poses_checked": 10,
+  "integration_s_per_pose": 2,
+  "gravity_torque_max_error_nm": 5.773159728050814e-15,
+  "ideal_gravity_hold_max_drift_rad": 0.0,
+  "base_fixed": true,
+  "contacts_enabled": false,
+  "contact_dynamics_validated": false,
+  "hardware_commands": false,
+  "reference_parameters": [
+    "body/mount/head/gripper/wheel mass and inertia",
+    "mount dimensions",
+    "all drive ratios and limits"
+  ],
+  "missing_for_real_contacts": [
+    "actual base model (DT-01 Pro vs current four-wheel reference)",
+    "whole-body CAD and installation calibration",
+    "real gripper model, stroke, effort and collision shapes",
+    "wheel friction/compliance and payload properties",
+    "measured actuator/damping/friction/controller parameters"
+  ],
+  "scope": "Fixed-base URDF import, inertia checks, static gravity comparison and ideal compensated integration only"
+}

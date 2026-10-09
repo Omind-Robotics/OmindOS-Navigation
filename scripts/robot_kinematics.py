@@ -6,6 +6,7 @@ import math
 import xml.etree.ElementTree as ET
 
 from robot_parameter_api import MAX_BYTES, number, validate_parameters
+from robot_assets import approved_mesh_url
 
 
 def vec(text, size=3):
@@ -95,7 +96,13 @@ def build_model(xml):
                 if g.tag == "cylinder":
                     item["length"] = number(g.get("length"), "length", positive=True)
             elif g.tag == "mesh":
-                warnings.append(name + ": mesh 未加载，以关节骨架显示")
+                item["filename"] = g.get("filename", "")
+                item["scale"] = vec(g.get("scale", "1 1 1"))
+                if any(x <= 0 or x > 100 for x in item["scale"]):
+                    raise ValueError("mesh scale must be positive and at most 100")
+                item["url"] = approved_mesh_url(item["filename"])
+                if item["url"] is None:
+                    warnings.append(name + ": mesh 未列入本地资源，以关节骨架显示")
             else:
                 raise ValueError("unsupported visual geometry: " + g.tag)
             visuals.append(item)
@@ -442,3 +449,4 @@ def wheel_trial(payload):
             'runtime_applied': False, 'hardware_validated': False,
             'limitations': ['四轮差速参考模型；不代表实机轮型，无侧移。',
                             '不计算侧向滑移、轮地接触、牵引力、碰撞、平衡或导航。']}
+

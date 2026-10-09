@@ -1,0 +1,198 @@
+{
+  "reference_signature": "796032fd7396120771084ab727c9171ccb43b96e4dda9343c69e577e6c00eddc",
+  "segments": [
+    {
+      "label": "准备姿态 · 平滑起动",
+      "duration_s": 6,
+      "target": {
+        "waist_pitch": 0,
+        "left_joint_1": 1.57,
+        "left_joint_2": 1.3,
+        "left_joint_3": -1.57,
+        "left_joint_4": 1.1,
+        "left_joint_5": 0.1,
+        "left_joint_6": 0.5,
+        "left_joint_7": 0,
+        "right_joint_1": -1.57,
+        "right_joint_2": 1.3,
+        "right_joint_3": 1.57,
+        "right_joint_4": 1.1,
+        "right_joint_5": -0.1,
+        "right_joint_6": 0.5,
+        "right_joint_7": 0,
+        "left_outer_finger_joint": 0.55,
+        "left_inner_finger_joint": 0.55,
+        "right_outer_finger_joint": 0.55,
+        "right_inner_finger_joint": 0.55
+      }
+    },
+    {
+      "label": "双臂协同接近",
+      "duration_s": 3,
+      "target": {
+        "waist_pitch": 0,
+        "left_joint_1": 2.3209841337744583,
+        "left_joint_2": 2.106161180738915,
+        "left_joint_3": -1.303938792824304,
+        "left_joint_4": 2.075377870975012,
+        "left_joint_5": 0.8400119480287223,
+        "left_joint_6": 0.19268167190796212,
+        "left_joint_7": 1.3168923852264451,
+        "right_joint_1": -2.3209919373366046,
+        "right_joint_2": 2.1061994398804407,
+        "right_joint_3": 1.3039736076145934,
+        "right_joint_4": 2.0753812060108023,
+        "right_joint_5": -0.8401400617066879,
+        "right_joint_6": 0.1927121990864625,
+        "right_joint_7": -1.3167749776983848,
+        "left_outer_finger_joint": 0.55,
+        "left_inner_finger_joint": 0.55,
+        "right_outer_finger_joint": 0.55,
+        "right_inner_finger_joint": 0.55
+      }
+    },
+    {
+      "label": "左右工具同步对齐",
+      "duration_s": 3,
+      "target": {
+        "waist_pitch": 0,
+        "left_joint_1": 1.6657178470155185,
+        "left_joint_2": 2.024354922195454,
+        "left_joint_3": -1.43061445590486,
+        "left_joint_4": 1.7628181870416284,
+        "left_joint_5": 0.7478960019955491,
+        "left_joint_6": -0.14454882946166017,
+        "left_joint_7": 1.2918839059600031,
+        "right_joint_1": -1.6657133242609177,
+        "right_joint_2": 2.0243489228970715,
+        "right_joint_3": 1.4306141616347439,
+        "right_joint_4": 1.7628220351761958,
+        "right_joint_5": -0.747994875245955,
+        "right_joint_6": -0.14455884938519978,
+        "right_joint_7": -1.2917744933081678
+      }
+    },
+    {
+      "label": "双夹爪同步合拢 · 参考开合",
+      "duration_s": 2,
+      "target": {
+        "left_outer_finger_joint": 0.06,
+        "left_inner_finger_joint": 0.06,
+        "right_outer_finger_joint": 0.06,
+        "right_inner_finger_joint": 0.06
+      }
+    },
+    {
+      "label": "双臂协同抬升",
+      "duration_s": 4,
+      "target": {
+        "waist_pitch": 0,
+        "left_joint_1": 1.650598425042226,
+        "left_joint_2": 2.0788004787854866,
+        "left_joint_3": -1.0443950951517733,
+        "left_joint_4": 2.334225248468451,
+        "left_joint_5": 0.6962293480592373,
+        "left_joint_6": -0.8163205561592302,
+        "left_joint_7": 1.5971245297095271,
+        "right_joint_1": -1.650569484676524,
+        "right_joint_2": 2.0787631143567,
+        "right_joint_3": 1.0443821779957325,
+        "right_joint_4": 2.3342283695049524,
+        "right_joint_5": -0.696269790557041,
+        "right_joint_6": -0.8163590544942825,
+        "right_joint_7": -1.597057584898935
+      }
+    },
+    {
+      "label": "底盘行进与转弯 · 双臂连续调整",
+      "duration_s": 6,
+      "target": {
+        "waist_pitch": -0.06,
+        "left_joint_1": 1.650598425042226,
+        "left_joint_2": 2.0788004787854866,
+        "left_joint_3": -1.0443950951517733,
+        "left_joint_4": 2.334225248468451,
+        "left_joint_5": 0.6962293480592373,
+        "left_joint_6": -0.8163205561592302,
+        "left_joint_7": 0.12,
+        "right_joint_1": -1.650569484676524,
+        "right_joint_2": 2.0787631143567,
+        "right_joint_3": 1.0443821779957325,
+        "right_joint_4": 2.3342283695049524,
+        "right_joint_5": -0.696269790557041,
+        "right_joint_6": -0.8163590544942825,
+        "right_joint_7": -0.12
+      },
+      "linear_m_s": 0.14,
+      "angular_rad_s": 0.1
+    },
+    {
+      "label": "左夹爪独立张开",
+      "duration_s": 1.5,
+      "target": {
+        "left_outer_finger_joint": 0.6,
+        "left_inner_finger_joint": 0.6,
+        "right_outer_finger_joint": 0.06,
+        "right_inner_finger_joint": 0.06
+      }
+    },
+    {
+      "label": "右夹爪独立张开",
+      "duration_s": 1.5,
+      "target": {
+        "left_outer_finger_joint": 0.6,
+        "left_inner_finger_joint": 0.6,
+        "right_outer_finger_joint": 0.6,
+        "right_inner_finger_joint": 0.6
+      }
+    },
+    {
+      "label": "双臂协同回位",
+      "duration_s": 4,
+      "target": {
+        "waist_pitch": 0,
+        "left_joint_1": 2.3209841337744583,
+        "left_joint_2": 2.106161180738915,
+        "left_joint_3": -1.303938792824304,
+        "left_joint_4": 2.075377870975012,
+        "left_joint_5": 0.8400119480287223,
+        "left_joint_6": 0.19268167190796212,
+        "left_joint_7": 1.3168923852264451,
+        "right_joint_1": -2.3209919373366046,
+        "right_joint_2": 2.1061994398804407,
+        "right_joint_3": 1.3039736076145934,
+        "right_joint_4": 2.0753812060108023,
+        "right_joint_5": -0.8401400617066879,
+        "right_joint_6": 0.1927121990864625,
+        "right_joint_7": -1.3167749776983848
+      }
+    },
+    {
+      "label": "连续动作结束 · 保持姿态",
+      "duration_s": 4,
+      "target": {
+        "waist_pitch": 0,
+        "left_joint_1": 1.57,
+        "left_joint_2": 1.3,
+        "left_joint_3": -1.57,
+        "left_joint_4": 1.1,
+        "left_joint_5": 0.1,
+        "left_joint_6": 0.5,
+        "left_joint_7": 0,
+        "right_joint_1": -1.57,
+        "right_joint_2": 1.3,
+        "right_joint_3": 1.57,
+        "right_joint_4": 1.1,
+        "right_joint_5": -0.1,
+        "right_joint_6": 0.5,
+        "right_joint_7": 0,
+        "left_outer_finger_joint": 0.4,
+        "left_inner_finger_joint": 0.4,
+        "right_outer_finger_joint": 0.23,
+        "right_inner_finger_joint": 0.23
+      }
+    }
+  ],
+  "ik_source": "Existing preview.7 reference URDF choreography; authoring IK, not contact solver",
+  "contact_dynamics_validated": false
+}

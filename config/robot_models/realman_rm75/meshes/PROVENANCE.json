@@ -1,0 +1,63 @@
+{
+  "repository": "RealManRobot/rm_models",
+  "commit": "b63dddb20b7620d14cfff32678de60bb3a201ebc",
+  "license": "Apache-2.0",
+  "files": [
+    {
+      "filename": "base_link.STL",
+      "source_path": "RM75/urdf/RM75-B/meshes/base_link.STL",
+      "git_blob_sha": "d5a35d5efcc35babc6b5207be91d0e6ab5e06222",
+      "size_bytes": 368984,
+      "modified": false
+    },
+    {
+      "filename": "link_1.STL",
+      "source_path": "RM75/urdf/RM75-B/meshes/link_1.STL",
+      "git_blob_sha": "8b2bc5f5b93a4cd7312a079cd66bc08296a9b5ca",
+      "size_bytes": 189684,
+      "modified": false
+    },
+    {
+      "filename": "link_2.STL",
+      "source_path": "RM75/urdf/RM75-B/meshes/link_2.STL",
+      "git_blob_sha": "83d21b39cd5d15db03114c8139442f9eddfa560f",
+      "size_bytes": 190384,
+      "modified": false
+    },
+    {
+      "filename": "link_3.STL",
+      "source_path": "RM75/urdf/RM75-B/meshes/link_3.STL",
+      "git_blob_sha": "5f6baba739f8c694fce77b21bc01eda1c9a681ad",
+      "size_bytes": 178184,
+      "modified": false
+    },
+    {
+      "filename": "link_4.STL",
+      "source_path": "RM75/urdf/RM75-B/meshes/link_4.STL",
+      "git_blob_sha": "949dc0fbdfc39c848e6d7bd782c9f1ebc022e62a",
+      "size_bytes": 185784,
+      "modified": false
+    },
+    {
+      "filename": "link_5.STL",
+      "source_path": "RM75/urdf/RM75-B/meshes/link_5.STL",
+      "git_blob_sha": "bfaf4f981b33ea5677895fd49882be3dfa45fb99",
+      "size_bytes": 184184,
+      "modified": false
+    },
+    {
+      "filename": "link_6.STL",
+      "source_path": "RM75/urdf/RM75-B/meshes/link_6.STL",
+      "git_blob_sha": "3ed9d502a963f43e841a57d8e80d5f8880690b45",
+      "size_bytes": 195784,
+      "modified": false
+    },
+    {
+      "filename": "link_7.STL",
+      "source_path": "RM75/urdf/RM75-B/meshes/link_7.STL",
+      "git_blob_sha": "412c292a05bdb57c5409e9420f7955751df1569e",
+      "size_bytes": 171684,
+      "modified": false
+    }
+  ]
+}
