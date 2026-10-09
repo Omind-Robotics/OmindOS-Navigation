@@ -14,6 +14,20 @@ def demo_profile(root=ROOT):
     source = root / 'config/robot_models/mevius2/models/mevius2_stl.urdf'
     robot = ET.fromstring(source.read_text(encoding='utf-8'))
     robot.set('name', 'MEVIUS2 四足参考模型')
+    # Display palette only; preserve the pinned geometry and physical reference values.
+    for link in robot.findall('link'):
+        name = link.get('name')
+        rgba = (.035, .045, .065, 1) if name == 'base_link' else (
+            (.18, .22, .26, 1) if 'scapula' in name else
+            (.31, .36, .41, 1) if 'thigh' in name else
+            (.05, .065, .085, 1) if 'calf' in name else (.022, .027, .035, 1))
+        for visual in link.findall('visual'):
+            material = visual.find('material')
+            if material is None:
+                material = ET.SubElement(visual, 'material')
+            material.clear()
+            material.set('name', 'workbench-preview')
+            ET.SubElement(material, 'color', rgba=' '.join(map(str, rgba)))
     drives = {}
     for joint in robot.findall('joint'):
         if joint.get('type') == 'fixed':
