@@ -1,0 +1,49 @@
+name: Validate complete Ubuntu Navigation installer
+on:
+  push:
+    branches: [codex/ubuntu-reference-installer-20261009]
+    paths:
+      - '.github/workflows/ubuntu-full-installer.yml'
+      - 'release/control-preview/finish_ubuntu_installer.py'
+      - 'scripts/capture_installed_quadruped.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare browser validation
+        run: |
+          npm install --prefix build/capture --no-save playwright@1.58.0
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-noto-cjk
+      - name: Build, install and validate final runtime
+        env:
+          NODE_PATH: ${{ github.workspace }}/build/capture/node_modules
+          CHROMIUM_EXECUTABLE: /usr/bin/google-chrome
+        run: python release/control-preview/finish_ubuntu_installer.py
+      - name: Preserve verified installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-navigation-preview7-verified
+          path: build/ubuntu-full-installer/distribution/*.*
+          compression-level: 0
+          if-no-files-found: error
+      - name: Preserve startup diagnosis and browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-navigation-preview7-diagnostics
+          path: |
+            build/ubuntu-full-installer/STARTUP_DIAGNOSIS.json
+            build/ubuntu-full-installer/workbench.log
+            build/ubuntu-full-installer/browser/
