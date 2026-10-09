@@ -1,7 +1,7 @@
 name: Build desktop workbench binaries
 on:
   push:
-    branches: [main, codex/workbench-binary-release, codex/manipulation-unified-preview6]
+    branches: [main, codex/workbench-binary-release, codex/manipulation-unified-preview6, codex/manipulation-unified-planning]
     paths:
       - '.github/workflows/workbench-binaries.yml'
       - 'release/workbench/**'
@@ -11,6 +11,8 @@ on:
       - 'scripts/robot_workbench.py'
       - 'scripts/robot_assets.py'
       - 'scripts/robot_sequence.py'
+      - 'scripts/robot_planning.py'
+      - 'scripts/dual_task_planner.py'
       - 'scripts/robot_kinematics.py'
       - 'scripts/workbench_state.py'
       - 'config/robot_models/realman_rm75/**'
@@ -24,7 +26,7 @@ permissions:
   contents: read
 concurrency:
   group: workbench-binary-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   build:
     strategy:
@@ -54,7 +56,7 @@ jobs:
       - name: Install compiler and frontend packer
         shell: bash
         run: |
-          python -m pip install Nuitka==4.2.2 ordered-set==4.1.0 zstandard==0.25.0
+          python -m pip install Nuitka==4.2.2 ordered-set==4.1.0 zstandard==0.25.0 numpy==1.26.4 scipy==1.14.1
           npm ci --prefix web/robot-workbench
       - name: Verify source on target platform
         run: python -m unittest discover -s tests -p 'test_robot*.py' -v
@@ -68,6 +70,7 @@ jobs:
             build/workbench-release/omindos-workbench-*.zip
             build/workbench-release/omindos-workbench-*.tar.gz
             build/workbench-release/*.sha256
+            build/workbench-release/planning-*-validation.json
           if-no-files-found: error
           retention-days: 14
 

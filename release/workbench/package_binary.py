@@ -15,7 +15,7 @@ import urllib.request
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.2.0-preview.8'
+VERSION = '0.2.0'
 
 
 def main():
@@ -44,7 +44,8 @@ def main():
                '--include-module=robot_workbench', '--include-module=robot_parameter_api',
                '--include-module=robot_kinematics', '--include-module=workbench_state',
                '--include-module=robot_assets', '--include-module=robot_sequence',
-               '--include-module=robot_connections', '--include-module=robot_runtime_client']
+               '--include-module=robot_connections', '--include-module=robot_runtime_client',
+               '--include-module=robot_planning', '--include-module=dual_task_planner']
     if windows:
         command += ['--msvc=latest', '--windows-console-mode=force',
                     '--company-name=OriginMind', '--product-name=OmindOS Workbench',
@@ -74,6 +75,8 @@ def main():
                     str(package / 'web/robot-workbench/workbench.js')], cwd=ROOT, check=True)
     shutil.copyfile(ROOT / 'release/workbench' / ('QUADRUPED.zh-CN.md' if args.variant == 'quadruped' else 'README.zh-CN.md'), package / 'README.zh-CN.md')
     shutil.copyfile(ROOT / 'release/workbench/ROS2.zh-CN.md', package / 'ROS2.zh-CN.md')
+    if args.variant == 'manipulation':
+        shutil.copyfile(ROOT/'docs/UNIFIED_MANIPULATION_PLANNING.zh-CN.md',package/'PLANNING.zh-CN.md')
     python_version = platform.python_version()
     with urllib.request.urlopen('https://raw.githubusercontent.com/python/cpython/v' + python_version + '/LICENSE', timeout=60) as response:
         (package / 'LICENSES/Python.txt').write_bytes(response.read())
@@ -83,10 +86,22 @@ def main():
             source = Path(distribution.locate_file(item))
             if source.is_file():
                 shutil.copyfile(source, package / 'LICENSES' / ('Nuitka-' + item.name))
+    for dependency in ('numpy','scipy'):
+        distribution = importlib.metadata.distribution(dependency)
+        for index,item in enumerate(distribution.files or []):
+            if item.name.lower() in ('license.txt','license','copying'):
+                source = Path(distribution.locate_file(item))
+                if source.is_file():
+                    shutil.copyfile(source, package/'LICENSES'/f'{dependency}-{index}-{item.name}')
     manifest = {'version': args.version, 'variant': args.variant, 'platform': target, 'python_bundled': python_version,
                 'compiler': 'Nuitka ' + importlib.metadata.version('Nuitka'),
                 'source_commit': os.environ.get('GITHUB_SHA', subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()),
-                'release_stage': 'desktop-preview', 'backend_source_included': False,
+                'release_stage': 'geometric-workbench', 'backend_source_included': False,
+                'planning_kernel_source': 'Omind-Robotics/OmindOS-Manipulation@cbe8caf13921002e463355c6a2982e900640c7e0',
+                'planning_kernel_sha256': hashlib.sha256((ROOT/'scripts/dual_task_planner.py').read_bytes()).hexdigest(),
+                'coupled_waist_dual_arm_planning': True,
+                'planning_collision_geometry': 'conservative_oriented_boxes',
+                'continuous_collision_validated': False, 'trajectory_timing_validated': False,
                 'ros_required': False, 'ros_runtime_bundled': False, 'ros_bridge_included': True,
                 'runtime_applied': False, 'hardware_validated': False,
                 'dynamics_simulation_bundled': False, 'torch_bundled': False, 'mujoco_bundled': False,
@@ -100,6 +115,9 @@ def main():
             raise SystemExit('Forbidden source artifact: ' + name)
     (package / 'MANIFEST.json').write_text(json.dumps(manifest, indent=2)+'\n', encoding='utf-8')
     subprocess.run([sys.executable, str(ROOT / 'release/workbench/smoke_binary.py'), str(package / executable), '--variant', args.variant], check=True)
+    if args.variant == 'manipulation':
+        subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_planning.py'),str(package/executable),
+                        '--report',str(output/'planning-binary-validation.json')],check=True)
     archive = output / (package.name + ('.zip' if windows else '.tar.gz'))
     if windows:
         with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as handle:
@@ -122,6 +140,9 @@ def main():
             handle.extractall(extracted, filter='data')
     subprocess.run([sys.executable, str(ROOT / 'release/workbench/smoke_binary.py'),
                     str(extracted / package.name / executable), '--variant', args.variant], check=True)
+    if args.variant == 'manipulation':
+        subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_planning.py'),
+                        str(extracted/package.name/executable),'--report',str(output/'planning-fresh-unpack-validation.json')],check=True)
     print(json.dumps({'archive': str(archive), 'sha256': digest, 'bytes': archive.stat().st_size}), flush=True)
 
 
