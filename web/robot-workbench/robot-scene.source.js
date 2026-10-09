@@ -17,7 +17,7 @@ export class RobotScene {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.02;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.VSMShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.scene = new THREE.Scene();
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, .01, 1000);
     this.camera.up.set(0, 0, 1);
@@ -33,7 +33,7 @@ export class RobotScene {
     ambient.position.set(0, 0, 3); this.scene.add(ambient);
     this.key = new THREE.DirectionalLight(0xfff5e9, 2.1);
     this.key.castShadow = true;
-    this.key.shadow.mapSize.set(2048, 2048);
+    this.key.shadow.mapSize.set(1024, 1024);
     this.key.shadow.bias = -.0002;
     this.key.shadow.normalBias = .008;
     this.key.shadow.radius = 5;
@@ -133,7 +133,7 @@ export class RobotScene {
       const rim = new THREE.Mesh(ring, this.dark);
       rim.scale.setScalar(size*1.04); rim.position.z = size*1.12;
       rim.userData = {name:joint.name, type:'joint'};
-      group.add(cap, rim); this.robot.add(group); this.joints.set(joint.name, {group, cap, rim, joint, manufacturer: /^(left|right)_joint_[1-7]$/.test(joint.name) && model.links.find(l=>l.name===joint.child)?.visuals.some(g=>g.type==='mesh' && g.url)});
+      group.add(cap, rim); this.robot.add(group); this.joints.set(joint.name, {group, cap, rim, joint, manufacturer: model.links.find(l=>l.name===joint.child)?.visuals.some(g=>g.type==='mesh' && g.url)});
     }
     // Retain a structural guide for links whose mesh resources are unavailable.
     const edges = model.joints.filter(joint => !this.links.get(joint.parent).meshes.length || !this.links.get(joint.child).meshes.length);
@@ -213,7 +213,7 @@ export class RobotScene {
 
   loadMesh(g, name, group, meshes) {
     // Server URL is an allowlisted same-origin asset, never a filename from an imported file.
-    if (!/^\/meshes\/rm75\/(base_link|link_[1-7])\.STL$/.test(g.url)) return;
+    if (!/^\/meshes\/(rm75\/(base_link|link_[1-7])|mevius2\/(base_link|[FB][LR]_(scapula|thigh|calf)_link))\.STL$/.test(g.url)) return;
     const generation = this.generation; this.meshStats.requested++;
     if (!this.meshCache.has(g.url)) {
       this.meshCache.set(g.url, this.meshLoader.loadAsync(g.url).then(geometry => {
@@ -275,4 +275,5 @@ export class RobotScene {
     return this.raycaster.intersectObject(this.robot, true).find(hit => hit.object.userData.type)?.object.userData || null;
   }
 }
+
 

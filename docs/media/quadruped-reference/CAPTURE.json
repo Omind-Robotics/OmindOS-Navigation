@@ -1,0 +1,26 @@
+{
+  "stage": "source-workbench-preview",
+  "hardware_validated": false,
+  "installer_updated": false,
+  "upstream_commit": "4f09680bb575574377b903bbc971bdb2695d507b",
+  "source_commit": "c5ae9ff40d6edd763d1418755822d8478b9c9dcf",
+  "viewport": {
+    "width": 1800,
+    "height": 1120
+  },
+  "browser": "154.0.8037.97",
+  "title": "OmindOS · 机器人调参工作台",
+  "mesh_loaded": 13,
+  "mesh_failed": 0,
+  "active_joints": 12,
+  "page_errors": [],
+  "mesh_request_errors": [],
+  "checks": [
+    "complete_mesh_webgl_render",
+    "12_joints",
+    "quadruped_only_controls",
+    "apply_configuration",
+    "point_one_degree_jog",
+    "stop_latches_motion"
+  ]
+}

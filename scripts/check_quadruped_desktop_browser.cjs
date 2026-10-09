@@ -24,7 +24,7 @@ const {chromium} = require('playwright');
     const page=await browser.newPage({viewport:{width:1440,height:1000}});
     const errors=[];page.on('pageerror',e=>errors.push(String(e)));
     await page.goto(base);
-    await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('四足教学示例已载入'));
+    await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('四足参考模型已载入'));
     assert.equal(await page.locator('#jog-joint option').count(),12);
     assert.equal(await page.locator('#connections-panel').isVisible(),false);
     assert.equal(await page.locator('.chassis-controls').isVisible(),false);
@@ -50,3 +50,4 @@ const {chromium} = require('playwright');
     server.kill();fs.rmSync(store,{recursive:true,force:true});
   }
 })().catch(e=>{console.error(e);process.exit(1);});
+

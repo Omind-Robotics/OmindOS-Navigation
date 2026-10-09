@@ -1,0 +1,66 @@
+{
+  "repository": "haraduka/mevius2",
+  "commit": "4f09680bb575574377b903bbc971bdb2695d507b",
+  "files": {
+    "LICENSE": {
+      "git_blob_sha1": "07cfbd5a7bcf6ec586d9095921b5acbbd7725eba",
+      "size": 1075
+    },
+    "models/meshes/BL_calf_link.STL": {
+      "git_blob_sha1": "f96a7bf36c92b45da7547abdfe00bfa479b306b3",
+      "size": 516684
+    },
+    "models/meshes/BL_scapula_link.STL": {
+      "git_blob_sha1": "a190834189627dbac52d7055ff01688b1c86b22b",
+      "size": 744584
+    },
+    "models/meshes/BL_thigh_link.STL": {
+      "git_blob_sha1": "37c6baca7f753c83feae462d7a6efa7fa1f9e9ca",
+      "size": 968684
+    },
+    "models/meshes/BR_calf_link.STL": {
+      "git_blob_sha1": "462adb7223d6a43f05a9eb1a43053fff9e4cf82f",
+      "size": 516684
+    },
+    "models/meshes/BR_scapula_link.STL": {
+      "git_blob_sha1": "b325c1fb179fb1dfd46ec3373caff699262702c0",
+      "size": 744584
+    },
+    "models/meshes/BR_thigh_link.STL": {
+      "git_blob_sha1": "6cd44c0b8184d02db2003cdf31a5a9f017dc10f8",
+      "size": 970684
+    },
+    "models/meshes/FL_calf_link.STL": {
+      "git_blob_sha1": "f96a7bf36c92b45da7547abdfe00bfa479b306b3",
+      "size": 516684
+    },
+    "models/meshes/FL_scapula_link.STL": {
+      "git_blob_sha1": "9db6491f7060db5b5fb85211082c70048f4afa32",
+      "size": 744584
+    },
+    "models/meshes/FL_thigh_link.STL": {
+      "git_blob_sha1": "c58dcd659b00a96e21d4f43430ddf9ac05bf4aa8",
+      "size": 968684
+    },
+    "models/meshes/FR_calf_link.STL": {
+      "git_blob_sha1": "e1f53b9969441cea746209ca636bfc19e782cb57",
+      "size": 516684
+    },
+    "models/meshes/FR_scapula_link.STL": {
+      "git_blob_sha1": "d4beaa2ed01260627bb08e573aaa61133d5f3001",
+      "size": 744584
+    },
+    "models/meshes/FR_thigh_link.STL": {
+      "git_blob_sha1": "ad5779959f6571370e8e051080593f84248e6f6e",
+      "size": 970684
+    },
+    "models/meshes/base_link.STL": {
+      "git_blob_sha1": "e16b5859ac48073551f8a2210cbfadfcedcd2fc8",
+      "size": 3671284
+    },
+    "models/mevius2_stl.urdf": {
+      "git_blob_sha1": "10d9726302e962689d6f314ff679112e69fea7c7",
+      "size": 16128
+    }
+  }
+}

@@ -125,9 +125,22 @@ def main():
             else:
                 model = request(base, '/v1/robot-model', {'urdf_xml': profile['kinematics']['urdf_xml']})
                 assert len(model['pose']['positions']) == 12
+                assert sum(g.get('url') is not None for link in model['model']['links']
+                           for g in link['visuals'] if g['type'] == 'mesh') == 13
+                import hashlib
+                import struct
+                for name in ('base_link.STL', *(f'{leg}_{part}_link.STL' for leg in ('FR','FL','BR','BL')
+                                               for part in ('scapula','thigh','calf'))):
+                    mesh = request(base, '/meshes/mevius2/' + name)
+                    assert len(mesh) == 84 + 50 * struct.unpack_from('<I', mesh, 80)[0]
+                    if not args.source:
+                        assert hashlib.sha256(mesh).hexdigest() == json.loads(
+                            (executable.parent / 'MANIFEST.json').read_text())['files'][
+                                'config/robot_models/mevius2/models/meshes/' + name]
+                checks.append('thirteen_packaged_pinned_quadruped_meshes')
                 checks.append('quadruped_12_joint_model_and_profile_saved')
-                result = request(base, '/v1/robot-jog', {'joint':'fl_hip', 'direction':1})
-                assert math.isclose(result['frames'][-1]['positions']['fl_hip'], math.radians(.1), abs_tol=1e-10)
+                result = request(base, '/v1/robot-jog', {'joint':'FL_collar_joint', 'direction':1})
+                assert math.isclose(result['frames'][-1]['positions']['FL_collar_joint'], math.radians(.1), abs_tol=1e-10)
                 assert not result['runtime_applied']
                 checks.append('quadruped_compiled_point_one_degree_jog')
                 result = request(base, '/v1/robot-sine', {'joints':list(model['pose']['positions']), 'amplitude_deg':2, 'period_s':4, 'cycles':1})
@@ -199,7 +212,7 @@ def main():
             loaded = request(base, '/v1/runtime/load', {'profile_id': registered['profile_id']})
             assert loaded['runtime_applied'] and not loaded['hardware_active']
             token = loaded['lease_token']
-            moving_joint = 'fl_hip' if args.variant == 'quadruped' else 'left_joint_4'
+            moving_joint = 'FL_collar_joint' if args.variant == 'quadruped' else 'left_joint_4'
             target = loaded['pose']['positions'].copy(); target[moving_joint] = .2
             run = {'profile_id':registered['profile_id'], 'lease_token':token, 'target':target, 'duration_s':2}
             assert request(base, '/v1/runtime/run', run)['state'] == 'RUNNING'
@@ -250,6 +263,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 

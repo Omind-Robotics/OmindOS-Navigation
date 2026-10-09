@@ -1,73 +1,78 @@
-"""Build-time variant data only; shares the existing compiled workbench backend."""
+"""Package the pinned, complete MEVIUS2 reference visuals for the quadruped UI."""
 import json
 from pathlib import Path
+import shutil
+import subprocess
+import sys
 import xml.etree.ElementTree as ET
 
+ROOT = Path(__file__).resolve().parents[2]
 
-def demo_profile():
-    """Synthetic 12-DoF teaching geometry, never a calibrated customer model."""
-    robot = ET.Element('robot', name='OmindOS 四足教学模型（未标定）')
+
+def demo_profile(root=ROOT):
+    """Upstream reference geometry and SI limits; customer calibration is unknown."""
+    source = root / 'config/robot_models/mevius2/models/mevius2_stl.urdf'
+    robot = ET.fromstring(source.read_text(encoding='utf-8'))
+    robot.set('name', 'MEVIUS2 四足参考模型')
+    # Display palette only; preserve the pinned geometry and physical reference values.
+    for link in robot.findall('link'):
+        name = link.get('name')
+        rgba = (.035, .045, .065, 1) if name == 'base_link' else (
+            (.18, .22, .26, 1) if 'scapula' in name else
+            (.31, .36, .41, 1) if 'thigh' in name else
+            (.05, .065, .085, 1) if 'calf' in name else (.022, .027, .035, 1))
+        for visual in link.findall('visual'):
+            material = visual.find('material')
+            if material is None:
+                material = ET.SubElement(visual, 'material')
+            material.clear()
+            material.set('name', 'workbench-preview')
+            ET.SubElement(material, 'color', rgba=' '.join(map(str, rgba)))
     drives = {}
-
-    def link(name, size, mass, center):
-        node = ET.SubElement(robot, 'link', name=name)
-        inertial = ET.SubElement(node, 'inertial')
-        xyz = ' '.join(map(str, center))
-        ET.SubElement(inertial, 'origin', xyz=xyz)
-        ET.SubElement(inertial, 'mass', value=str(mass))
-        x, y, z = size
-        ET.SubElement(inertial, 'inertia', ixx=str(mass*(y*y+z*z)/12),
-                      iyy=str(mass*(x*x+z*z)/12), izz=str(mass*(x*x+y*y)/12),
-                      ixy='0', ixz='0', iyz='0')
-        visual = ET.SubElement(node, 'visual')
-        ET.SubElement(visual, 'origin', xyz=xyz)
-        ET.SubElement(ET.SubElement(visual, 'geometry'), 'box', size=' '.join(map(str, size)))
-        ET.SubElement(ET.SubElement(visual, 'material', name='shell'), 'color', rgba='.12 .55 .65 1')
-
-    link('body', (.5, .28, .12), 5, (0, 0, .5))
-    for leg, x, y in [('fl', .2, .16), ('fr', .2, -.16), ('rl', -.2, .16), ('rr', -.2, -.16)]:
-        parent = 'body'
-        for part, origin, axis, length in [('hip', (x,y,.5), '1 0 0', .04),
-                                          ('thigh', (0,0,-.04), '0 1 0', .2),
-                                          ('knee', (0,0,-.2), '0 1 0', .2)]:
-            name = leg+'_'+part
-            child = name+'_link'
-            link(child, (.04,.04,length), .3, (0,0,-length/2))
-            joint = ET.SubElement(robot, 'joint', name=name, type='revolute')
-            ET.SubElement(joint, 'parent', link=parent)
-            ET.SubElement(joint, 'child', link=child)
-            ET.SubElement(joint, 'origin', xyz=' '.join(map(str, origin)))
-            ET.SubElement(joint, 'axis', xyz=axis)
-            ET.SubElement(joint, 'limit', lower='-1.5', upper='1.5', effort='20', velocity='1')
-            drives[name] = dict(motor_model='DEMO-NOT-HARDWARE', reduction_ratio=10,
-                                direction=1, zero_offset_rad=0, torque_limit_nm=15, velocity_limit_rad_s=1)
-            parent = child
-    ET.indent(robot)
-    return dict(robot_id='demo-quadruped', kinematics={'urdf_xml':ET.tostring(robot, encoding='unicode')},
-                dynamics={'joints':drives})
+    for joint in robot.findall('joint'):
+        if joint.get('type') == 'fixed':
+            continue
+        limit = joint.find('limit')
+        drives[joint.get('name')] = dict(
+            motor_model='MEVIUS2-REFERENCE-NOT-CUSTOMER', reduction_ratio=1,
+            direction=1, zero_offset_rad=0, torque_limit_nm=float(limit.get('effort')),
+            velocity_limit_rad_s=float(limit.get('velocity')))
+    return dict(robot_id='mevius2-reference',
+                kinematics={'urdf_xml': ET.tostring(robot, encoding='unicode')},
+                dynamics={'joints': drives})
 
 
 def prepare(package: Path, root: Path):
-    profile = demo_profile()
-    (package/'config/robot_profiles/workbench-demo.json').write_text(
-        json.dumps(profile, ensure_ascii=False, indent=2)+'\n', encoding='utf-8')
-    path = package/'web/robot-workbench/index.html'
+    subprocess.run([sys.executable, str(root / 'scripts/fetch_mevius2_workbench.py')], check=True)
+    source = root / 'config/robot_models/mevius2'
+    destination = package / 'config/robot_models/mevius2'
+    if source.resolve() != destination.resolve():
+        shutil.copytree(source, destination, dirs_exist_ok=True)
+    (package / 'config/robot_profiles').mkdir(parents=True, exist_ok=True)
+    (package / 'config/robot_profiles/workbench-demo.json').write_text(
+        json.dumps(demo_profile(root), ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    path = package / 'web/robot-workbench/index.html'
     html = path.read_text(encoding='utf-8')
     replacements = {
-        '加载双七轴移动机器人':'加载四足教学模型',
-        '双臂各7轴 + 腰部pitch = 15个主体关节<br>RM75-B关节结构；机身、夹爪与驱动参数待标定。':
-            '四条腿 × 每腿3关节；仅用于调参和运动学教学。<br>尺寸、质量和驱动参数为示意值，请导入自己的URDF与参数。',
-        'value="demo-dual-rm75"':'value="demo-quadruped"',
-        '关节运动学 · 底盘平面位姿 · 静态重力负载':'四足关节运动学 · 静态重力负载',
-        '全身仅控制主体关节；夹爪和轮轴单独控制。':'全身正弦控制12个关节，不生成行走步态。',
+        '加载双七轴移动机器人': '加载四足参考模型',
+        '双臂各7轴 + 腰部pitch = 15个主体关节<br>RM75-B关节结构；可按客户硬件设置模型与参数。':
+            '完整 MEVIUS2 外观 · 12 个关节<br>参考参数，客户电机方向与零位待标定。',
+        'value="demo-dual-rm75"': 'value="mevius2-reference"',
+        '运动学 · 路径规划': '四足模型 · 参数配置',
+        '全身仅控制主体关节；夹爪和轮轴单独控制。':
+            '12 关节运动学预览；不生成行走步态。',
+        '差速 / 全向导航仿真 · 双臂与腰部协同规划<br>导航到位并停车后操作；动力学后续升级':
+            '参考模型 · 客户参数待标定 · 真机未连接<br>当前画面为运动学预览；未进行真实板卡验收',
+        '参考参数 · 运动学': '完整外观 · 运动学预览',
     }
     for old, new in replacements.items():
         if old not in html:
-            raise ValueError('Workbench template changed; review quadruped UI: '+old)
-        html = html.replace(old,new)
+            raise ValueError('Workbench template changed; review quadruped UI: ' + old)
+        html = html.replace(old, new)
     path.write_text(html, encoding='utf-8')
-    # Keep DOM IDs used by the common renderer; omit manipulation-only controls
-    # from this product's visible interface. No different controller is introduced.
-    with (package/'web/robot-workbench/workbench.css').open('a',encoding='utf-8') as stream:
-        stream.write('\n#connections-panel,.chassis-controls,#pose-details,[data-sine="left"],'
-                     '[data-sine="right"],[data-sine="both"]{display:none}\n')
+    # Preserve common DOM IDs and backend behavior; expose only quadruped controls.
+    with (package / 'web/robot-workbench/workbench.css').open('a', encoding='utf-8') as stream:
+        stream.write('\n#connections-panel,.chassis-controls,.navigation-controls,.planning-controls,'
+                     '.cooperative-controls,.reference-photo,#pose-details,[data-sine="left"],'
+                     '[data-sine="right"],[data-sine="both"],[data-focus],#tool-trails,#follow-base'
+                     '{display:none}\n')
