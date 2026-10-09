@@ -11,7 +11,7 @@ import webbrowser
 import robot_workbench
 import robot_planning
 
-VERSION = '0.2.0'
+VERSION = '0.3.0'
 ROOT = Path(__file__).resolve().parent if '__compiled__' in globals() else Path(__file__).resolve().parents[1]
 
 

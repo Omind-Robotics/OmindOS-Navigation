@@ -34,13 +34,28 @@
 <p class="hint">拖动旋转 · 滚轮缩放 · 点击选择部件</p>
 <div id="warnings" class="notice" role="status"></div>
 <details class="reference-photo"><summary>外观与参数来源</summary><img src="/mda1-reference.webp" alt="用户提供的移动双臂机器人外观参考"><p class="note">机械臂：厂家 RM75-B 网格与 URDF。机身配色参考照片；安装尺寸、质量惯量与驱动参数可按客户硬件设置。内置双指夹爪和四轮差速底盘采用参考配置，可通过模型与参数编辑适配客户硬件。</p></details>
-<div class="scope">运动学 · 双臂与腰部协同规划 · 离散碰撞检查<br>协同规划时底盘固定；动力学后续升级</div>
+<div class="scope">差速 / 全向导航仿真 · 双臂与腰部协同规划<br>导航到位并停车后操作；动力学后续升级</div>
 </section>
 <aside class="actions">
 <section class="emergency-controls" aria-label="软件急停">
 <div class="emergency-buttons"><button id="emergency-stop" class="emergency-stop">急停 <small>ESC</small></button><button id="reset-stop" aria-describedby="reset-stop-note" disabled>复位</button></div>
 <div class="emergency-row"><span id="emergency-state" role="status">电脑端软件急停 · 真机未连接</span></div>
 <p id="reset-stop-note" class="note">复位只解除急停，不归零、不自动继续运动。</p>
+</section>
+<section class="navigation-controls" aria-label="底盘导航与双臂衔接">
+<h2>底盘导航</h2><p class="note">地图避障 → 到位对齐 → 停车确认 → 双臂操作</p>
+<label>底盘类型<select id="navigation-type"><option value="differential">差速轮</option><option value="omnidirectional">全向轮</option></select></label>
+<div class="fields base-fields"><label>目标 X / m<input id="navigation-x" type="number" min="-100" max="100" step=".1" value="1.2"></label><label>目标 Y / m<input id="navigation-y" type="number" min="-100" max="100" step=".1" value=".4"></label><label>目标朝向 / °<input id="navigation-yaw" type="number" min="-360" max="360" step="5" value="0"></label></div>
+<canvas id="navigation-map" width="560" height="340" aria-label="导航地图、规划路径、整机避障包络与当前底盘位置"></canvas>
+<div class="sine-buttons"><button id="navigation-run" class="primary" data-motion>导航到目标</button><button id="navigation-stop" disabled>取消并停车</button></div>
+<button id="navigation-then-arm" data-motion>导航到位后双手共同移动</button>
+<p id="navigation-status" class="note" role="status">使用现有导航内核 · 本机几何仿真</p>
+<details><summary>导航参数与地图</summary>
+<div class="fields"><label>速度上限 / m/s<input id="navigation-speed" type="number" min=".02" max=".5" step=".01" value=".25"></label><label>转速上限 / rad/s<input id="navigation-angular" type="number" min=".05" max="1.2" step=".05" value=".6"></label><label>安全余量 / m<input id="navigation-margin" type="number" min=".02" max=".5" step=".01" value=".08"></label></div>
+<label>地图范围与栅格<textarea id="navigation-grid" rows="5" spellcheck="false">{"size_m":[10,10],"origin_m":[-5,-5],"resolution_m":0.1}</textarea></label>
+<p class="note">未提供 data 时为合成空地图。可导入 OccupancyGrid 整数数组 data（按行排列，只有 0 为自由空间）；环境障碍物与下方规划配置共用世界坐标。整机外形与展开双臂共同决定避障包络。</p>
+<button id="navigation-export">导出导航配置</button><label class="file">导入导航配置<input id="navigation-import" type="file" accept=".json"></label>
+</details><p class="note">双臂共同位移使用下方 X / Y / Z 参数。停车须满足位置、朝向和连续 0.6 秒零运动。定位反馈来自几何仿真；实机定位、制动及驱动仍待接入。</p>
 </section>
 <section class="planning-controls" aria-label="双臂与腰部协同规划">
 <h2>双臂与腰部规划</h2>

@@ -1,7 +1,7 @@
 name: Build desktop workbench binaries
 on:
   push:
-    branches: [main, codex/workbench-binary-release, codex/manipulation-unified-preview6, codex/manipulation-unified-planning]
+    branches: [main, codex/workbench-binary-release, codex/manipulation-unified-preview6, codex/manipulation-unified-planning, codex/manipulation-navigation]
     paths:
       - '.github/workflows/workbench-binaries.yml'
       - 'release/workbench/**'
@@ -13,6 +13,8 @@ on:
       - 'scripts/robot_sequence.py'
       - 'scripts/robot_planning.py'
       - 'scripts/dual_task_planner.py'
+      - 'scripts/robot_navigation.py'
+      - 'scripts/navigation_*.py'
       - 'scripts/robot_kinematics.py'
       - 'scripts/workbench_state.py'
       - 'config/robot_models/realman_rm75/**'
@@ -71,6 +73,7 @@ jobs:
             build/workbench-release/omindos-workbench-*.tar.gz
             build/workbench-release/*.sha256
             build/workbench-release/planning-*-validation.json
+            build/workbench-release/navigation-*-validation.json
           if-no-files-found: error
           retention-days: 14
 

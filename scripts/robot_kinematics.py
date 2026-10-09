@@ -221,8 +221,8 @@ def base_position(value=None):
     if not isinstance(value, dict) or set(value) - {'x_m', 'y_m', 'yaw_rad'}:
         raise ValueError('base_pose must contain only x_m, y_m and yaw_rad')
     result = {k: number(value.get(k, 0), 'base_pose.'+k) for k in ('x_m', 'y_m', 'yaw_rad')}
-    if any(abs(result[k]) > 5 for k in ('x_m', 'y_m')) or abs(result['yaw_rad']) > 2*math.pi:
-        raise ValueError('base_pose exceeds preview range: XY +/-5 m, yaw +/-2pi rad')
+    if any(abs(result[k]) > 100 for k in ('x_m', 'y_m')) or abs(result['yaw_rad']) > 2*math.pi:
+        raise ValueError('base_pose exceeds workspace range: XY +/-100 m, yaw +/-2pi rad')
     return result
 
 
@@ -433,6 +433,8 @@ def wheel_trial(payload):
                         'yaw_rad': (base['yaw_rad']+theta+math.pi) % (2*math.pi)-math.pi}
         if i == 0:
             current_base = base.copy()
+        if any(abs(current_base[k]) > 5 for k in ('x_m','y_m')):
+            raise ValueError('手动轮式试跑限制在 XY +/-5 m；较远地图目标请使用导航。')
         frame = pose(model, q, current_base)
         frame.update(time_s=duration*u, wheel_velocity_rad_s={n: rate*gain for n, rate in rates.items()},
                      base_velocity={'linear_m_s': v*gain, 'angular_rad_s': omega*gain},

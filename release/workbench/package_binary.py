@@ -15,7 +15,7 @@ import urllib.request
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.2.0'
+VERSION = '0.3.0'
 
 
 def main():
@@ -45,7 +45,8 @@ def main():
                '--include-module=robot_kinematics', '--include-module=workbench_state',
                '--include-module=robot_assets', '--include-module=robot_sequence',
                '--include-module=robot_connections', '--include-module=robot_runtime_client',
-               '--include-module=robot_planning', '--include-module=dual_task_planner']
+               '--include-module=robot_planning', '--include-module=dual_task_planner',
+               '--include-module=robot_navigation', '--include-module=navigation_kernel', '--include-module=navigation_guard']
     if windows:
         command += ['--msvc=latest', '--windows-console-mode=force',
                     '--company-name=OriginMind', '--product-name=OmindOS Workbench',
@@ -60,6 +61,7 @@ def main():
              'LICENSES/Three-MIT.txt', 'LICENSES/OpenSSL-3-Apache-2.0.txt',
              'LICENSES/Workbench-Runtime-NOTICE.txt', 'LICENSES/bzip2-LICENSE.txt',
              'LICENSES/XZ-COPYING.txt', 'config/robot_models/realman_rm75/LICENSE',
+             'LICENSES/nav3d-native-Apache-2.0.txt', 'LICENSES/nav3d-native-NOTICE.txt',
              'config/robot_models/realman_rm75/UPSTREAM_LICENSE', 'config/robot_models/realman_rm75/NOTICE.md']
     paths += ['config/robot_models/realman_rm75/meshes/' + p.name
               for p in sorted((ROOT/'config/robot_models/realman_rm75/meshes').iterdir()) if p.is_file()]
@@ -77,6 +79,7 @@ def main():
     shutil.copyfile(ROOT / 'release/workbench/ROS2.zh-CN.md', package / 'ROS2.zh-CN.md')
     if args.variant == 'manipulation':
         shutil.copyfile(ROOT/'docs/UNIFIED_MANIPULATION_PLANNING.zh-CN.md',package/'PLANNING.zh-CN.md')
+        shutil.copyfile(ROOT/'docs/WORKBENCH_NAVIGATION.zh-CN.md',package/'NAVIGATION.zh-CN.md')
     python_version = platform.python_version()
     with urllib.request.urlopen('https://raw.githubusercontent.com/python/cpython/v' + python_version + '/LICENSE', timeout=60) as response:
         (package / 'LICENSES/Python.txt').write_bytes(response.read())
@@ -100,6 +103,12 @@ def main():
                 'planning_kernel_source': 'Omind-Robotics/OmindOS-Manipulation@cbe8caf13921002e463355c6a2982e900640c7e0',
                 'planning_kernel_sha256': hashlib.sha256((ROOT/'scripts/dual_task_planner.py').read_bytes()).hexdigest(),
                 'coupled_waist_dual_arm_planning': True,
+                'navigation_integrated':True, 'navigation_drive_types':['differential','omnidirectional'],
+                'navigation_kernel_source':'Omind-Robotics/OmindOS-Navigation@3293dfc83e32b8e56f1f185b80e19e56a2fe600d:src/nav3d_native/nav3d_native/algorithms.py',
+                'navigation_kernel_sha256':hashlib.sha256((ROOT/'scripts/navigation_kernel.py').read_bytes()).hexdigest(),
+                'navigation_guard_sha256':hashlib.sha256((ROOT/'scripts/navigation_guard.py').read_bytes()).hexdigest(),
+                'navigation_localization_source':'geometric_simulator', 'sensor_localization_bundled':False,
+                'parking_interlock':{'position_tolerance_m':.035,'yaw_tolerance_deg':2,'observed_zero_motion_s':.6},
                 'planning_collision_geometry': 'conservative_oriented_boxes',
                 'continuous_collision_validated': False, 'trajectory_timing_validated': False,
                 'ros_required': False, 'ros_runtime_bundled': False, 'ros_bridge_included': True,
@@ -118,6 +127,8 @@ def main():
     if args.variant == 'manipulation':
         subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_planning.py'),str(package/executable),
                         '--report',str(output/'planning-binary-validation.json')],check=True)
+        subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_navigation.py'),str(package/executable),
+                        '--report',str(output/'navigation-binary-validation.json')],check=True)
     archive = output / (package.name + ('.zip' if windows else '.tar.gz'))
     if windows:
         with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as handle:
@@ -143,6 +154,8 @@ def main():
     if args.variant == 'manipulation':
         subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_planning.py'),
                         str(extracted/package.name/executable),'--report',str(output/'planning-fresh-unpack-validation.json')],check=True)
+        subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_navigation.py'),
+                        str(extracted/package.name/executable),'--report',str(output/'navigation-fresh-unpack-validation.json')],check=True)
     print(json.dumps({'archive': str(archive), 'sha256': digest, 'bytes': archive.stat().st_size}), flush=True)
 
 
