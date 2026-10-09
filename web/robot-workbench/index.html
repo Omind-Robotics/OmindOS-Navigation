@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmindOS · 机器人调参工作台</title><link rel="stylesheet" href="/workbench.css"><script defer src="/workbench.js"></script><script defer src="/runtime.js"></script></head>
 <body>
-<header><div><b>OmindOS</b><span>机器人调参工作台</span></div><span class="badge">三维交互验证版 · 运动学</span></header>
+<header><div><b>OmindOS</b><span>机器人调参工作台</span></div><span class="badge">运动学 · 路径规划</span></header>
 <main>
 <aside class="parameters">
 <div class="parameter-fields">
@@ -34,13 +34,25 @@
 <p class="hint">拖动旋转 · 滚轮缩放 · 点击选择部件</p>
 <div id="warnings" class="notice" role="status"></div>
 <details class="reference-photo"><summary>外观与参数来源</summary><img src="/mda1-reference.webp" alt="用户提供的移动双臂机器人外观参考"><p class="note">机械臂：厂家 RM75-B 网格与 URDF。机身配色参考照片；安装尺寸、质量惯量与驱动参数可按客户硬件设置。内置双指夹爪和四轮差速底盘采用参考配置，可通过模型与参数编辑适配客户硬件。</p></details>
-<div class="scope">关节运动学 · 底盘平面位姿 · 静态重力负载<br>不包含轮地接触、碰撞、平衡和完整动力学仿真</div>
+<div class="scope">运动学 · 双臂与腰部协同规划 · 离散碰撞检查<br>协同规划时底盘固定；动力学后续升级</div>
 </section>
 <aside class="actions">
 <section class="emergency-controls" aria-label="软件急停">
 <div class="emergency-buttons"><button id="emergency-stop" class="emergency-stop">急停 <small>ESC</small></button><button id="reset-stop" aria-describedby="reset-stop-note" disabled>复位</button></div>
 <div class="emergency-row"><span id="emergency-state" role="status">电脑端软件急停 · 真机未连接</span></div>
 <p id="reset-stop-note" class="note">复位只解除急停，不归零、不自动继续运动。</p>
+</section>
+<section class="planning-controls" aria-label="双臂与腰部协同规划">
+<h2>双臂与腰部规划</h2>
+<p class="note">使用当前客户模型、限位与工具坐标。夹爪和底盘在规划时保持固定。</p>
+<button id="planning-start-pose" data-motion>记为规划起点</button>
+<button id="planning-joint" data-motion>规划到当前目标姿态</button>
+<div class="fields"><label>共同 X 位移 / m<input id="planning-x" type="number" min="-.25" max=".25" step=".005" value=".01"></label><label>共同 Y 位移 / m<input id="planning-y" type="number" min="-.25" max=".25" step=".005" value="0"></label><label>共同 Z 位移 / m<input id="planning-z" type="number" min="-.25" max=".25" step=".005" value="0"></label></div>
+<button id="planning-object" class="primary" data-motion>双手共同移动 · 协同规划</button>
+<button id="planning-cancel" disabled>取消规划</button>
+<p id="planning-status" class="note" role="status">runtime.2 协同内核 · 本地计算</p>
+<details><summary>客户规划配置</summary><label>十五关节与 TCP 映射<textarea id="planning-mapping" rows="8" spellcheck="false"></textarea></label><label>环境障碍物 / m<textarea id="planning-obstacles" rows="4" spellcheck="false">[]</textarea></label><button id="planning-export">导出规划配置</button><label class="file">导入规划配置<input id="planning-import" type="file" accept=".json"></label><p class="note">可修改关节名称和两个 TCP 连杆；障碍物格式：[{"size_m":[0.1,0.1,0.1],"position_m":[0.5,0,1]}]。</p></details>
+<p class="note">按几何包围盒保守检查自身与障碍物碰撞，相邻两个主体关节及固定装配内部被结构性排除；跨臂保留检查。仅验证离散样本；六秒播放时长不代表控制时序。普通点动和演示仍是运动学预览。</p>
 </section>
 <section class="cooperative-controls" aria-label="双臂协同演示">
 <h2>双臂协同演示</h2><p class="note">接近 → 对齐 → 夹爪开合 → 抬升 → 连续行进</p>

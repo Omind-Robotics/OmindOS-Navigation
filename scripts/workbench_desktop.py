@@ -9,8 +9,9 @@ import threading
 import webbrowser
 
 import robot_workbench
+import robot_planning
 
-VERSION = '0.2.0-preview.8'
+VERSION = '0.2.0'
 ROOT = Path(__file__).resolve().parent if '__compiled__' in globals() else Path(__file__).resolve().parents[1]
 
 
@@ -44,6 +45,7 @@ def main():
         print('Package verification passed.', flush=True)
         return
     robot_workbench.ROOT = ROOT
+    robot_planning.ROOT = ROOT
     try:
         server = robot_workbench.ThreadingHTTPServer(('127.0.0.1', args.port), robot_workbench.make_handler(args.store, args.runtime_url))
     except (OSError, ValueError) as error:

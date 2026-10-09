@@ -4,6 +4,7 @@ let xml, profile, model, currentPose, targets = {}, mode = 'joint', revision = 0
 let timer, animation, latestTrial, view = {yaw: .75, pitch: .48, zoom: 1, center: [0, 0, .5], span: 1.5};
 let projected = [], operation = false;
 let sceneEngine = null;
+let planningJob = null, planningStart = null;
 let baseTarget = {x_m:0, y_m:0, yaw_rad:0};
 let emergencyStop = false, safetyPending = false, safetyRequest = 0, motionEpoch = -1, motionTicket = 0;
 let connectionOptions, connectionDraft = {schema_version:1,devices:{}};
@@ -36,11 +37,13 @@ async function api(path, data) {
 }
 function stop(message) {
   motionTicket++;
+  if(planningJob){const id=planningJob;planningJob=null;api('/v1/planning-cancel',{task_id:id}).catch(()=>{});$('planning-cancel').disabled=true;}
   cancelAnimationFrame(animation); animation = null; $('stop').disabled = true;
   updateWheelSpeeds();
   if (message) status(message);
 }
 function edited({refresh = true, config = true} = {}) {
+  if(config)planningStart=null;
   stop(); revision++; readyRevision = -1; latestTrial = null; $('results').replaceChildren(); $('progress').value = 0;
   if(config){$('dirty').textContent = '有修改 · 未保存';$('apply-note').textContent='参数有修改，点击写入后作为程序当前配置。';} $('xml').value = serializer.serializeToString(xml);
   status('参数已修改'); clearTimeout(timer); if (refresh) timer = setTimeout(() => refreshModel(false), 120);
@@ -72,6 +75,7 @@ async function importProfile(data, fromUrdf = false) {
   if (fromUrdf) candidate.dynamics.joints = missingDrives(doc);
   stop(); clearTimeout(timer); revision++; readyRevision = revision; latestTrial = null;
   profile = candidate; xml = doc; model = result.model; currentPose = result.pose; targets = {...result.pose.positions};
+  planningStart=null;
   connectionInvalid.clear();connectionDraft=structuredClone(candidate.connections||{schema_version:1,devices:{}});renderConnections();
   baseTarget = {...result.pose.base_pose};
   document.querySelectorAll('.base-fields input').forEach(input=>input.removeAttribute('aria-invalid'));
@@ -82,7 +86,7 @@ async function importProfile(data, fromUrdf = false) {
   $('profile-id').value='';$('saved').textContent='参数保存在本机服务目录；旧版本保留。';
   $('apply-note').textContent='当前编辑配置尚未写入程序，点击写入后生效。';
   syncQuickControls(); rebuildParts(); fitView(); draw();
-  status(fromUrdf ? '模型已导入。请补充各活动关节的电机参数后试运行、保存。' : '模型已载入 · 可调整参数');
+  status(fromUrdf ? '模型已导入。可按客户硬件设置参数；运动学规划使用当前几何和关节限位。' : '模型已载入 · 可调整参数');
 }
 function textBlock(text, cls = 'note') { const el = document.createElement('div'); el.className = cls; el.textContent = text; $('editor').append(el); return el; }
 function connectionChanged(){
@@ -373,7 +377,8 @@ function drawWireframe(){
   ctx.font='11px system-ui';[['X',[.15,0,0],'#a86458'],['Y',[0,.15,0],'#69865a'],['Z',[0,0,.15],'#5077a0']].forEach(([name,p,color])=>{line([0,0,0],p,color,2);const a=project(p);ctx.fillStyle=color;ctx.fillText(name,a[0]+4,a[1]);});
 }
 function report(result){
-  $('results').replaceChildren();const head=document.createElement('p');head.textContent='运动路径采样点的峰值静态保持力矩';$('results').append(head);
+  $('results').replaceChildren();const head=document.createElement('p');head.textContent=result.motion_type==='planned'?`规划通过 · ${result.validated_samples} 个离散碰撞样本`:'运动路径采样点的峰值静态保持力矩';$('results').append(head);
+  if(result.motion_type==='planned'){const note=document.createElement('p');note.textContent='底盘固定 · 几何包围盒保守检查 · 不含动力学';$('results').append(note);if(result.max_tcp_position_error_m!==undefined){const error=document.createElement('p');error.textContent=`两手最大位置误差 ${(result.max_tcp_position_error_m*1000).toFixed(3)} mm；相对误差 ${(result.max_relative_position_error_m*1000).toFixed(3)} mm（模型数值）`;$('results').append(error);}return;}
   if(result.actual_amplitude_deg){const note=document.createElement('p');note.textContent='实际正弦振幅：'+Object.entries(result.actual_amplitude_deg).map(([n,v])=>`${n} ${v.toFixed(2)}°`).join('；');$('results').append(note);}
   for(const [name,value] of Object.entries(result.peak_holding_torque_nm)){const row=document.createElement('div');row.className='metric';const label=document.createElement('span');label.textContent=name;const val=document.createElement('strong');val.textContent=`${value.toFixed(2)} N·m`;if(result.gravity_limit_exceeded.includes(name))val.className='error';row.append(label,val);$('results').append(row);}
   if(result.gravity_limit_exceeded.length){const warn=document.createElement('p');warn.className='error';warn.textContent='静态重力负载超限：'+result.gravity_limit_exceeded.join('、');$('results').append(warn);}
@@ -399,9 +404,9 @@ async function motionReady(){
   if(ticket!==motionTicket)throw Error('运动已取消，请重新选择并启动。');
   if(emergencyStop||safetyPending)throw Error('急停锁定中，请先手动复位。');
 }
-async function executeMotion(path,data,label){
+async function executeMotion(path,data,label,validatedResult=null){
   stop();$('progress').value=0;const rev=revision,ticket=motionTicket;status('正在计算运动轨迹和重力负载…');
-  const result=await api(path,data);
+  const result=validatedResult||await api(path,data);
   if(rev!==revision||ticket!==motionTicket||emergencyStop||safetyPending||result.motion_epoch<motionEpoch)return;
   motionEpoch=result.motion_epoch;latestTrial=result;report(result);model=result.model;
   if(result.motion_type==='sine'){
@@ -434,6 +439,43 @@ $('cooperative-demo').onclick=()=>guarded(async()=>{
   await executeMotion('/v1/robot-sequence',{profile:payload(),start:currentPose.positions,base_pose:currentPose.base_pose,
     segments:demo.segments,reference_signature:demo.reference_signature},'双臂协同演示');
 });
+async function runPlanning(mode){
+  await motionReady();stop();const ticket=motionTicket,rev=revision;
+  const start=mode==='joint'?planningStart:currentPose;
+  if(!start)throw Error('请先记下规划起点，再调整主体关节到目标姿态。');
+  if(mode==='joint'&&Object.keys(baseTarget).some(k=>Math.abs(baseTarget[k]-start.base_pose[k])>1e-9))throw Error('规划时底盘必须固定，请保持起点底盘位姿。');
+  const mapping=JSON.parse($('planning-mapping').value),obstacles=JSON.parse($('planning-obstacles').value);
+  const data={profile:payload(),start:start.positions,base_pose:start.base_pose,mapping,obstacles,mode};
+  if(mode==='joint')data.target=targets;
+  else{const ids=['planning-x','planning-y','planning-z'];if(ids.some(id=>!$(id).checkValidity()||!$(id).value.trim()))throw Error('请填写有效的共同位移。');data.translation_m=ids.map(id=>numeric($(id).value));}
+  localStorage.setItem('omindos-planning-config',JSON.stringify({mapping,obstacles}));
+  $('planning-status').textContent='正在计算 · 最多 60 秒，可取消';
+  const task=await api('/v1/planning-start',data);
+  if(ticket!==motionTicket||rev!==revision){await api('/v1/planning-cancel',{task_id:task.task_id});return;}
+  planningJob=task.task_id;$('planning-cancel').disabled=false;
+  try{
+    while(planningJob===task.task_id&&ticket===motionTicket&&rev===revision){
+      const state=await api('/v1/planning-task/'+task.task_id);
+      if(state.status==='running'){await new Promise(resolve=>setTimeout(resolve,300));continue;}
+      if(ticket!==motionTicket||rev!==revision||planningJob!==task.task_id)return;
+      planningJob=null;$('planning-cancel').disabled=true;
+      if(state.status!=='succeeded')throw Error(state.error||'规划未通过');
+      if(emergencyStop||state.motion_epoch<motionEpoch)throw Error('规划状态已改变，请重新规划。');
+      $('planning-status').textContent=`规划通过 · ${state.result.validated_samples} 个离散样本 · 播放六秒`;
+      await executeMotion(null,null,mode==='joint'?'关节路径规划':'双臂与腰部协同规划',state.result);
+      return;
+    }
+  }catch(e){$('planning-status').textContent=e.message;throw e;}
+  finally{if(planningJob===task.task_id){stop();}$('planning-cancel').disabled=true;}
+}
+$('planning-start-pose').onclick=()=>guarded(async()=>{await motionReady();stop();planningStart=structuredClone(currentPose);$('planning-status').textContent='已记录起点；调整主体关节后点击规划到目标姿态。';});
+$('planning-joint').onclick=()=>guarded(()=>runPlanning('joint'));
+$('planning-object').onclick=()=>guarded(()=>runPlanning('object'));
+$('planning-cancel').onclick=()=>{stop('规划已取消');$('planning-status').textContent='规划已取消，保留当前姿态。';};
+for(const id of ['planning-mapping','planning-obstacles','planning-x','planning-y','planning-z'])$(id).oninput=()=>{stop();$('planning-status').textContent='规划输入已修改，重新计算后生效。';};
+$('planning-export').onclick=()=>guarded(async()=>{const config={mapping:JSON.parse($('planning-mapping').value),obstacles:JSON.parse($('planning-obstacles').value)};const url=URL.createObjectURL(new Blob([JSON.stringify(config,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='OmindOS-Planning-Config.json';a.click();URL.revokeObjectURL(url);});
+$('planning-import').onchange=()=>guarded(async()=>{const file=$('planning-import').files[0];if(!file)return;if(file.size>65536)throw Error('规划配置不能超过 64 KiB。');const config=JSON.parse(await file.text());if(!config.mapping||!Array.isArray(config.obstacles))throw Error('需要 mapping 和 obstacles。');stop();planningStart=null;$('planning-mapping').value=JSON.stringify(config.mapping,null,2);$('planning-obstacles').value=JSON.stringify(config.obstacles,null,2);localStorage.setItem('omindos-planning-config',JSON.stringify(config));$('planning-status').textContent='客户规划配置已导入，将使用当前模型校验。';});
+(async()=>{try{const saved=localStorage.getItem('omindos-planning-config');const config=saved?JSON.parse(saved):await api('/v1/planning-config');$('planning-mapping').value=JSON.stringify(config.mapping,null,2);$('planning-obstacles').value=JSON.stringify(config.obstacles||[],null,2);}catch(e){$('planning-status').textContent=e.message;}})();
 $('run').onclick=()=>guarded(async()=>{await motionReady();await executeMotion('/v1/robot-preview',{profile:payload(),target:targets,base_target:baseTarget,duration_s:numeric($('duration').value)},'运动学试运行');});
 for(const button of document.querySelectorAll('[data-drive]'))button.onclick=()=>guarded(async()=>{
   await motionReady();
