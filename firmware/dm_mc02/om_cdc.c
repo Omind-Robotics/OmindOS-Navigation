@@ -1,13 +1,24 @@
 #include "om_cdc.h"
 #include <string.h>
 
-int om_cdc_init(om_cdc *s,om_cdc_io io,const uint8_t nonce[16],
-                const uint8_t digest[32],const om_joint *j) {
+static int init(om_cdc *s,om_cdc_io io,const uint8_t nonce[16],
+                const uint8_t digest[32],const om_joint *j,int observer) {
     memset(s,0,sizeof(*s)); s->io=io;
     if(!io.enter || !io.leave || !io.submit) {
         s->transport_fault=1;om_fault(&s->core,1);return -1;
     }
-    return om_init(&s->core,nonce,digest,j);
+#ifdef OM_BENCH_OBSERVER_ONLY
+    (void)observer;
+    return om_init_observer(&s->core,nonce,digest,j);
+#else
+    return observer ? om_init_observer(&s->core,nonce,digest,j) : om_init(&s->core,nonce,digest,j);
+#endif
+}
+int om_cdc_init(om_cdc *s,om_cdc_io io,const uint8_t nonce[16],const uint8_t digest[32],const om_joint *j) {
+    return init(s,io,nonce,digest,j,0);
+}
+int om_cdc_init_observer(om_cdc *s,om_cdc_io io,const uint8_t nonce[16],const uint8_t digest[32],const om_joint *j) {
+    return init(s,io,nonce,digest,j,1);
 }
 void om_cdc_receive(om_cdc *s,const uint8_t *data,size_t n) {
     uint32_t key=s->io.enter(s->io.context);

@@ -19,12 +19,14 @@ typedef struct {
     om_joint joints[OM_JOINTS];
     size_t used;
     uint32_t sequence, deadline, lease_deadline;
-    uint8_t fault, configured, ticket_pending, lease;
+    uint8_t fault, configured, ticket_pending, lease, observer_only;
     om_status_provider status;
     void *status_context;
 } om_usb;
 /* nonce must be a fresh boot nonce from the board RNG, never a constant. */
 int om_init(om_usb *, const uint8_t nonce[16], const uint8_t digest[32], const om_joint *);
+/* Only bus/ID routing is required; never validates targets or issues tickets. */
+int om_init_observer(om_usb *, const uint8_t nonce[16], const uint8_t digest[32], const om_joint *);
 /* Call from the independent scheduler even when USB has no traffic. */
 void om_tick(om_usb *, uint32_t now_ms);
 /* A return of 1 means a full response; -1 means latched error. Never actuates. */

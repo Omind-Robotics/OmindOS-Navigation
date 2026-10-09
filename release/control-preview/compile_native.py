@@ -14,7 +14,8 @@ names=['robot_parameter_api','robot_workbench','robot_kinematics','workbench_sta
        'robot_profile_runtime_core','joint_interface','quadruped_controller',
        'quadruped_backends','quadruped_worker','quadruped_ros2','robstride04_driver',
        'rs04_simulated_bus','check_customer_profile','check_rs04_hardware',
-       'validate_quadruped_dynamics','dm_mc02_protocol','native_entry']
+       'validate_quadruped_dynamics','dm_mc02_protocol','native_entry','robot_assets','robot_sequence',
+       'robot_planning','dual_task_planner']
 files=[root/'scripts'/f'{n}.py' if n!='native_entry' else root/'release/control-preview/native_entry.py' for n in names]
 setup(name='omindos-control-native',ext_modules=cythonize(
     [Extension(n,[str(p)],extra_compile_args=['-O2','-g0']) for n,p in zip(names,files)],

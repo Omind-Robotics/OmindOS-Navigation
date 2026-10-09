@@ -45,6 +45,22 @@ void om_fault(om_usb *s,uint8_t reason) {
     if(!s->fault) s->fault=reason?reason:1;
     s->ticket_pending=s->lease=0;
 }
+int om_init_observer(om_usb *s,const uint8_t nonce[16],const uint8_t digest[32],const om_joint *j) {
+    memset(s,0,sizeof(*s)); s->observer_only=1;
+    if(!nonce || !digest || !j) {om_fault(s,1);return -1;}
+    uint8_t any=0; for(unsigned i=0;i<16;++i) any|=nonce[i];
+    unsigned buses[3]={0};
+    if(!any) {om_fault(s,1);return -1;}
+    for(unsigned i=0;i<OM_JOINTS;++i) {
+        if(j[i].bus>=3 || !j[i].motor_id || j[i].motor_id>127) {om_fault(s,1);return -1;}
+        for(unsigned k=0;k<i;++k)
+            if(j[k].bus==j[i].bus && j[k].motor_id==j[i].motor_id) {om_fault(s,1);return -1;}
+        ++buses[j[i].bus];
+        s->joints[i].bus=j[i].bus;s->joints[i].motor_id=j[i].motor_id;
+    }
+    if(buses[0]!=4 || buses[1]!=4 || buses[2]!=4) {om_fault(s,1);return -1;}
+    memcpy(s->nonce,nonce,16);memcpy(s->digest,digest,32);s->configured=1;return 0;
+}
 int om_init(om_usb *s,const uint8_t nonce[16],const uint8_t digest[32],const om_joint *j) {
     memset(s,0,sizeof(*s));
     uint8_t any=0; for(unsigned i=0;i<16;++i) any|=nonce[i];
@@ -108,6 +124,10 @@ int om_feed(om_usb *s,uint8_t byte,uint32_t now,uint8_t *out,size_t *len) {
     }
     if(memcmp(p+6,s->nonce,16)) return error(s,3,out,len);
     if(kind==4 && !n) return error(s,7,out,len); /* explicit STOP latches bench session */
+#ifdef OM_BENCH_OBSERVER_ONLY
+    return error(s,9,out,len); /* target codec/tickets excluded from linked firmware */
+#else
+    if(s->observer_only) return error(s,9,out,len);
     if(kind==2 && !n && !rd32(p+22) && !rd32(p+26)) {
         if(s->sequence==0xffffffffu) return error(s,4,out,len);
         ++s->sequence;s->deadline=now+50u;s->ticket_pending=1;
@@ -124,4 +144,5 @@ int om_feed(om_usb *s,uint8_t byte,uint32_t now,uint8_t *out,size_t *len) {
         uint8_t locked=1;reply(s,131,&locked,1,out,len);return 1;
     }
     return error(s,2,out,len);
+#endif
 }
