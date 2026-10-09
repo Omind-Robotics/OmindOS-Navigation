@@ -109,6 +109,7 @@ class NavigationSimulation:
         yy,xx = np.mgrid[:self.height,:self.width]
         xx=self.ox+(xx+.5)*self.res; yy=self.oy+(yy+.5)*self.res
         grid[(xx<=self.ox+r)|(xx>=self.ox+self.width*self.res-r)|(yy<=self.oy+r)|(yy>=self.oy+self.height*self.res-r)] = 100
+        grid[(np.abs(xx)>100-cell_margin)|(np.abs(yy)>100-cell_margin)] = 100
         from scipy.ndimage import distance_transform_edt
         raw_blocked=np.array(raw).reshape(self.height,self.width)!=0
         if raw_blocked.any():
@@ -161,6 +162,7 @@ class NavigationSimulation:
 
     def clear(self, x, y, radius=None):
         r = self.radius if radius is None else radius
+        if abs(x)>100 or abs(y)>100: return False
         if not (self.ox+r < x < self.ox+self.width*self.res-r and self.oy+r < y < self.oy+self.height*self.res-r):
             return False
         if len(self.rect_array):

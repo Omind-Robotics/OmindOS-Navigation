@@ -82,6 +82,18 @@ class NavigationTests(unittest.TestCase):
         self.assertAlmostEqual(b.radius-a.radius,.12)
         self.assertGreater(a.radius,.8)
 
+    def test_customer_map_origin_and_far_base_work_through_arm_planning(self):
+        from robot_planning import plan
+        data=self.payload(goal={'x_m':20.7,'y_m':10.4,'yaw_rad':.3})
+        for side,q in [('left',[1.57,1.3,-1.57,1.1,.1,.5,0]),('right',[-1.57,1.3,1.57,1.1,-.1,.5,0])]:
+            data['start'].update({f'{side}_joint_{i+1}':v for i,v in enumerate(q)})
+        data['base_pose']={'x_m':20,'y_m':10,'yaw_rad':0}
+        data['config']['map']['origin_m']=[15,5]
+        sim=NavigationSimulation(data,lambda:None);self.finish(sim)
+        result=plan({'profile':sim.profile,'start':sim.q,'base_pose':sim.base,'mode':'object','translation_m':[.005,0,0]},lambda:None,sim.arm_environment_clear)
+        self.assertTrue(result['navigation_map_checked'])
+        self.assertTrue(all(f['base_pose']==sim.base for f in result['frames']))
+
     def test_missing_mass_and_motor_data_do_not_block_geometry(self):
         data=self.payload();data['profile']={'kinematics':self.profile['kinematics']}
         sim=NavigationSimulation(data,lambda:None);self.finish(sim)

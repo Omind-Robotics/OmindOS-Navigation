@@ -129,7 +129,7 @@ class KinematicsTests(unittest.TestCase):
 
     def test_base_pose_rejects_invalid_values(self):
         model = build_model(fixture()['kinematics']['urdf_xml'])
-        for value in [[], {'z_m':1}, {'x_m':6}, {'y_m':float('nan')}, {'yaw_rad':7}]:
+        for value in [[], {'z_m':1}, {'x_m':101}, {'y_m':float('nan')}, {'yaw_rad':7}]:
             with self.subTest(value=value), self.assertRaises(ValueError):
                 pose(model, {}, value)
         with self.assertRaisesRegex(ValueError, 'rgba'):
@@ -364,3 +364,4 @@ class WheelBaseTests(unittest.TestCase):
 
 if __name__=='__main__':
     unittest.main()
+
