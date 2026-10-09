@@ -64,6 +64,25 @@ export class RobotScene {
 
   own(resource) {this.resources.push(resource); return resource;}
 
+  setNavigation(nav, key) {
+    if(this.navigationKey===key)return;
+    if(this.navigation){this.scene.remove(this.navigation);this.navigation.traverse(o=>{o.geometry?.dispose();if(o.material){o.material.map?.dispose();o.material.dispose();}});}
+    this.navigationKey=key;this.navigation=new THREE.Group();this.scene.add(this.navigation);
+    const [ox,oy]=nav.map_bounds.origin_m,[sx,sy]=nav.map_bounds.size_m;
+    const image=document.createElement('canvas');image.width=image.height=1024;const ctx=image.getContext('2d');
+    ctx.fillStyle='#e6eff3';ctx.fillRect(0,0,1024,1024);ctx.strokeStyle='#cadbe3';ctx.lineWidth=2;
+    const px=x=>(x-ox)/sx*1024,py=y=>(1-(y-oy)/sy)*1024;
+    for(let x=Math.ceil(ox);x<ox+sx;x++){ctx.beginPath();ctx.moveTo(px(x),0);ctx.lineTo(px(x),1024);ctx.stroke();}
+    for(let y=Math.ceil(oy);y<oy+sy;y++){ctx.beginPath();ctx.moveTo(0,py(y));ctx.lineTo(1024,py(y));ctx.stroke();}
+    ctx.fillStyle='#657d8c';for(const [x,y,w,h] of nav.obstacles_xy)ctx.fillRect(px(x),py(y+h),w/sx*1024,h/sy*1024);
+    const texture=new THREE.CanvasTexture(image);texture.colorSpace=THREE.SRGBColorSpace;
+    const floor=new THREE.Mesh(new THREE.PlaneGeometry(sx,sy),new THREE.MeshBasicMaterial({map:texture,transparent:true,opacity:.68,depthWrite:false}));floor.position.set(ox+sx/2,oy+sy/2,.008);this.navigation.add(floor);
+    const route=new THREE.Line(new THREE.BufferGeometry().setFromPoints(nav.path.map(([x,y])=>new THREE.Vector3(x,y,.022))),new THREE.LineBasicMaterial({color:0x0397c5,linewidth:2}));this.navigation.add(route);
+    const g=nav.goal;const goal=new THREE.Mesh(new THREE.RingGeometry(.09,.115,40),new THREE.MeshBasicMaterial({color:0x169c7b,side:THREE.DoubleSide}));goal.position.set(g.x_m,g.y_m,.028);this.navigation.add(goal);
+    const heading=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(g.x_m,g.y_m,.03),new THREE.Vector3(g.x_m+.3*Math.cos(g.yaw_rad),g.y_m+.3*Math.sin(g.yaw_rad),.03)]),new THREE.LineBasicMaterial({color:0x16876c}));this.navigation.add(heading);
+    for(const box of nav.obstacles){const obstacle=new THREE.Mesh(new THREE.BoxGeometry(...box.size_m),new THREE.MeshStandardMaterial({color:0x718796,roughness:.85,transparent:true,opacity:.72}));obstacle.position.set(...box.position_m);this.navigation.add(obstacle);}
+  }
+
   rebuild(model) {
     this.generation++; this.meshStats = {requested:0, loaded:0, failed:0};
     this.robot.clear(); this.resources.forEach(resource => resource.dispose()); this.resources = [];

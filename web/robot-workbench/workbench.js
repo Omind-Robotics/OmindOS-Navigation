@@ -5,6 +5,7 @@ let timer, animation, latestTrial, view = {yaw: .75, pitch: .48, zoom: 1, center
 let projected = [], operation = false;
 let sceneEngine = null;
 let planningJob = null, planningStart = null;
+let navigationJob = null, navigationData = null;
 let baseTarget = {x_m:0, y_m:0, yaw_rad:0};
 let emergencyStop = false, safetyPending = false, safetyRequest = 0, motionEpoch = -1, motionTicket = 0;
 let connectionOptions, connectionDraft = {schema_version:1,devices:{}};
@@ -37,6 +38,7 @@ async function api(path, data) {
 }
 function stop(message) {
   motionTicket++;
+  if(navigationJob){const id=navigationJob;navigationJob=null;api('/v1/navigation-cancel',{task_id:id}).catch(()=>{});$('navigation-stop').disabled=true;updateMotionControls();}
   if(planningJob){const id=planningJob;planningJob=null;api('/v1/planning-cancel',{task_id:id}).catch(()=>{});$('planning-cancel').disabled=true;}
   cancelAnimationFrame(animation); animation = null; $('stop').disabled = true;
   updateWheelSpeeds();
@@ -190,7 +192,7 @@ function syncJogControls(){
 }
 function updateJogAngle(){const q=currentPose?.positions[$('jog-joint').value];$('jog-angle').textContent=Number.isFinite(q)?(q*180/Math.PI).toFixed(3)+'°':'—';}
 function updateMotionControls(){
-  const locked=emergencyStop||safetyPending||!model;
+  const locked=emergencyStop||safetyPending||!model||!!navigationJob;
   document.body.dataset.estop=String(emergencyStop);
   document.querySelectorAll('[data-motion],#pitch,#left-gripper,#right-gripper,#base-x,#base-y,#base-yaw,#reset-pose,#editor input[type=range]').forEach(el=>el.disabled=locked);
   for(const button of document.querySelectorAll('[data-sine]')){
@@ -476,6 +478,68 @@ for(const id of ['planning-mapping','planning-obstacles','planning-x','planning-
 $('planning-export').onclick=()=>guarded(async()=>{const config={mapping:JSON.parse($('planning-mapping').value),obstacles:JSON.parse($('planning-obstacles').value)};const url=URL.createObjectURL(new Blob([JSON.stringify(config,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='OmindOS-Planning-Config.json';a.click();URL.revokeObjectURL(url);});
 $('planning-import').onchange=()=>guarded(async()=>{const file=$('planning-import').files[0];if(!file)return;if(file.size>65536)throw Error('规划配置不能超过 64 KiB。');const config=JSON.parse(await file.text());if(!config.mapping||!Array.isArray(config.obstacles))throw Error('需要 mapping 和 obstacles。');stop();planningStart=null;$('planning-mapping').value=JSON.stringify(config.mapping,null,2);$('planning-obstacles').value=JSON.stringify(config.obstacles,null,2);localStorage.setItem('omindos-planning-config',JSON.stringify(config));$('planning-status').textContent='客户规划配置已导入，将使用当前模型校验。';});
 (async()=>{try{const saved=localStorage.getItem('omindos-planning-config');const config=saved?JSON.parse(saved):await api('/v1/planning-config');$('planning-mapping').value=JSON.stringify(config.mapping,null,2);$('planning-obstacles').value=JSON.stringify(config.obstacles||[],null,2);}catch(e){$('planning-status').textContent=e.message;}})();
+const navigationPhases={planning:'正在规划导航路径',navigating:'沿路径导航',aligning:'到位 · 对齐朝向',parking:'零运动停车确认',parked:'已到位并确认停车',manipulation_planning:'停车已确认 · 计算双臂路径',succeeded:'导航与双臂规划通过',failed:'任务未通过',canceled:'任务已取消'};
+function navigationConfig(){
+  for(const id of ['navigation-speed','navigation-angular','navigation-margin'])if(!$(id).checkValidity()||!$(id).value.trim())throw Error('请填写有效的导航速度和安全余量。');
+  return {drive_type:$('navigation-type').value,max_linear_m_s:numeric($('navigation-speed').value),max_angular_rad_s:numeric($('navigation-angular').value),safety_margin_m:numeric($('navigation-margin').value),map:JSON.parse($('navigation-grid').value)};
+}
+function showNavigationMap(nav){
+  const canvas=$('navigation-map'),ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
+  ctx.fillStyle='#eff5f8';ctx.fillRect(0,0,w,h);if(!nav)return;
+  const origin=nav.map_bounds.origin_m,size=nav.map_bounds.size_m,scale=Math.min((w-40)/size[0],(h-30)/size[1]);
+  const px=x=>w/2+(x-origin[0]-size[0]/2)*scale,py=y=>h/2-(y-origin[1]-size[1]/2)*scale;
+  ctx.strokeStyle='#bfced8';ctx.strokeRect(px(origin[0]),py(origin[1]+size[1]),size[0]*scale,size[1]*scale);
+  ctx.fillStyle='#52687b';for(const [x,y,sw,sh] of nav.obstacles_xy)ctx.fillRect(px(x),py(y+sh),sw*scale,sh*scale);
+  ctx.strokeStyle='#0b94bb';ctx.lineWidth=3;ctx.beginPath();nav.path.forEach(([x,y],i)=>i?ctx.lineTo(px(x),py(y)):ctx.moveTo(px(x),py(y)));ctx.stroke();
+  const b=nav.base_pose,g=nav.goal;ctx.strokeStyle='#16846e';ctx.lineWidth=2;ctx.beginPath();ctx.arc(px(g.x_m),py(g.y_m),7,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='#1ca4c422';ctx.strokeStyle='#1588a5';ctx.beginPath();ctx.arc(px(b.x_m),py(b.y_m),nav.footprint_radius_m*scale,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#0e536f';ctx.beginPath();ctx.arc(px(b.x_m),py(b.y_m),5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.moveTo(px(b.x_m),py(b.y_m));ctx.lineTo(px(b.x_m)+16*Math.cos(b.yaw_rad),py(b.y_m)-16*Math.sin(b.yaw_rad));ctx.stroke();
+}
+async function runNavigation(thenArm=false){
+  await motionReady();stop();freezePose();const ticket=motionTicket,rev=revision;
+  for(const id of ['navigation-x','navigation-y','navigation-yaw'])if(!$(id).checkValidity()||!$(id).value.trim())throw Error('请填写有效的导航目标位姿。');
+  const config=navigationConfig(),data={profile:payload(),start:currentPose.positions,base_pose:currentPose.base_pose,config,
+    goal:{x_m:numeric($('navigation-x').value),y_m:numeric($('navigation-y').value),yaw_rad:numeric($('navigation-yaw').value)*Math.PI/180},
+    mapping:JSON.parse($('planning-mapping').value),obstacles:JSON.parse($('planning-obstacles').value)};
+  if(thenArm){const ids=['planning-x','planning-y','planning-z'];if(ids.some(id=>!$(id).checkValidity()||!$(id).value.trim()))throw Error('请填写有效的双臂共同位移。');data.manipulation={translation_m:ids.map(id=>numeric($(id).value))};}
+  localStorage.setItem('omindos-navigation-config',JSON.stringify(config));$('navigation-status').textContent='正在启动导航';
+  const task=await api('/v1/navigation-start',data);
+  if(ticket!==motionTicket||rev!==revision){await api('/v1/navigation-cancel',{task_id:task.task_id});return;}
+  navigationJob=task.task_id;$('navigation-stop').disabled=false;updateMotionControls();let fitted=false;
+  try{
+    while(navigationJob===task.task_id&&ticket===motionTicket&&rev===revision){
+      const state=await api('/v1/navigation-task/'+task.task_id);
+      if(ticket!==motionTicket||rev!==revision||navigationJob!==task.task_id)return;
+      if(state.navigation){
+        const nav=state.navigation;navigationData=nav;currentPose=nav.pose;currentPose.phase=navigationPhases[state.status];targets={...currentPose.positions};baseTarget={...currentPose.base_pose};
+        showNavigationMap(nav);sceneEngine?.setNavigation(nav,task.task_id);
+        if(!fitted){fitView();const xs=nav.path.map(p=>p[0]),ys=nav.path.map(p=>p[1]);view.center=[(Math.min(...xs)+Math.max(...xs))/2,(Math.min(...ys)+Math.max(...ys))/2,.65];view.span=Math.max(view.span,Math.max(...xs)-Math.min(...xs)+2*nav.footprint_radius_m,Math.max(...ys)-Math.min(...ys)+2*nav.footprint_radius_m)*1.3;fitted=true;}
+        syncQuickControls();draw();
+        const v=nav.cmd_vel;$('navigation-status').textContent=`${navigationPhases[state.status]} · ${nav.drive_type==='differential'?'差速':'全向'} · vx ${v.linear_m_s.toFixed(2)} / vy ${v.lateral_m_s.toFixed(2)} m/s · 包络半径 ${nav.footprint_radius_m.toFixed(2)} m`;
+      }else $('navigation-status').textContent=navigationPhases[state.status];
+      if(['parked','succeeded','failed','canceled'].includes(state.status)){
+        navigationJob=null;$('navigation-stop').disabled=true;updateMotionControls();freezePose();
+        if(['failed','canceled'].includes(state.status))throw Error(state.error||'导航任务未通过');
+        if(thenArm&&state.status==='succeeded'){
+          if(!state.navigation.parking_confirmed)throw Error('停车未确认，双臂保持锁定。');
+          $('navigation-status').textContent='导航到位，连续零运动已确认 · 播放已验证的双臂路径';
+          await executeMotion(null,null,'停车后双臂协同',state.result);
+        }else $('navigation-status').textContent='已到位并确认停车 · 保持当前位置';
+        return;
+      }
+      await new Promise(resolve=>setTimeout(resolve,100));
+    }
+  }catch(e){$('navigation-status').textContent=e.message;throw e;}
+  finally{if(navigationJob===task.task_id)stop();$('navigation-stop').disabled=true;updateMotionControls();}
+}
+$('navigation-run').onclick=()=>guarded(()=>runNavigation());
+$('navigation-then-arm').onclick=()=>guarded(()=>runNavigation(true));
+$('navigation-stop').onclick=()=>{stop('导航已取消并停车');freezePose();$('navigation-status').textContent='导航已取消；双臂操作未继续';};
+for(const id of ['navigation-type','navigation-x','navigation-y','navigation-yaw','navigation-speed','navigation-angular','navigation-margin','navigation-grid'])$(id).oninput=()=>{stop();$('navigation-status').textContent='导航输入已修改，重新启动后生效。';};
+function loadNavigationConfig(config){$('navigation-type').value=config.drive_type;$('navigation-speed').value=config.max_linear_m_s;$('navigation-angular').value=config.max_angular_rad_s;$('navigation-margin').value=config.safety_margin_m;$('navigation-grid').value=JSON.stringify(config.map,null,2);}
+$('navigation-export').onclick=()=>guarded(async()=>{const data={config:navigationConfig(),obstacles:JSON.parse($('planning-obstacles').value)},url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='OmindOS-Navigation-Config.json';a.click();URL.revokeObjectURL(url);});
+$('navigation-import').onchange=()=>guarded(async()=>{const file=$('navigation-import').files[0];if(!file)return;if(file.size>512000)throw Error('导航配置不能超过 500 KiB。');const data=JSON.parse(await file.text());if(!data.config||!Array.isArray(data.obstacles))throw Error('需要 config 与 obstacles。');stop();loadNavigationConfig(data.config);$('planning-obstacles').value=JSON.stringify(data.obstacles,null,2);localStorage.setItem('omindos-navigation-config',JSON.stringify(data.config));$('navigation-status').textContent='导航配置已导入，将在启动时校验整机包络。';});
+(async()=>{try{const saved=localStorage.getItem('omindos-navigation-config');loadNavigationConfig(saved?JSON.parse(saved):(await api('/v1/navigation-config')).config);showNavigationMap(null);}catch(e){$('navigation-status').textContent=e.message;}})();
 $('run').onclick=()=>guarded(async()=>{await motionReady();await executeMotion('/v1/robot-preview',{profile:payload(),target:targets,base_target:baseTarget,duration_s:numeric($('duration').value)},'运动学试运行');});
 for(const button of document.querySelectorAll('[data-drive]'))button.onclick=()=>guarded(async()=>{
   await motionReady();

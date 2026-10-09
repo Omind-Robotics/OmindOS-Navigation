@@ -13,6 +13,7 @@ from workbench_state import WorkbenchState, MotionLocked
 from robot_connections import connection_catalog, validate_connections
 from robot_runtime_client import RuntimeClient
 from robot_planning import PlanningJobs, default_mapping
+from robot_navigation import NavigationJobs, default_config as navigation_config
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = {"/": ("web/robot-workbench/index.html", "text/html; charset=utf-8"),
@@ -28,6 +29,7 @@ ASSETS = {"/": ("web/robot-workbench/index.html", "text/html; charset=utf-8"),
 def make_handler(store_dir, runtime_url=None):
     runtime = WorkbenchState(store_dir)
     planning = PlanningJobs(runtime)
+    navigation = NavigationJobs(runtime, planning)
     ros_runtime = RuntimeClient(runtime_url) if runtime_url else None
     ros_session = {'lease_token': None}
     class Handler(registry_handler(store_dir)):
@@ -54,6 +56,13 @@ def make_handler(store_dir, runtime_url=None):
                 return self.respond(code, body)
             if self.path == '/v1/workbench-state':
                 return self.respond(200, runtime.snapshot())
+            if self.path == '/v1/navigation-config':
+                return self.respond(200, {'config':navigation_config(), 'drive_types':['differential','omnidirectional'], 'simulation_only':True})
+            if self.path.startswith('/v1/navigation-task/'):
+                try:
+                    return self.respond(200, navigation.snapshot(self.path.rsplit('/',1)[-1]))
+                except ValueError as e:
+                    return self.respond(404, {'error':str(e)})
             if self.path == '/v1/planning-config':
                 return self.respond(200, {'mapping':default_mapping(), 'kernel':'runtime.2',
                                          'collision_geometry':'conservative_oriented_boxes'})
@@ -103,7 +112,7 @@ def make_handler(store_dir, runtime_url=None):
                 return self.respond(415, {"error": "Content-Type must be application/json"})
             runtime_route = self.path in ['/v1/runtime/' + op for op in ('load', 'run', 'stop', 'heartbeat')]
             if self.path not in ("/v1/robot-model", "/v1/robot-preview", '/v1/robot-jog', '/v1/robot-sine', '/v1/robot-wheel-base', '/v1/robot-sequence',
-                                 '/v1/workbench-active-profile', '/v1/workbench-stop', '/v1/planning-start', '/v1/planning-cancel') and not runtime_route:
+                                 '/v1/workbench-active-profile', '/v1/workbench-stop', '/v1/planning-start', '/v1/planning-cancel', '/v1/navigation-start', '/v1/navigation-cancel') and not runtime_route:
                 return super().do_POST()
             try:
                 self.connection.settimeout(10)
@@ -115,6 +124,7 @@ def make_handler(store_dir, runtime_url=None):
                     raise ValueError("incomplete request")
                 payload = json.loads(raw)
                 if runtime_route:
+                    if self.path == '/v1/runtime/run': navigation.ensure_idle()
                     with runtime.lock:
                         if self.path == '/v1/runtime/run':
                             runtime.check_motion()
@@ -122,15 +132,25 @@ def make_handler(store_dir, runtime_url=None):
                         if code == 200 and self.path == '/v1/runtime/load':
                             ros_session['lease_token'] = body.get('lease_token')
                     return self.respond(code, body)
-                if self.path == '/v1/planning-start':
-                    result = planning.submit(payload)
+                if self.path == '/v1/navigation-start':
+                    result = navigation.submit(payload)
+                elif self.path == '/v1/navigation-cancel':
+                    if not isinstance(payload,dict) or set(payload) != {'task_id'}:
+                        raise ValueError('expected task_id')
+                    result = navigation.cancel(payload['task_id'])
+                elif self.path == '/v1/planning-start':
+                    with navigation.lock:
+                        navigation.ensure_idle()
+                        result = planning.submit(payload)
                 elif self.path == '/v1/planning-cancel':
                     if not isinstance(payload,dict) or set(payload) != {'task_id'}:
                         raise ValueError('expected task_id')
                     result = planning.cancel(payload['task_id'])
                 elif self.path == '/v1/workbench-active-profile':
+                    if navigation.active(): navigation.cancel()
                     result = runtime.apply(payload)
                 elif self.path == '/v1/workbench-stop':
+                    if isinstance(payload,dict) and payload.get('engaged') is True and navigation.active(): navigation.cancel()
                     with runtime.lock:
                         result = runtime.set_stop(payload)
                         if payload['engaged'] and ros_runtime and ros_session['lease_token']:
@@ -146,6 +166,7 @@ def make_handler(store_dir, runtime_url=None):
                     model = build_model(payload["urdf_xml"])
                     result = {"model": model, "pose": pose(model, payload.get("positions", {}), payload.get('base_pose'))}
                 else:
+                    navigation.ensure_idle()
                     epoch = runtime.check_motion()
                     if isinstance(payload, dict) and 'profile' not in payload:
                         profile = runtime.active_profile()
