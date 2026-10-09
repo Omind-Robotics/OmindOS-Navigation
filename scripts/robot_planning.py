@@ -19,7 +19,7 @@ from scipy.spatial.transform import Rotation
 from dual_task_planner import DualTaskPlanner, PlanningFailure, TrackingSettings
 from robot_assets import MESH_ASSETS, approved_mesh_url
 from robot_kinematics import build_model, pose, positions, base_position, origin, vec
-from robot_parameter_api import validate_parameters, number
+from robot_parameter_api import number
 
 ROOT = Path(__file__).resolve().parents[1]
 KERNEL_COMMIT = 'cbe8caf13921002e463355c6a2982e900640c7e0'
@@ -68,7 +68,9 @@ def overlap(a, b):
 
 class ProfileRobot:
     def __init__(self, profile, start, base, mapping, obstacles, check):
-        validate_parameters(profile)
+        if (not isinstance(profile,dict) or not isinstance(profile.get('kinematics'),dict)
+                or not isinstance(profile['kinematics'].get('urdf_xml'),str)):
+            raise ValueError('规划需要当前客户 URDF 运动学模型。')
         self.model = build_model(profile['kinematics']['urdf_xml'])
         self.start = positions(self.model, start)
         self.base = base_position(base)

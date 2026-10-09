@@ -45,6 +45,18 @@ class PlanningTests(unittest.TestCase):
         self.assertGreater(np.linalg.norm(new.tcps(np.zeros(15))[0]-original.tcps(np.zeros(15))[0]),.01)
         self.assertLess(result['max_tcp_position_error_m'],.001)
 
+    def test_geometric_planning_does_not_require_dynamics_parameters(self):
+        import xml.etree.ElementTree as ET
+        root=ET.fromstring(self.profile['kinematics']['urdf_xml'])
+        for link in root.findall('link'):
+            for inertia in link.findall('inertial'):
+                link.remove(inertia)
+        profile={'kinematics':{'urdf_xml':ET.tostring(root,encoding='unicode')}}
+        result=plan({'profile':profile,'mode':'joint','target':{'waist_pitch':.01}},lambda:None)
+        self.assertEqual(result['frames'][-1]['positions']['waist_pitch'],.01)
+        self.assertIsNone(result['frames'][-1]['holding_torque_nm'])
+        self.assertFalse(result['dynamics_validated'])
+
     def test_obstacle_at_tcp_rejects_path(self):
         r=ProfileRobot(self.profile,{},None,default_mapping(),[],lambda:None)
         tcp=r.tcps(np.zeros(15))[0][:3,3].tolist()

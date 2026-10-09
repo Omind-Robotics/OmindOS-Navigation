@@ -86,7 +86,7 @@ async function importProfile(data, fromUrdf = false) {
   $('profile-id').value='';$('saved').textContent='参数保存在本机服务目录；旧版本保留。';
   $('apply-note').textContent='当前编辑配置尚未写入程序，点击写入后生效。';
   syncQuickControls(); rebuildParts(); fitView(); draw();
-  status(fromUrdf ? '模型已导入。请补充各活动关节的电机参数后试运行、保存。' : '模型已载入 · 可调整参数');
+  status(fromUrdf ? '模型已导入。可按客户硬件设置参数；运动学规划使用当前几何和关节限位。' : '模型已载入 · 可调整参数');
 }
 function textBlock(text, cls = 'note') { const el = document.createElement('div'); el.className = cls; el.textContent = text; $('editor').append(el); return el; }
 function connectionChanged(){
