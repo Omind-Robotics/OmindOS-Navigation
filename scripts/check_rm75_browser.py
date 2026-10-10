@@ -55,7 +55,7 @@ def run(output):
                     page.wait_for_timeout(50)
                 detail=page.locator('#status').inner_text()
                 raise AssertionError('UI wait timed out: '+expression+'; status='+detail)
-            page.goto(url,wait_until='networkidle')
+            page.goto(url,wait_until='domcontentloaded')
             wait('!operation && readyRevision===revision && !!profile')
             assert page.locator('#cad-model option').count()==3
             checks.append('three_explicit_CAD_variants_visible')
@@ -98,7 +98,7 @@ def run(output):
             wait("!operation && profile.robot_id==='rm75-integration-b'")
             checks.append('UI_version_save_and_history_reload')
             process.terminate();process.wait(timeout=5);process=None
-            process,url=start(Path(td));page.goto(url,wait_until='networkidle')
+            process,url=start(Path(td));page.goto(url,wait_until='domcontentloaded')
             wait("!operation && profile.robot_id==='rm75-integration-b' && readyRevision===revision")
             assert page.input_value('#profile-id')==saved_id
             assert page.input_value('#profile-mode')=='kinematic_preview'
