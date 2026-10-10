@@ -114,14 +114,21 @@ def group_indices(bounds, budget):
     return sorted(groups,key=lambda g:min(g))
 
 
-def convert_profile(profile, folder, manifest, budget=24):
+def convert_profile(profile, folder, manifest, budget=24, *, link_budgets=None):
     if type(budget) is not int or not 1 <= budget <= 64:
         raise ValueError('per-link box budget must be 1..64')
+    link_budgets = {} if link_budgets is None else link_budgets
+    if not isinstance(link_budgets, dict) or any(
+            not isinstance(k, str) or type(v) is not int or not 1 <= v <= 64
+            for k, v in link_budgets.items()):
+        raise ValueError('link_budgets must map link names to integer budgets 1..64')
     result=copy.deepcopy(profile)
     xml=profile['kinematics']['urdf_xml']
     if not isinstance(xml,str) or len(xml.encode())>2*1024*1024 or '<!DOCTYPE' in xml.upper() or '<!ENTITY' in xml.upper():
         raise ValueError('invalid source URDF')
     tree=ET.fromstring(xml)
+    if set(link_budgets)-{link.get('name') for link in tree.findall('link')}:
+        raise ValueError('link budget names must exist in the source model')
     if tree.findall('omindos_frame_only'):
         raise ValueError('source already declares frame-only links')
     joints=tree.findall('joint')
@@ -143,7 +150,7 @@ def convert_profile(profile, folder, manifest, budget=24):
             pts,detail=shape_corners(node,folder,manifest,cache)
             corners.append(pts);sources.append({'collision_index':index,**detail})
         bounds=np.array([[p.min(0),p.max(0)]for p in corners])
-        for index,group in enumerate(group_indices(bounds,budget)):
+        for index,group in enumerate(group_indices(bounds,link_budgets.get(name,budget))):
             pts=np.concatenate([corners[i]for i in group])
             low=pts.min(0)-PADDING_M;high=pts.max(0)+PADDING_M
             center=(low+high)/2;size=high-low
@@ -179,7 +186,9 @@ def convert_profile(profile, folder, manifest, budget=24):
                   'false_positive_collisions_possible':True,'groups':audit}
 
 
-def prepare(source,output):
+def prepare(source,output, *, collision_mode='detailed'):
+    if collision_mode not in ('lite', 'detailed'):
+        raise ValueError('collision_mode must be lite or detailed')
     source=Path(source).resolve();output=Path(output).resolve()
     if output.exists() or output.is_relative_to(source):
         raise ValueError('output must be a new folder outside the source bundle')
@@ -195,7 +204,8 @@ def prepare(source,output):
             if not path.resolve().is_relative_to(source):raise ValueError('unsafe profile path')
             data=path.read_bytes()
             if sha256(data)!=record['profile_sha256']:raise ValueError('profile checksum mismatch')
-            profile,audit=convert_profile(json.loads(data),source,manifest)
+            profile,audit=convert_profile(json.loads(data),source,manifest,
+                link_budgets={'base_link':8, 'torso_link':4} if collision_mode=='lite' else None)
             encoded=(json.dumps(profile,ensure_ascii=False,sort_keys=True,indent=2)+'\n').encode()
             (stage/'models'/f'{variant}.json').write_bytes(encoded)
             new['variants'][variant]['profile']=f'models/{variant}.json'
@@ -210,6 +220,7 @@ def prepare(source,output):
         new['scope']='kinematic_display_with_conservative_collision_proxies'
         new['source_manifest_sha256']=sha256(raw)
         new['collision_representation_verified']=True
+        new['collision_mode']=collision_mode
         new['collision_planning_validated']=False
         new['limitations']=['Conservative boxes enclose original collision OBBs and may reject valid narrow-space paths.',
                            'Proxy coverage is not evidence of a feasible collision-free trajectory.',
@@ -218,7 +229,8 @@ def prepare(source,output):
         (stage/'manifest.json').write_text(json.dumps(new,ensure_ascii=False,indent=2)+'\n')
         (stage/'collision-coverage.json').write_text(json.dumps({'source_manifest_sha256':sha256(raw),'variants':report},indent=2)+'\n')
         if (source/'source-notices').is_dir():shutil.copytree(source/'source-notices',stage/'source-notices')
-        (stage/'README.zh-CN.md').write_text('# RM75 整机运动学模型与保守碰撞表示\n\n仅开发接入资源，非 Ubuntu 安装包。每种型号的357个原碰撞实体被64个包围盒覆盖；每个原实体的全部包围盒角点均逐一核验。两个空TCP坐标系显式声明，不能据此跳过任何有实体几何的连杆。\n\n外观网格、关节原点、轴向、限位不变。碰撞包围盒可能保守地拒绝原本可行的姿态；不代表已经找到无碰撞路径。未知动力学及电机参数仍为空。\n')
+        counts=', '.join(f'{v}: {a["source_collision_count"]} → {a["proxy_count"]}' for v,a in report.items())
+        (stage/'README.zh-CN.md').write_text('# RM75 整机运动学模型与保守碰撞表示\n\n仅开发接入资源，非 Ubuntu 安装包。碰撞实体数量：'+counts+'。每个原实体的全部包围盒角点均逐一核验。两个空TCP坐标系显式声明，不能据此跳过任何有实体几何的连杆。\n\n外观网格、关节原点、轴向、限位不变。碰撞包围盒可能保守地拒绝原本可行的姿态；不代表已经找到无碰撞路径。未知动力学及电机参数仍为空。\n')
         stage.rename(output)
         return {'variants':{v:{k:a[k]for k in ('source_collision_count','proxy_count','frame_only_links','max_source_corner_excess_m')}for v,a in report.items()},
                 'visual_assets':len(used),'asset_bytes':sum(r['size_bytes']for r in new['assets'].values()),
@@ -229,4 +241,6 @@ def prepare(source,output):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('source',type=Path);p.add_argument('output',type=Path)
-    args=p.parse_args();print(json.dumps(prepare(args.source,args.output),indent=2))
+    p.add_argument('--collision-mode', choices=('lite','detailed'), default='detailed',
+                   help='lite: base 8 + torso 4 + arm boxes; detailed: up to 24 per link')
+    args=p.parse_args();print(json.dumps(prepare(args.source,args.output,collision_mode=args.collision_mode),indent=2))

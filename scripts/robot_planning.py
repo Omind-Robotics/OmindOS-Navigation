@@ -172,6 +172,13 @@ class ProfileRobot:
         self.last_collision = None
         self.cache = None
         self.environment_guard = None
+        # Immutable geometry/pair arrays are built once, not for each sample.
+        self._pair_indices = np.asarray(self.pairs, dtype=int).reshape(-1, 2)
+        self._shape_links = [shape[0] for shape in self.shapes]
+        self._local_boxes = np.asarray([shape[1] for shape in self.shapes])
+        self._half_boxes = np.asarray([shape[2] for shape in self.shapes])
+        self._obstacle_centers = np.asarray([box[0] for box in self.obstacles]).reshape(-1, 3)
+        self._obstacle_half = np.asarray([box[2] for box in self.obstacles]).reshape(-1, 3)
 
     def world(self, q):
         self.check()
@@ -196,21 +203,32 @@ class ProfileRobot:
 
     def clear(self, q):
         world = self.world(q)
-        boxes = []
-        for name, local, half in self.shapes:
-            t = world[name] @ local
-            boxes.append((t[:3,3], t[:3,:3], half))
-        for index,(i, k) in enumerate(self.pairs):
-            if index % 128 == 0:
-                self.check()
+        self.last_collision = None
+        transforms = np.asarray([world[name] for name in self._shape_links]) @ self._local_boxes
+        centers, rotations = transforms[:, :3, 3], transforms[:, :3, :3]
+        extents = (np.abs(rotations) @ self._half_boxes[..., None])[..., 0]
+        boxes = list(zip(centers, rotations, self._half_boxes))
+        # The same world-AABB predicate/tolerance as overlap(), batched before
+        # the unchanged 15-axis OBB test. Rejection only: no new exclusions.
+        left, right = self._pair_indices.T
+        candidates = np.flatnonzero(np.all(
+            np.abs(centers[left]-centers[right]) <= extents[left]+extents[right]+1e-10, axis=1))
+        self.check()
+        for index in candidates:
+            self.check()
+            i, k = self.pairs[index]
             if overlap(boxes[i], boxes[k]):
                 self.last_collision = [self.shapes[i][0], self.shapes[k][0]]
                 return False
-        for i, box in enumerate(boxes):
-            for k, obstacle in enumerate(self.obstacles):
-                if overlap(box, obstacle):
-                    self.last_collision = [self.shapes[i][0], f'obstacle_{k+1}']
-                    return False
+        obstacle_candidates = np.argwhere(np.all(
+            np.abs(centers[:, None, :]-self._obstacle_centers[None, :, :]) <=
+            extents[:, None, :]+self._obstacle_half[None, :, :]+1e-10, axis=2))
+        for i, k in obstacle_candidates:
+            self.check()
+            if overlap(boxes[i], self.obstacles[k]):
+                self.last_collision = [self.shapes[i][0], f'obstacle_{k+1}']
+                return False
+        self.check()
         if self.environment_guard is not None and not self.environment_guard(boxes):
             self.last_collision = ['robot', 'navigation_map']
             return False

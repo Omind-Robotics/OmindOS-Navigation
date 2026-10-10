@@ -61,6 +61,14 @@ class CollisionProxyTests(unittest.TestCase):
         for budget in (0,65,-1,True,2.5):
             with self.subTest(budget=budget),self.assertRaises(ValueError):convert_profile(p,Path('.'),{'assets':{}},budget)
         self.assertEqual(p,before)
+    def test_per_link_budget_covers_sources_and_rejects_unknown_names(self):
+        p=fixture()
+        _,audit=convert_profile(p,Path('.'),{'assets':{}},link_budgets={'base':2})
+        self.assertEqual(audit['proxy_count'],3)
+        self.assertEqual(sum(len(g['source_indices']) for g in audit['groups']),9)
+        for overrides in ({'missing':2},{'base':0},{'base':True}):
+            with self.subTest(overrides=overrides),self.assertRaises(ValueError):
+                convert_profile(p,Path('.'),{'assets':{}},link_budgets=overrides)
     def test_nonfinite_geometry_and_dtd_are_rejected(self):
         for old,new in (('.12 .03 .07','nan .03 .07'),('<robot','<!DOCTYPE robot><robot')):
             p=fixture();p['kinematics']['urdf_xml']=p['kinematics']['urdf_xml'].replace(old,new)
