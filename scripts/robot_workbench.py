@@ -9,7 +9,9 @@ from robot_parameter_api import MAX_BYTES, ThreadingHTTPServer, make_handler as 
 from robot_kinematics import build_model, pose, trial, jog_trial, sine_trial, wheel_trial
 from robot_assets import MESH_ASSETS
 from robot_sequence import sequence_trial
-from workbench_state import WorkbenchState, MotionLocked
+from workbench_state import (WorkbenchState, MotionLocked, _register_workbench_profile, _load_workbench_profile)
+from robot_kinematic_preview import motion as kinematic_motion
+from robot_model_bundle import register_bundle, inventory as model_inventory, model as bundled_model
 from robot_connections import connection_catalog, validate_connections
 from robot_runtime_client import RuntimeClient
 from robot_planning import PlanningJobs, default_mapping
@@ -22,6 +24,7 @@ ASSETS = {"/cad/v11/kinematics.json": ("config/robot_models/originmind_quadruped
           "/cad/v11/manifest.json": ("config/robot_models/originmind_quadruped_v11/manifest.json", "application/json; charset=utf-8"),
           "/cad/v11/assembly.glb": ("config/robot_models/originmind_quadruped_v11/assembly.glb", "model/gltf-binary"),
           "/": ("web/robot-workbench/index.html", "text/html; charset=utf-8"),
+          "/rm75-workbench.js": ("web/robot-workbench/rm75-workbench.js", "text/javascript; charset=utf-8"),
           "/workbench.js": ("web/robot-workbench/workbench.js", "text/javascript; charset=utf-8"),
           "/robot-scene.js": ("web/robot-workbench/robot-scene.js", "text/javascript; charset=utf-8"),
           "/runtime.js": ("web/robot-workbench/runtime.js", "text/javascript; charset=utf-8"),
@@ -59,6 +62,22 @@ def make_handler(store_dir, runtime_url=None):
             if self.path == '/v1/runtime/status':
                 code, body = ros_runtime.request(self.path) if ros_runtime else (503, {'error': 'ROS 2 preview not configured; use --runtime-url http://127.0.0.1:8086'})
                 return self.respond(code, body)
+            if self.path == '/v1/workbench-models':
+                return self.respond(200, model_inventory())
+            if self.path.startswith('/v1/workbench-model/'):
+                try:
+                    return self.respond(200, bundled_model(self.path[len('/v1/workbench-model/'):]))
+                except ValueError as e:
+                    return self.respond(404, {'error': str(e)})
+            if self.path.startswith('/v1/workbench-profiles/'):
+                try:
+                    return self.respond(200, _load_workbench_profile(self.path[len('/v1/workbench-profiles/'):], store_dir))
+                except FileNotFoundError:
+                    return self.respond(404, {'error': 'profile not found'})
+                except ValueError as e:
+                    return self.respond(400, {'error': str(e)})
+                except OSError:
+                    return self.respond(500, {'error': 'profile storage unavailable'})
             if self.path == '/v1/workbench-state':
                 return self.respond(200, runtime.snapshot())
             if self.path == '/v1/navigation-config':
@@ -116,7 +135,7 @@ def make_handler(store_dir, runtime_url=None):
             if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
                 return self.respond(415, {"error": "Content-Type must be application/json"})
             runtime_route = self.path in ['/v1/runtime/' + op for op in ('load', 'run', 'stop', 'heartbeat')]
-            if self.path not in ("/v1/robot-model", "/v1/robot-preview", '/v1/robot-jog', '/v1/robot-sine', '/v1/robot-wheel-base', '/v1/robot-sequence',
+            if self.path not in ("/v1/workbench-profiles", "/v1/robot-model", "/v1/robot-preview", '/v1/robot-jog', '/v1/robot-sine', '/v1/robot-wheel-base', '/v1/robot-sequence',
                                  '/v1/workbench-active-profile', '/v1/workbench-stop', '/v1/planning-start', '/v1/planning-cancel', '/v1/navigation-start', '/v1/navigation-cancel') and not runtime_route:
                 return super().do_POST()
             try:
@@ -128,6 +147,8 @@ def make_handler(store_dir, runtime_url=None):
                 if len(raw) != size:
                     raise ValueError("incomplete request")
                 payload = json.loads(raw)
+                if self.path == '/v1/workbench-profiles':
+                    return self.respond(201, _register_workbench_profile(payload, store_dir))
                 if runtime_route:
                     if self.path == '/v1/runtime/run': navigation.ensure_idle()
                     with runtime.lock:
@@ -179,7 +200,7 @@ def make_handler(store_dir, runtime_url=None):
                             raise ValueError('请先将参数写入程序，或提供完整 profile。')
                         payload = {**payload, 'profile': profile}
                     function = {'/v1/robot-preview': trial, '/v1/robot-jog': jog_trial, '/v1/robot-sine': sine_trial, '/v1/robot-wheel-base': wheel_trial, '/v1/robot-sequence': sequence_trial}[self.path]
-                    result = function(payload)
+                    result = (kinematic_motion(self.path, payload) if isinstance(payload, dict) and isinstance(payload.get('profile'), dict) and payload['profile'].get('profile_mode') == 'kinematic_preview' else function(payload))
                     runtime.check_motion(epoch)
                     result['motion_epoch'] = epoch
                 self.respond(200, result)
@@ -198,7 +219,11 @@ def main():
     parser.add_argument("--store", type=Path, required=True)
     parser.add_argument("--port", type=int, default=8085)
     parser.add_argument("--runtime-url", help="Optional localhost ROS 2 joint-preview API")
+    parser.add_argument("--model-bundle", type=Path, help="Explicit local RM75 model resource directory")
     args = parser.parse_args()
+    bundle = args.model_bundle or ROOT / "config/robot_models/rm75-cad"
+    if args.model_bundle is not None or bundle.is_dir():
+        register_bundle(bundle)
     server = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(args.store, args.runtime_url))
     print(f"OmindOS robot workbench: http://127.0.0.1:{server.server_port}/", flush=True)
     try:

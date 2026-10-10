@@ -18,7 +18,7 @@ BASE={
  'scripts/robot_workbench.py':'d635108d6345dbaa3c5303722b5dd460840ec08d',
  'scripts/workbench_desktop.py':'c33e1a3e1f07bc810833a1517ed2f55b795591a1',
  'web/robot-workbench/index.html':'b690e8515110f2e91221e5dc7a2b53bf9f6f3265',
- 'web/robot-workbench/workbench.js':'73b8e811ec7b176f00d1569b0111edc567470c95',
+ 'web/robot-workbench/workbench.js':'c04c89eeaeacc968b594a4f8c1fdc0753892f1fd',
  'release/workbench/package_binary.py':'9d26223441dfd95d75e5afb73619730c19df2457',
 }
 files={}

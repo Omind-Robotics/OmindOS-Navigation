@@ -20,6 +20,7 @@ from dual_task_planner import DualTaskPlanner, PlanningFailure, TrackingSettings
 from robot_assets import MESH_ASSETS, approved_mesh_url
 from robot_kinematics import build_model, pose, positions, base_position, origin, vec
 from robot_parameter_api import number
+from robot_collision_frames import frame_only_links
 
 ROOT = Path(__file__).resolve().parents[1]
 KERNEL_COMMIT = 'cbe8caf13921002e463355c6a2982e900640c7e0'
@@ -106,10 +107,14 @@ class ProfileRobot:
             if ancestry[tcp] != [mapping['waist'], *mapping[side]]:
                 raise ValueError('TCP 链必须经过共享腰部和对应七轴机械臂，其他活动关节在规划中保持固定。')
         root = ET.fromstring(profile['kinematics']['urdf_xml'])
+        self.frame_only_links = frame_only_links(root, self.tcp_links)
+        self.model['frame_only_links'] = sorted(self.frame_only_links)
         self.shapes = []
         for link in root.findall('link'):
             check()
             name = link.get('name')
+            if name in self.frame_only_links:
+                continue
             geometries = link.findall('collision') or link.findall('visual')
             if not geometries:
                 raise ValueError(name + '：缺少碰撞几何或可用外形，不能验收碰撞检查。')

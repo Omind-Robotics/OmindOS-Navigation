@@ -1,6 +1,9 @@
 """Explicit local asset catalog: imported URDFs cannot open paths or fetch URLs."""
 from pathlib import Path
 
+# Populated only after explicit local bundle integrity verification.
+EXTRA_MESH_URLS = {}
+
 RM75_FILES = ('base_link.STL', *(f'link_{i}.STL' for i in range(1, 8)))
 MEVIUS2_FILES = ('base_link.STL', *(f'{leg}_{part}_link.STL'
                   for leg in ('FR', 'FL', 'BR', 'BL')
@@ -16,6 +19,8 @@ MESH_ASSETS.update({
 
 
 def approved_mesh_url(filename):
+    if isinstance(filename, str) and filename in EXTRA_MESH_URLS:
+        return EXTRA_MESH_URLS[filename]
     quad_prefix = 'package://mevius2/models/meshes/'
     if isinstance(filename, str) and filename.startswith(quad_prefix):
         name = filename[len(quad_prefix):]

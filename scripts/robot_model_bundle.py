@@ -71,7 +71,7 @@ def register_bundle(directory):
         _,data=checked_bytes(root,record['profile'],2*1024*1024)
         if hashlib.sha256(data).hexdigest()!=record.get('profile_sha256'):raise ValueError('model profile integrity check failed')
         profile=json.loads(data)
-        if profile.get('profile_mode')!='kinematic_preview':raise ValueError('bundle profile must be explicitly kinematic')
+        if not isinstance(profile,dict) or profile.get('profile_mode')!='kinematic_preview':raise ValueError('bundle profile must be explicitly kinematic')
         _validate_workbench_profile(profile)
         tree=ET.fromstring(profile['kinematics']['urdf_xml'])
         for mesh in tree.findall('.//mesh'):

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmindOS · 机器人调参工作台</title><link rel="stylesheet" href="/workbench.css"><script defer src="/workbench.js"></script><script defer src="/runtime.js"></script><script defer src="/cad-panel.js"></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmindOS · 机器人调参工作台</title><link rel="stylesheet" href="/workbench.css"><script defer src="/workbench.js"></script><script defer src="/rm75-workbench.js"></script><script defer src="/runtime.js"></script><script defer src="/cad-panel.js"></script></head>
 <body>
 <header><div><b>OmindOS</b><span>机器人调参工作台</span></div><span class="badge">运动学 · 路径规划</span></header>
 <nav id="workbench-model-tabs" class="model-tabs" aria-label="工作台模式" hidden>
@@ -43,6 +43,13 @@
 <h2>模型与参数</h2><p class="muted">导入模型，在三维视图中检查调整。</p>
 <label class="file">导入 URDF / 完整配置<input id="import" type="file" accept=".urdf,.xml,.json"></label>
 <button id="example">加载双七轴移动机器人</button><p class="note">双臂各7轴 + 腰部pitch = 15个主体关节<br>RM75-B关节结构；可按客户硬件设置模型与参数。</p>
+<section id="rm75-model-panel" aria-label="整机模型与配置模式">
+<label>配置模式<select id="profile-mode"><option value="full">完整参数配置</option><option value="kinematic_preview">运动学预览 · 不要求动力学参数</option></select></label>
+<p id="profile-mode-note" class="note">运动学模式不计算电机目标、力矩或动力学；未知参数可留空。</p>
+<label>整机 CAD<select id="cad-model" aria-label="RM75模型子型号"></select></label>
+<button id="load-cad-model" disabled>加载整机 CAD 模型</button>
+<p id="cad-bundle-note" class="note" role="status">检查本机整机资源…</p>
+</section>
 <label>机器人编号<input id="robot-id" value="demo-dual-rm75" maxlength="64"></label>
 <details id="connections-panel">
 <summary>设备通信 <span class="connection-badge">可稍后选择</span></summary>

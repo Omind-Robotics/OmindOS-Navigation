@@ -10,6 +10,7 @@ import webbrowser
 
 import robot_workbench
 import robot_planning
+from robot_model_bundle import register_bundle
 
 VERSION = '0.3.0'
 ROOT = Path(__file__).resolve().parent if '__compiled__' in globals() else Path(__file__).resolve().parents[1]
@@ -31,6 +32,7 @@ def main():
     parser.add_argument('--port', type=int, default=8085)
     parser.add_argument('--store', type=Path, default=Path.home() / 'OmindOS' / 'workbench-configurations')
     parser.add_argument('--runtime-url', help='Optional localhost ROS 2 joint-preview API; use the same configuration store')
+    parser.add_argument('--model-bundle', type=Path, help='Explicit local RM75 resource directory; bundled model is used when installed')
     parser.add_argument('--no-browser', action='store_true')
     parser.add_argument('--verify', action='store_true')
     args = parser.parse_args()
@@ -47,6 +49,9 @@ def main():
     robot_workbench.ROOT = ROOT
     robot_planning.ROOT = ROOT
     try:
+        bundle = args.model_bundle or ROOT / 'config/robot_models/rm75-cad'
+        if args.model_bundle is not None or bundle.is_dir():
+            register_bundle(bundle)
         server = robot_workbench.ThreadingHTTPServer(('127.0.0.1', args.port), robot_workbench.make_handler(args.store, args.runtime_url))
     except (OSError, ValueError) as error:
         raise SystemExit('Cannot start workbench. Check the port and store directory: ' + str(error)) from error

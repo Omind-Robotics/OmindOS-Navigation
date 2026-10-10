@@ -31,7 +31,7 @@ def setup(payload, allowed):
 
 
 def frame(model,q,base,t):
-    out=pose(model,q,base)
+    out=pose(model,q,base,calculate_gravity=False)
     out.update(time_s=t,holding_torque_nm=None,motor_positions_rad=None,centers_of_mass={})
     return out
 
