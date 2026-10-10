@@ -4,7 +4,7 @@
   "ubuntu_installer_updated": false,
   "browser": "153.0.8010.0",
   "metadata": {
-    "parts": "954",
+    "parts": "988",
     "bounds": [
       [
         -0.62761023920777,
@@ -36,8 +36,9 @@
     "parameter_apply",
     "cad_does_not_replace_active_profile",
     "390px_no_horizontal_overflow",
-    "twelve_axes_loaded_six_enabled",
-    "incomplete_source_drives_locked",
+    "twelve_axes_enabled",
+    "corrected_assembly_loaded",
+    "calibration_export_preserves_unknown_encoder_zeros",
     "three_left_rear_controls_enabled",
     "rendered_cad_moves",
     "out_of_range_pose_rejected",

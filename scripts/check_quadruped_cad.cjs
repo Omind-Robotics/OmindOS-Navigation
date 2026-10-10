@@ -22,7 +22,7 @@ const {spawn}=require('node:child_process'),os=require('node:os');
   const metadata=await page.evaluate(()=>({parts:document.getElementById('cad-scene').dataset.parts,bounds:JSON.parse(document.getElementById('cad-scene').dataset.bounds),size:document.getElementById('cad-size').textContent}));
   console.log(JSON.stringify(metadata));assert(Number(metadata.parts)>900);
   const manifest=await page.evaluate(async()=>await(await fetch('/cad/v11/manifest.json')).json());
-  console.log(JSON.stringify({expected_bounds:manifest.bounds_m}));assert.equal(Number(metadata.parts),manifest.visible_instances);
+  console.log(JSON.stringify({expected_bounds:manifest.bounds_m}));const model=await page.evaluate(async()=>await(await fetch('/cad/v11/kinematics.json')).json());assert.equal(Number(metadata.parts),manifest.visible_instances+model.assembly.additions.length);
   for(let r=0;r<2;r++)for(let c=0;c<3;c++)assert(Math.abs(metadata.bounds[r][c]-manifest.bounds_m[r][c])<1e-5,'CAD bounds must survive GLB load');
   for(const v of ['front','side','left','top','iso'])await page.locator(`[data-cad-view=${v}]`).click();
   await page.locator('#cad-palette').selectOption('blue');
@@ -41,11 +41,17 @@ const {spawn}=require('node:child_process'),os=require('node:os');
   for(const leg of ['FL','FR','RR']){
    await page.locator(`[data-cad-leg=${leg}]`).click();
    assert.equal(await page.locator('#cad-q0').isEnabled(),true);
-   assert.equal(await page.locator('#cad-q1').isDisabled(),true);
-   assert.equal(await page.locator('#cad-q2').isDisabled(),true);
+   assert.equal(await page.locator('#cad-q1').isEnabled(),true);
+   assert.equal(await page.locator('#cad-q2').isEnabled(),true);
   }
   await page.locator('[data-cad-leg=RL]').click();
   for(const i of [0,1,2])assert(await page.locator('#cad-q'+i).isEnabled());
+  await page.locator('summary').filter({hasText:'轴线、零位与映射依据'}).click();
+  const downloadEvent=page.waitForEvent('download');await page.locator('#cad-export-calibration').click();
+  const download=await downloadEvent;const calibration=JSON.parse(fs.readFileSync(await download.path()));
+  assert.equal(calibration.calibration.joints.length,12);assert(calibration.calibration.joints.every(j=>j.encoder_zero_rad===null&&j.motor_direction===null));
+  assert.equal(calibration.assembly_revision,'v1.1-assembly-r1');
+  await page.locator('summary').filter({hasText:'轴线、零位与映射依据'}).click();
   await page.locator('#cad-show-axes').uncheck();
   await page.locator('[data-cad-view=left]').click();
   const imageBefore=await page.locator('#cad-scene').screenshot();
@@ -94,12 +100,12 @@ const {spawn}=require('node:child_process'),os=require('node:os');
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'mobile overflow');
   await page.screenshot({path:path.join(out,'OriginMind-Quadruped-V11-Mobile.png'),fullPage:true});
   assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);assert.deepEqual(motionRequests,[]);
-  const report={stage:'source-development-preview',hardware_validated:false,ubuntu_installer_updated:false,
+  const report={stage:process.env.INSTALLED_PACKAGE?'installed-full-package':'source-development-preview',hardware_validated:false,ubuntu_installer_updated:!!process.env.INSTALLED_PACKAGE,
    browser:browser.version(),metadata,errors,failed,motionRequests,rendered_motion_changed_fraction:changed/rawA.length,
    checks:['cad_mesh_render','cad_bounds_preserved','five_camera_views','palette_change','orbit_zoom_fit','part_picking',
     'cad_no_motion_requests','parameter_reference_meshes','draft_survives_tab_roundtrip',
     'parameter_apply','cad_does_not_replace_active_profile','390px_no_horizontal_overflow',
-    'twelve_axes_loaded_six_enabled','incomplete_source_drives_locked','three_left_rear_controls_enabled',
+    'twelve_axes_enabled','corrected_assembly_loaded','calibration_export_preserves_unknown_encoder_zeros','three_left_rear_controls_enabled',
     'rendered_cad_moves','out_of_range_pose_rejected','preview_stop_holds_pose','cad_zero_reset','leave_cad_stops_animation']};
   fs.writeFileSync(path.join(out,'BROWSER_VALIDATION.json'),JSON.stringify(report,null,2)+'\n');
   console.log(JSON.stringify(report));

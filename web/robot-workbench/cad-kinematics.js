@@ -33,6 +33,26 @@ export function solveLeg(leg,angles){
   const matrices={hip:abduction,thigh:abduction.clone().multiply(thigh),crank:abduction.clone().multiply(crank),calf:abduction.clone().multiply(calf),rod:abduction.clone().multiply(rod)};
   return {matrices,closure_error_m:Math.max(Math.abs(cp.distanceTo(bb)-r),Math.abs(cp.distanceTo(aa)-l)),pivots:{a:aa.applyMatrix4(abduction).toArray(),b:bb.applyMatrix4(abduction).toArray(),c:cp.applyMatrix4(abduction).toArray()}};
 }
+export function repairAssembly(assembly,model,manifest){
+ if(model.schema_version!==2||model.source_sha256!==manifest.source_sha256||model.glb_sha256!==manifest.glb_sha256)throw Error('装配修正与源 CAD 版本不一致');
+ const nodes=new Map();assembly.traverse(o=>{if(o.name.startsWith('part_'))nodes.set(o.name,o);});
+ const parts=new Map(manifest.parts.map(p=>[p.node,p]));
+ const changes=[...model.assembly.replacements,...model.assembly.additions];
+ for(const change of changes){
+  if(!nodes.has(change.source_node)||change.matrix.length!==16||!change.matrix.every(Number.isFinite))throw Error('装配修正无效');
+ }
+ for(const change of model.assembly.replacements){
+  const object=nodes.get(change.node);if(!object)throw Error('待修正零件缺失');
+  object.matrixAutoUpdate=false;object.matrix.fromArray(change.matrix);object.matrixWorldNeedsUpdate=true;parts.set(change.node,change.part);
+ }
+ for(const change of model.assembly.additions){
+  if(nodes.has(change.node))throw Error('补齐零件重复');
+  const source=nodes.get(change.source_node),object=source.clone(true);object.name=change.node;
+  object.matrixAutoUpdate=false;object.matrix.fromArray(change.matrix);object.matrixWorldNeedsUpdate=true;
+  source.parent.add(object);nodes.set(change.node,object);parts.set(change.node,change.part);
+ }
+ assembly.updateMatrixWorld(true);return parts;
+}
 export function bindRig(assembly,model){
   const nodes=new Map();assembly.traverse(o=>{if(o.name.startsWith('part_'))nodes.set(o.name,o);});
   const originals=new Map([...nodes].map(([id,obj])=>[id,obj.matrix.clone()]));

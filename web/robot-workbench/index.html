@@ -26,12 +26,12 @@
 <div class="cad-toolbar" role="group" aria-label="CAD 视角"><button data-cad-view="iso">立体</button><button data-cad-view="front">前视</button><button data-cad-view="side">右侧</button><button data-cad-view="left">左侧</button><button data-cad-view="top">俯视</button><button id="cad-fit">适合窗口</button><span>拖动旋转 · 滚轮缩放 · 点击选件</span></div>
 <section class="cad-motion" aria-label="V1.1 关节运动预览">
 <div class="cad-motion-heading"><h2>12 关节轴线与运动</h2><button id="cad-reset" disabled>恢复 CAD 零位</button></div>
-<p class="cad-motion-note">已开放 4 条腿侧摆及左后腿完整联动。其余联动因源 CAD 缺件或错位锁定。角度相对 CAD 零位，范围不是机械限位。</p>
+<p class="cad-motion-note">装配 R1 已开放全部 12 轴几何联动。角度相对修正后的 CAD 零位，范围不是机械限位；电机零位等待真机回读。</p>
 <div class="cad-leg-tabs" role="group" aria-label="选择机器狗腿"><button data-cad-leg="FL" aria-pressed="true">左前腿</button><button data-cad-leg="FR" aria-pressed="false">右前腿</button><button data-cad-leg="RL" aria-pressed="false">左后腿</button><button data-cad-leg="RR" aria-pressed="false">右后腿</button></div>
 <div id="cad-joint-controls"></div>
 <div class="cad-motion-actions"><label class="cad-checkbox"><input id="cad-show-axes" type="checkbox" checked>显示当前腿转轴</label><button id="cad-demo" disabled>小幅运动 · 6 秒</button><button id="cad-motion-stop" disabled>停止预览</button></div>
 <p id="cad-motion-status" role="status">正在核对运动映射…</p>
-<details><summary>轴线、零位与映射依据</summary><p id="cad-axis-details"></p><p>侧摆 → 大腿 → 膝驱动；膝驱动经传动杆带动小腿。连杆使用闭合约束求解，当前为几何推导预览，尚未完成全行程干涉与真机验收。</p></details>
+<details><summary>轴线、零位与映射依据</summary><button id="cad-export-calibration">导出 12 轴标定表</button><p id="cad-axis-details"></p><p>侧摆 → 大腿 → 膝驱动；膝驱动经传动杆带动小腿。连杆使用闭合约束求解，当前为几何推导预览，尚未完成全行程干涉与真机验收。</p></details>
 </section>
 <p id="cad-status" role="status">正在加载 CAD 装配…</p>
 <details class="cad-provenance"><summary>模型来源与显示范围</summary><p id="cad-exclusions"></p><p id="cad-source-details"></p></details>

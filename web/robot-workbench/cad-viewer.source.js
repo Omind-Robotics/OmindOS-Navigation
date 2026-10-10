@@ -1,3 +1,4 @@
+import {repairAssembly} from './cad-kinematics.js';
 import {mountMotion} from './cad-motion.js';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
@@ -24,7 +25,9 @@ export async function mountCAD(container) {
   }
   const {scene:assembly}=await new GLTFLoader().loadAsync('/cad/v11/assembly.glb');
   scene.add(assembly);assembly.updateMatrixWorld(true);
-  const parts=new Map(manifest.parts.map(p=>[p.node,p]));
+  const motionResponse=await fetch('/cad/v11/kinematics.json');if(!motionResponse.ok)throw Error('装配修正加载失败');
+  const model=await motionResponse.json();
+  const parts=repairAssembly(assembly,model,manifest);
   const meshes=[];
   const selectedMaterial=new THREE.MeshStandardMaterial({color:0x20b5ce,metalness:.25,roughness:.4});
   assembly.traverse(obj=>{if(obj.isMesh){
@@ -90,16 +93,16 @@ export async function mountCAD(container) {
   container.querySelector('#cad-palette').onchange=e=>palette(e.target.value);
   container.querySelector('#cad-fit').onclick=()=>fit();
   container.querySelector('#cad-size').textContent=manifest.size_m.map(n=>Math.round(n*1000)).join(' × ')+' mm';
-  container.querySelector('#cad-count').textContent=manifest.visible_instances+' 个零件实例';
+  container.querySelector('#cad-count').textContent=parts.size+' 个零件实例 · 装配 R1';
   container.querySelector('#cad-exclusions').textContent=manifest.excluded.length
     ?'源文件中 '+manifest.excluded.length+' 个异常几何实例未显示，详见模型来源。':'全部零件实例已加载';
   container.querySelector('#cad-source-details').textContent=
     '来源：'+manifest.source_filename+'。显示资源 '+(manifest.glb_bytes/1048576).toFixed(1)+' MiB。'+
-    '配色仅用于显示。此处外廓为当前装配姿态的网格测量。'+
+    '装配 R1：补齐前腿摇臂及轴承组件，修正右后摇臂、压盖和螺栓位置。原始 STEP 保留；紧固件 BOM 待复核。配色仅用于显示。'+
     (manifest.excluded.length?' 排除项：'+manifest.excluded.map(x=>x.name).join('；'):'');
   palette('graphite');resize();fit();
   let motion;
-  try{motion=await mountMotion(container,assembly,scene,render,manifest);}
+  try{motion=await mountMotion(container,assembly,scene,render,manifest,model);}
   catch(error){container.querySelector('#cad-motion-status').textContent='运动预览不可用：'+error.message;}
   status.textContent='装配加载完成 · 可旋转、缩放、选择零件';
   canvas.dataset.loaded='true';canvas.dataset.parts=String(meshes.length);

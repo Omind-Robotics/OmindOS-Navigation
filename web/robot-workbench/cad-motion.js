@@ -1,8 +1,6 @@
 import * as THREE from 'three';
 import {bindRig} from './cad-kinematics.js';
-export async function mountMotion(container,assembly,scene,render,manifest){
-  const res=await fetch('/cad/v11/kinematics.json');if(!res.ok)throw Error('运动映射加载失败');
-  const model=await res.json();
+export async function mountMotion(container,assembly,scene,render,manifest,model){
   if(model.source_sha256!==manifest.source_sha256||model.glb_sha256!==manifest.glb_sha256)throw Error('运动映射与 CAD 版本不一致');
   const rig=bindRig(assembly,model),get=id=>container.querySelector('#'+id);
   const status=get('cad-motion-status'),details=get('cad-axis-details'),canvas=get('cad-scene');
@@ -48,6 +46,11 @@ export async function mountMotion(container,assembly,scene,render,manifest){
     stop();current=btn.dataset.cadLeg;
     container.querySelectorAll('[data-cad-leg]').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)));sync();
   });
+  get('cad-export-calibration').onclick=()=>{
+    const data={schema_version:1,assembly_revision:model.assembly.revision,source_sha256:model.source_sha256,glb_sha256:model.glb_sha256,frame:model.frame,zero:model.zero,angle_mapping:model.angle_mapping,calibration:model.calibration};
+    const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+    const link=document.createElement('a');link.href=url;link.download='OriginMind-V11-Calibration.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  };
   get('cad-reset').disabled=false;get('cad-demo').disabled=false;
   get('cad-reset').onclick=()=>{stop();apply(Object.fromEntries(model.legs.map(l=>[l.id,[0,0,0]])));};
   get('cad-show-axes').onchange=sync;get('cad-motion-stop').onclick=stop;
