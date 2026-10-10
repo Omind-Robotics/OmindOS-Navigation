@@ -62,6 +62,8 @@ def run(output):
             page.select_option('#cad-model','b');page.click('#load-cad-model')
             wait("!operation && profile.robot_id==='rm75-integration-b' && readyRevision===revision")
             assert page.input_value('#profile-mode')=='kinematic_preview'
+            assert page.locator('#cooperative-demo').is_enabled()
+            assert '规划并播放' in page.locator('#cooperative-demo').inner_text()
             mapping=json.loads(page.input_value('#planning-mapping'))
             assert mapping['tcp_links']==['left_tool0','right_tool0']
             checks.append('model_load_and_actual_TCP_mapping')
@@ -102,6 +104,8 @@ def run(output):
             wait("!operation && profile.robot_id==='rm75-integration-b' && readyRevision===revision")
             assert page.input_value('#profile-id')==saved_id
             assert page.input_value('#profile-mode')=='kinematic_preview'
+            assert page.locator('#cooperative-demo').is_enabled()
+            assert '规划并播放' in page.locator('#cooperative-demo').inner_text()
             checks.append('UI_saved_configuration_restored_after_service_restart')
             page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(250)
             assert page.evaluate('() => document.documentElement.scrollWidth<=window.innerWidth+1')

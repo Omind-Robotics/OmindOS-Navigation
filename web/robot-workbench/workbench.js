@@ -214,7 +214,7 @@ function updateMotionControls(){
     if(group==='both')button.disabled=locked||!armJoints('left').length||!armJoints('right').length;
   }
   document.querySelectorAll('[data-drive]').forEach(button=>button.disabled=locked||!model?.wheel_base);
-  $('cooperative-demo').disabled=locked||armJoints('left').length!==7||armJoints('right').length!==7||!model?.wheel_base;
+  $('cooperative-demo').disabled=locked||armJoints('left').length!==7||armJoints('right').length!==7||(profile?.profile_mode!=='kinematic_preview'&&!model?.wheel_base);
   $('reset-stop').disabled=!emergencyStop||safetyPending;
   $('emergency-state').textContent=emergencyStop?'已急停 · 运动锁定，需手动复位':'电脑端软件急停 · 真机未连接';
 }
