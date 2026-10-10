@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>登录云端体验 · OmindOS</title>
+  <link rel="stylesheet" href="/_cloud-preview/preview-login.css">
+</head>
+<body>
+  <main class="login-card">
+    <a class="brand" href="/">OriginMind <span>OmindOS CLOUD</span></a>
+    <p class="eyebrow">云端机器人工作台</p>
+    <h1>登录云端体验</h1>
+    <p class="intro">在浏览器中查看机器人模型、调整参数，体验导航与双臂规划。</p>
+    <form method="post" action="/_cloud-preview/login">
+      <input type="hidden" name="csrf" value="{{csrf}}">
+      <label for="username">账号</label>
+      <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="128" value="preview" required>
+      <label for="password">密码</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" maxlength="256" placeholder="复制刚才消息中的预览密码" required>
+      <p class="message" role="status" aria-live="polite">{{message}}</p>
+      <button type="submit">进入工作台 <span aria-hidden="true">→</span></button>
+    </form>
+    <p class="help">使用上一条消息中的账号和密码。若内置浏览器仍无法打开，请在手机浏览器中打开本链接。</p>
+    <footer>单人预览 · 几何仿真</footer>
+  </main>
+</body>
+</html>
