@@ -46,52 +46,65 @@ def run(output):
             browser=driver.chromium.launch(headless=True,args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'])
             page=browser.new_page(viewport={'width':1440,'height':1000})
             page.on('pageerror',lambda e:errors.append(str(e)))
+            def wait(expression, timeout=30):
+                # Poll from the test driver; never enable unsafe-eval in the app.
+                deadline=time.monotonic()+timeout
+                while time.monotonic()<deadline:
+                    if page.evaluate('() => ('+expression+')'):
+                        return
+                    page.wait_for_timeout(50)
+                detail=page.locator('#status').inner_text()
+                raise AssertionError('UI wait timed out: '+expression+'; status='+detail)
             page.goto(url,wait_until='networkidle')
-            page.wait_for_function('!operation && readyRevision===revision && !!profile')
+            wait('!operation && readyRevision===revision && !!profile')
             assert page.locator('#cad-model option').count()==3
             checks.append('three_explicit_CAD_variants_visible')
             page.select_option('#cad-model','b');page.click('#load-cad-model')
-            page.wait_for_function("!operation && profile.robot_id==='rm75-integration-b' && readyRevision===revision")
+            wait("!operation && profile.robot_id==='rm75-integration-b' && readyRevision===revision")
             assert page.input_value('#profile-mode')=='kinematic_preview'
             mapping=json.loads(page.input_value('#planning-mapping'))
             assert mapping['tcp_links']==['left_tool0','right_tool0']
             checks.append('model_load_and_actual_TCP_mapping')
-            page.wait_for_function('sceneEngine && sceneEngine.meshStats.requested>0 && sceneEngine.meshStats.loaded===sceneEngine.meshStats.requested && sceneEngine.meshStats.failed===0')
-            assert page.get_attribute('#scene','data-renderer')=='webgl'
+            wait('sceneEngine && sceneEngine.meshStats.requested>0 && sceneEngine.meshStats.loaded===sceneEngine.meshStats.requested && sceneEngine.meshStats.failed===0')
+            assert page.evaluate("""() => {
+                const c=document.getElementById('scene');
+                const gl=c.getContext('webgl2') || c.getContext('webgl');
+                return !!gl && !gl.isContextLost() && c.width>0 && c.height>0;
+            }""")
             checks.append('verified_local_transfer_mesh_loaded_by_real_renderer')
             page.click('#apply-program')
-            page.wait_for_function("!operation && document.getElementById('apply-note').textContent.includes('已写入程序')")
+            wait("!operation && document.getElementById('apply-note').textContent.includes('已写入程序')")
             saved_id=page.input_value('#profile-id');assert len(saved_id)==64
             with urllib.request.urlopen(url+'/v1/workbench-active-profile') as r:active=json.load(r)
             assert active['active_profile_id']==saved_id
             assert all(v['zero_offset_rad']is None for v in active['profile']['dynamics']['joints'].values())
             checks.append('UI_apply_preserves_unknown_motor_parameters')
             page.select_option('#jog-joint','waist_pitch')
-            before=page.evaluate('currentPose.positions.waist_pitch')
+            before=page.evaluate('() => currentPose.positions.waist_pitch')
             page.click('#jog-plus')
-            page.wait_for_function('!operation && animation===null')
-            after=page.evaluate('currentPose.positions.waist_pitch')
+            wait('!operation && animation===null')
+            after=page.evaluate('() => currentPose.positions.waist_pitch')
             assert abs(after-before-math.radians(.1))<1e-10
             checks.append('UI_tenth_degree_joint_jog')
-            page.click('#emergency-stop');page.wait_for_function('emergencyStop && !safetyPending')
+            page.click('#emergency-stop');wait('emergencyStop && !safetyPending')
             assert page.is_disabled('#jog-plus')
-            page.click('#reset-stop');page.wait_for_function('!emergencyStop && !safetyPending')
-            assert page.evaluate('animation===null')
+            page.click('#reset-stop');wait('!emergencyStop && !safetyPending')
+            assert page.evaluate('() => animation===null')
             checks.append('UI_stop_latch_and_reset_without_auto_resume')
             page.fill('#robot-id','rm75-ui-history');page.click('#save')
-            page.wait_for_function("!operation && document.getElementById('saved').textContent.includes('已保存配置')")
+            wait("!operation && document.getElementById('saved').textContent.includes('已保存配置')")
             history_id=page.input_value('#profile-id');assert history_id!=saved_id
             page.fill('#profile-id',saved_id);page.click('#load')
-            page.wait_for_function("!operation && profile.robot_id==='rm75-integration-b'")
+            wait("!operation && profile.robot_id==='rm75-integration-b'")
             checks.append('UI_version_save_and_history_reload')
             process.terminate();process.wait(timeout=5);process=None
             process,url=start(Path(td));page.goto(url,wait_until='networkidle')
-            page.wait_for_function("!operation && profile.robot_id==='rm75-integration-b' && readyRevision===revision")
+            wait("!operation && profile.robot_id==='rm75-integration-b' && readyRevision===revision")
             assert page.input_value('#profile-id')==saved_id
             assert page.input_value('#profile-mode')=='kinematic_preview'
             checks.append('UI_saved_configuration_restored_after_service_restart')
             page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(250)
-            assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth+1')
+            assert page.evaluate('() => document.documentElement.scrollWidth<=window.innerWidth+1')
             checks.append('mobile_390px_no_horizontal_page_overflow')
             assert not errors,errors
             checks.append('no_JavaScript_page_errors')
