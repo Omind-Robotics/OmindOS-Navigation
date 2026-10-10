@@ -1,0 +1,85 @@
+name: Apply verified RM75 integration
+on:
+  push:
+    branches: [codex/rm75-cad-workbench-20261010]
+    paths:
+      - '.github/workflows/rm75-integration-apply.yml'
+      - 'tools/apply_rm75_integration.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: rm75-integration-apply
+  cancel-in-progress: false
+jobs:
+  integrate:
+    if: github.ref == 'refs/heads/codex/rm75-cad-workbench-20261010'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    env:
+      PYTHONPATH: scripts
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify actual geometry fixture transfer
+        shell: bash
+        run: |
+          python - <<'PY'
+          import ast, hashlib
+          from pathlib import Path
+          source=Path('tests/test_workbench_rm75_integration.py').read_text()
+          node=next(n for n in ast.parse(source).body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='PART_HASHES' for t in n.targets))
+          hashes=ast.literal_eval(node.value);bad=[]
+          for i,expected in enumerate(hashes):
+              p=Path('tests/rm75_fixture_parts')/f'{i:02d}.part'
+              actual=hashlib.sha256(p.read_text().strip().encode()).hexdigest()
+              if actual!=expected:bad.append(i);print(f'BAD fixture part {i:02d}: {actual}')
+          if bad:raise SystemExit('Fixture transfer failed: '+str(bad))
+          print('All fourteen geometry fixture chunks match original SHA256 values.')
+          PY
+      - name: Install pinned source-test dependencies
+        run: python -m pip install numpy==1.26.4 scipy==1.14.1 trimesh==4.11.1
+      - name: Pin reviewed current-main UI baseline
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tools/apply_rm75_integration.py');s=p.read_text()
+          old='73b8e811ec7b176f00d1569b0111edc567470c95'
+          new='c04c89eeaeacc968b594a4f8c1fdc0753892f1fd'
+          # PR22 only adds a hidden-main draw guard and leave-parameters stop hook.
+          # Retain those two independently inspected changes; do not loosen hashes.
+          if s.count(old)!=1:raise SystemExit('Expected original UI baseline marker')
+          p.write_text(s.replace(old,new))
+          PY
+      - name: Apply exact reviewed source edits
+        run: python tools/apply_rm75_integration.py
+      - name: Check JavaScript syntax
+        run: |
+          node --check web/robot-workbench/workbench.js
+          node --check web/robot-workbench/rm75-workbench.js
+      - name: Existing and new actual-model API regressions
+        shell: bash
+        run: |
+          python -m unittest discover -s tests -p 'test_robot*.py' -v > /tmp/robot-tests.log 2>&1 || { cat /tmp/robot-tests.log; exit 1; }
+          tail -n 5 /tmp/robot-tests.log
+          python -m unittest discover -s tests -p 'test_workbench*.py' -v > /tmp/workbench-tests.log 2>&1 || { cat /tmp/workbench-tests.log; exit 1; }
+          tail -n 5 /tmp/workbench-tests.log
+          git diff --check
+      - name: Commit verified source to the feature branch only
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/apply_rm75_integration.py scripts/robot_kinematic_preview.py scripts/robot_model_bundle.py scripts/robot_assets.py scripts/robot_kinematics.py scripts/robot_planning.py scripts/robot_workbench.py scripts/workbench_desktop.py web/robot-workbench/index.html web/robot-workbench/workbench.js release/workbench/package_binary.py
+          git commit -m 'feat: integrate verified RM75 model catalogue and kinematic motion in the workbench'
+          git push origin HEAD:refs/heads/codex/rm75-cad-workbench-20261010
+          git rev-parse HEAD

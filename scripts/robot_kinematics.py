@@ -226,7 +226,7 @@ def base_position(value=None):
     return result
 
 
-def pose(model, values, base_pose=None):
+def pose(model, values, base_pose=None, *, calculate_gravity=True):
     q = positions(model, values)
     base = base_position(base_pose)
     root_frame = rotation([0, 0, 1], base['yaw_rad'])
@@ -243,11 +243,11 @@ def pose(model, values, base_pose=None):
         ancestors[j["child"]] = ancestors[j["parent"]] + ([j["name"]] if j["type"] != "fixed" else [])
     torque = {name: 0.0 for name in q}
     coms = {}
-    complete_mass = all(link["mass"] is not None for link in model["links"])
+    complete_mass = calculate_gravity and all(link["mass"] is not None for link in model["links"])
     for link in model["links"]:
         com = transform(world[link["name"]], link["com"])
         coms[link["name"]] = com
-        if link["mass"] is None:
+        if not calculate_gravity or link["mass"] is None:
             continue
         for name in ancestors[link["name"]]:
             r = [com[i] - pivot[name][i] for i in range(3)]

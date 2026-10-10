@@ -1,0 +1,98 @@
+{
+  "scope": "source_runtime_and_real_HTTP_API",
+  "bundle": {
+    "mesh_count": 14,
+    "mesh_bytes": 68804176,
+    "model_ids": [
+      "6f",
+      "6fb",
+      "b"
+    ],
+    "manifest_sha256": "cb38efe909587f762e7ad66e408f6de933dfdc87addfdbc0653c36fbf1294cf1"
+  },
+  "hardware_validated": false,
+  "dynamics_validated": false,
+  "compiled_installer_tested": false,
+  "variants": {
+    "b": {
+      "boxes": 28,
+      "self_pairs": 225,
+      "compared_poses": 258,
+      "clear_poses": 187,
+      "same_collision_decisions_and_first_pair": true,
+      "same_joint_path": true,
+      "wrist_obstacle_rejected": true,
+      "validated_path_samples": 21,
+      "scalar_collision_ms": 1.5832879499794217,
+      "batched_collision_ms": 0.05433295002148952,
+      "collision_speedup": 29.14047459880619,
+      "scalar_plan_ms": 53.735413996037096,
+      "batched_plan_ms": 19.283171997813042,
+      "plan_speedup": 2.7866480681773402
+    },
+    "6fb": {
+      "boxes": 28,
+      "self_pairs": 225,
+      "compared_poses": 258,
+      "clear_poses": 186,
+      "same_collision_decisions_and_first_pair": true,
+      "same_joint_path": true,
+      "wrist_obstacle_rejected": true,
+      "validated_path_samples": 21,
+      "scalar_collision_ms": 1.5987016300641699,
+      "batched_collision_ms": 0.054803870007162914,
+      "collision_speedup": 29.171327314206426,
+      "scalar_plan_ms": 53.51343800430186,
+      "batched_plan_ms": 19.514731997333,
+      "plan_speedup": 2.742207170030074
+    },
+    "6f": {
+      "boxes": 28,
+      "self_pairs": 225,
+      "compared_poses": 258,
+      "clear_poses": 186,
+      "same_collision_decisions_and_first_pair": true,
+      "same_joint_path": true,
+      "wrist_obstacle_rejected": true,
+      "validated_path_samples": 21,
+      "scalar_collision_ms": 1.5971815400553169,
+      "batched_collision_ms": 0.055643539963057265,
+      "collision_speedup": 28.703808943782406,
+      "scalar_plan_ms": 53.50323700258741,
+      "batched_plan_ms": 19.7866430025897,
+      "plan_speedup": 2.7040077993818783
+    }
+  },
+  "HTTP": {
+    "models": 3,
+    "saved_and_reloaded": true,
+    "applied": true,
+    "joint_plan_status": "succeeded",
+    "stop_engaged": true
+  },
+  "status": "passed",
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0"
+  },
+  "representation_comparison_64_vs_28": {
+    "b": {
+      "same": 254,
+      "lite_more_conservative": 4,
+      "lite_clear_detailed_blocked": 0
+    },
+    "6fb": {
+      "same": 253,
+      "lite_more_conservative": 5,
+      "lite_clear_detailed_blocked": 0
+    },
+    "6f": {
+      "same": 253,
+      "lite_more_conservative": 5,
+      "lite_clear_detailed_blocked": 0
+    }
+  },
+  "timing_method": "Median of 5 repeats of 100 identical preview-pose collision checks (FK cache warm), and 7 complete 21-sample joint-plan calls. Scalar versus batched algorithm on the same 28-box model; no comparison to the unsupported 357-mesh runtime."
+}

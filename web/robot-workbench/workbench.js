@@ -69,14 +69,27 @@ async function refreshModel(fit = false) {
 function missingDrives(doc) {
   return Object.fromEntries([...doc.documentElement.children].filter(n => n.tagName === 'joint' && n.getAttribute('type') !== 'fixed').map(n => [n.getAttribute('name'), {motor_model:'', reduction_ratio:null, direction:null, zero_offset_rad:null, torque_limit_nm:null, velocity_limit_rad_s:null}]));
 }
+function updateCooperativeDemo() {
+  const kinematic = profile?.profile_mode === 'kinematic_preview';
+  $('cooperative-demo').textContent = kinematic ? '规划并播放双臂协同预览' : '播放连续演示 · 35 秒';
+  $('cooperative-description').textContent = kinematic
+    ? '使用当前双臂与腰部模型，碰撞规划通过后播放。'
+    : '接近 → 对齐 → 夹爪开合 → 抬升 → 连续行进';
+  $('cooperative-note').textContent = kinematic
+    ? '共同位移采用上方 X / Y / Z 设置；底盘固定，不计算抓取接触力。'
+    : '参考轨迹 · 内置双指夹爪与四轮底盘参数可按硬件配置。未计算抓取接触力。';
+}
 async function importProfile(data, fromUrdf = false) {
-  const candidate = fromUrdf ? {robot_id:$('robot-id').value || 'robot-a', kinematics:{urdf_xml:data}, dynamics:{joints:{}}} : structuredClone(data);
-  if (!candidate || !candidate.kinematics || typeof candidate.kinematics.urdf_xml !== 'string' || !candidate.dynamics || typeof candidate.dynamics.joints !== 'object' || candidate.dynamics.joints === null) throw Error('完整配置需要 robot_id、kinematics.urdf_xml 和 dynamics.joints。');
+  const candidate = fromUrdf ? {profile_mode:'kinematic_preview', robot_id:$('robot-id').value || 'robot-a', kinematics:{urdf_xml:data}, dynamics:{joints:{}}} : structuredClone(data);
+  if (!candidate || !candidate.kinematics || typeof candidate.kinematics.urdf_xml !== 'string') throw Error('需要 robot_id 与 kinematics.urdf_xml。');
   const doc = parse(candidate.kinematics.urdf_xml);
+  if (candidate.profile_mode === 'kinematic_preview' && candidate.dynamics === undefined) candidate.dynamics = {joints:missingDrives(doc)};
+  if (!candidate.dynamics || typeof candidate.dynamics.joints !== 'object' || candidate.dynamics.joints === null) throw Error('完整配置需要 dynamics.joints；仅运动学可显式选择 kinematic_preview。');
   const result = await api('/v1/robot-model', {urdf_xml:candidate.kinematics.urdf_xml,connections:candidate.connections});
   if (fromUrdf) candidate.dynamics.joints = missingDrives(doc);
   stop(); clearTimeout(timer); revision++; readyRevision = revision; latestTrial = null;
-  profile = candidate; xml = doc; model = result.model; currentPose = result.pose; targets = {...result.pose.positions};
+  profile = candidate; $('profile-mode').value = candidate.profile_mode || 'full'; xml = doc; model = result.model; currentPose = result.pose; targets = {...result.pose.positions};
+  updateCooperativeDemo();
   planningStart=null;
   connectionInvalid.clear();connectionDraft=structuredClone(candidate.connections||{schema_version:1,devices:{}});renderConnections();
   baseTarget = {...result.pose.base_pose};
@@ -201,7 +214,7 @@ function updateMotionControls(){
     if(group==='both')button.disabled=locked||!armJoints('left').length||!armJoints('right').length;
   }
   document.querySelectorAll('[data-drive]').forEach(button=>button.disabled=locked||!model?.wheel_base);
-  $('cooperative-demo').disabled=locked||armJoints('left').length!==7||armJoints('right').length!==7||!model?.wheel_base;
+  $('cooperative-demo').disabled=locked||armJoints('left').length!==7||armJoints('right').length!==7||(profile?.profile_mode!=='kinematic_preview'&&!model?.wheel_base);
   $('reset-stop').disabled=!emergencyStop||safetyPending;
   $('emergency-state').textContent=emergencyStop?'已急停 · 运动锁定，需手动复位':'电脑端软件急停 · 真机未连接';
 }
@@ -380,7 +393,7 @@ function drawWireframe(){
   ctx.font='11px system-ui';[['X',[.15,0,0],'#a86458'],['Y',[0,.15,0],'#69865a'],['Z',[0,0,.15],'#5077a0']].forEach(([name,p,color])=>{line([0,0,0],p,color,2);const a=project(p);ctx.fillStyle=color;ctx.fillText(name,a[0]+4,a[1]);});
 }
 function report(result){
-  $('results').replaceChildren();const head=document.createElement('p');head.textContent=result.motion_type==='planned'?`规划通过 · ${result.validated_samples} 个离散碰撞样本`:'运动路径采样点的峰值静态保持力矩';$('results').append(head);
+  $('results').replaceChildren();const head=document.createElement('p');head.textContent=result.motion_type==='planned'?`规划通过 · ${result.validated_samples} 个离散碰撞样本`:result.gravity_evaluated===false?'仅运动学预览 · 未计算力矩或电机目标':'运动路径采样点的峰值静态保持力矩';$('results').append(head);
   if(result.motion_type==='planned'){const note=document.createElement('p');note.textContent='底盘固定 · 几何包围盒保守检查 · 不含动力学';$('results').append(note);if(result.max_tcp_position_error_m!==undefined){const error=document.createElement('p');error.textContent=`两手最大位置误差 ${(result.max_tcp_position_error_m*1000).toFixed(3)} mm；相对误差 ${(result.max_relative_position_error_m*1000).toFixed(3)} mm（模型数值）`;$('results').append(error);}return;}
   if(result.actual_amplitude_deg){const note=document.createElement('p');note.textContent='实际正弦振幅：'+Object.entries(result.actual_amplitude_deg).map(([n,v])=>`${n} ${v.toFixed(2)}°`).join('；');$('results').append(note);}
   for(const [name,value] of Object.entries(result.peak_holding_torque_nm)){const row=document.createElement('div');row.className='metric';const label=document.createElement('span');label.textContent=name;const val=document.createElement('strong');val.textContent=`${value.toFixed(2)} N·m`;if(result.gravity_limit_exceeded.includes(name))val.className='error';row.append(label,val);$('results').append(row);}
@@ -413,7 +426,7 @@ async function motionReady(){
   if(emergencyStop||safetyPending)throw Error('急停锁定中，请先手动复位。');
 }
 async function executeMotion(path,data,label,validatedResult=null){
-  stop();$('progress').value=0;const rev=revision,ticket=motionTicket;status('正在计算运动轨迹和重力负载…');
+  stop();$('progress').value=0;const rev=revision,ticket=motionTicket;status(profile?.profile_mode==='kinematic_preview'?'正在计算关节运动学轨迹…':'正在计算运动轨迹和重力负载…');
   const result=validatedResult||await api(path,data);
   if(rev!==revision||ticket!==motionTicket||emergencyStop||safetyPending||result.motion_epoch<motionEpoch)return;
   motionEpoch=result.motion_epoch;latestTrial=result;report(result);model=result.model;
@@ -443,6 +456,7 @@ async function executeMotion(path,data,label,validatedResult=null){
   };animation=requestAnimationFrame(tick);
 }
 $('cooperative-demo').onclick=()=>guarded(async()=>{
+  if(profile?.profile_mode==='kinematic_preview')return runPlanning('object');
   await motionReady(); const demo=await api('/cooperative-demo.json');
   await executeMotion('/v1/robot-sequence',{profile:payload(),start:currentPose.positions,base_pose:currentPose.base_pose,
     segments:demo.segments,reference_signature:demo.reference_signature},'双臂协同演示');
@@ -546,7 +560,7 @@ function loadNavigationConfig(config){$('navigation-type').value=config.drive_ty
 $('navigation-export').onclick=()=>guarded(async()=>{const data={config:navigationConfig(),obstacles:JSON.parse($('planning-obstacles').value)},url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='OmindOS-Navigation-Config.json';a.click();URL.revokeObjectURL(url);});
 $('navigation-import').onchange=()=>guarded(async()=>{const file=$('navigation-import').files[0];if(!file)return;if(file.size>512000)throw Error('导航配置不能超过 500 KiB。');const data=JSON.parse(await file.text());if(!data.config||!Array.isArray(data.obstacles))throw Error('需要 config 与 obstacles。');stop();loadNavigationConfig(data.config);$('planning-obstacles').value=JSON.stringify(data.obstacles,null,2);localStorage.setItem('omindos-navigation-config',JSON.stringify(data.config));$('navigation-status').textContent='导航配置已导入，将在启动时校验整机包络。';});
 (async()=>{try{const saved=localStorage.getItem('omindos-navigation-config');loadNavigationConfig(saved?JSON.parse(saved):(await api('/v1/navigation-config')).config);showNavigationMap(null);}catch(e){$('navigation-status').textContent=e.message;}})();
-$('run').onclick=()=>guarded(async()=>{await motionReady();await executeMotion('/v1/robot-preview',{profile:payload(),target:targets,base_target:baseTarget,duration_s:numeric($('duration').value)},'运动学试运行');});
+$('run').onclick=()=>guarded(async()=>{await motionReady();await executeMotion('/v1/robot-preview',{profile:payload(),...(profile.profile_mode==='kinematic_preview'?{start:currentPose.positions,base_start:currentPose.base_pose}:{}),target:targets,base_target:baseTarget,duration_s:numeric($('duration').value)},'运动学试运行');});
 for(const button of document.querySelectorAll('[data-drive]'))button.onclick=()=>guarded(async()=>{
   await motionReady();
   for(const id of ['drive-linear','drive-angular','drive-duration'])if(!$(id).checkValidity()||!$(id).value.trim())throw Error('请填写有效的底盘速度和试跑时长。');
@@ -573,8 +587,8 @@ $('apply-program').onclick=()=>guarded(async()=>{
   if(rev===revision)$('connection-state').textContent='通信配置已写入 · 驱动未接入';
   if(rev===revision)$('dirty').textContent='参数已写入程序';status('参数已写入工作台程序 · 未接入真机控制器');
 });
-$('save').onclick=()=>guarded(async()=>{const rev=revision;const result=await api('/v1/robot-profiles',payload());$('profile-id').value=result.profile_id;$('saved').textContent='已保存配置：'+result.profile_id;if(rev===revision)$('dirty').textContent='参数已保存';status(rev===revision?'配置已保存，旧版本保留；未应用到控制器。':'修改前的参数已保存，当前编辑内容尚未保存。');});
-$('load').onclick=()=>guarded(async()=>{const id=$('profile-id').value.trim();if(!/^[0-9a-f]{64}$/.test(id))throw Error('请输入完整的 64 位配置编号。');await importProfile(await api('/v1/robot-profiles/'+id));$('profile-id').value=id;$('saved').textContent='当前读取版本：'+id;$('dirty').textContent='已读取保存版本';status('已读取保存版本 · 尚未应用到控制器');});
+$('save').onclick=()=>guarded(async()=>{const rev=revision;const result=await api(profile.profile_mode==='kinematic_preview'?'/v1/workbench-profiles':'/v1/robot-profiles',payload());$('profile-id').value=result.profile_id;$('saved').textContent='已保存配置：'+result.profile_id;if(rev===revision)$('dirty').textContent='参数已保存';status(rev===revision?'配置已保存，旧版本保留；未应用到控制器。':'修改前的参数已保存，当前编辑内容尚未保存。');});
+$('load').onclick=()=>guarded(async()=>{const id=$('profile-id').value.trim();if(!/^[0-9a-f]{64}$/.test(id))throw Error('请输入完整的 64 位配置编号。');await importProfile(await api('/v1/workbench-profiles/'+id));$('profile-id').value=id;$('saved').textContent='当前读取版本：'+id;$('dirty').textContent='已读取保存版本';status('已读取保存版本 · 尚未应用到控制器');});
 $('export').onclick=()=>{try{const data=payload(),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='robot-parameters.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status('已导出编辑内容；保存版本时会进行完整参数校验。');}catch(e){status(e.message,true);}};
 $('example').onclick=()=>guarded(loadExample);
 $('import').onchange=()=>guarded(async()=>{const file=$('import').files[0];if(!file)return;if(file.size>2*1024*1024)throw Error('文件上限 2 MiB。');const content=await file.text();await importProfile(file.name.toLowerCase().endsWith('.json')?JSON.parse(content):content,!file.name.toLowerCase().endsWith('.json'));$('import').value='';});
@@ -587,7 +601,8 @@ $('stage-stop').onclick=engageStop;
 $('follow-base').onclick=()=>{view.follow=!view.follow;view.followOffset=[view.center[0]-currentPose.base_pose.x_m,view.center[1]-currentPose.base_pose.y_m];$('follow-base').setAttribute('aria-pressed',String(view.follow));draw();};
 $('tool-trails').onclick=()=>{if(sceneEngine){sceneEngine.showTrails=!sceneEngine.showTrails;$('tool-trails').setAttribute('aria-pressed',String(sceneEngine.showTrails));draw();}};
 document.querySelectorAll('[data-focus]').forEach(button=>button.onclick=()=>{
-  const t=currentPose?.link_transforms[button.dataset.focus+'_hand'];if(!t)return;
+  const transforms=currentPose?.link_transforms;
+  const t=transforms?.[button.dataset.focus+'_hand'] || transforms?.[button.dataset.focus+'_tool0'] || transforms?.[button.dataset.focus+'_tip'];if(!t)return;
   view.follow=false;$('follow-base').setAttribute('aria-pressed','false');view.center=t.slice(0,3).map(r=>r[3]);view.span=.65;view.zoom=1;draw();
 });
 $('solid-view').onclick=()=>{if(sceneEngine)sceneEngine.wireframe=false;$('solid-view').setAttribute('aria-pressed','true');$('wireframe-view').setAttribute('aria-pressed','false');draw();};

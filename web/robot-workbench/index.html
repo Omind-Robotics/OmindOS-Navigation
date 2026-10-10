@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmindOS · 机器人调参工作台</title><link rel="stylesheet" href="/workbench.css"><script defer src="/workbench.js"></script><script defer src="/runtime.js"></script><script defer src="/cad-panel.js"></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmindOS · 机器人调参工作台</title><link rel="stylesheet" href="/workbench.css"><script defer src="/workbench.js"></script><script defer src="/rm75-workbench.js"></script><script defer src="/runtime.js"></script><script defer src="/cad-panel.js"></script></head>
 <body>
 <header><div><b>OmindOS</b><span>机器人调参工作台</span></div><span class="badge">运动学 · 路径规划</span></header>
 <nav id="workbench-model-tabs" class="model-tabs" aria-label="工作台模式" hidden>
@@ -43,6 +43,13 @@
 <h2>模型与参数</h2><p class="muted">导入模型，在三维视图中检查调整。</p>
 <label class="file">导入 URDF / 完整配置<input id="import" type="file" accept=".urdf,.xml,.json"></label>
 <button id="example">加载双七轴移动机器人</button><p class="note">双臂各7轴 + 腰部pitch = 15个主体关节<br>RM75-B关节结构；可按客户硬件设置模型与参数。</p>
+<section id="rm75-model-panel" aria-label="整机模型与配置模式">
+<label>配置模式<select id="profile-mode"><option value="full">完整参数配置</option><option value="kinematic_preview">运动学预览 · 不要求动力学参数</option></select></label>
+<p id="profile-mode-note" class="note">运动学模式不计算电机目标、力矩或动力学；未知参数可留空。</p>
+<label>整机 CAD<select id="cad-model" aria-label="RM75模型子型号"></select></label>
+<button id="load-cad-model" disabled>加载整机 CAD 模型</button>
+<p id="cad-bundle-note" class="note" role="status">检查本机整机资源…</p>
+</section>
 <label>机器人编号<input id="robot-id" value="demo-dual-rm75" maxlength="64"></label>
 <details id="connections-panel">
 <summary>设备通信 <span class="connection-badge">可稍后选择</span></summary>
@@ -104,10 +111,10 @@
 <p class="note">按几何包围盒保守检查自身与障碍物碰撞，相邻两个主体关节及固定装配内部被结构性排除；跨臂保留检查。仅验证离散样本；六秒播放时长不代表控制时序。普通点动和演示仍是运动学预览。</p>
 </section>
 <section class="cooperative-controls" aria-label="双臂协同演示">
-<h2>双臂协同演示</h2><p class="note">接近 → 对齐 → 夹爪开合 → 抬升 → 连续行进</p>
+<h2>双臂协同演示</h2><p id="cooperative-description" class="note">接近 → 对齐 → 夹爪开合 → 抬升 → 连续行进</p>
 <button id="cooperative-demo" class="primary" data-motion>播放连续演示 · 35 秒</button>
 <p id="sequence-phase" role="status">按当前姿态开始，结束后保持位置。</p>
-<p class="note">参考轨迹 · 内置双指夹爪与四轮底盘参数可按硬件配置。未计算抓取接触力。</p>
+<p id="cooperative-note" class="note">参考轨迹 · 内置双指夹爪与四轮底盘参数可按硬件配置。未计算抓取接触力。</p>
 </section>
 <section class="chassis-controls" aria-label="底盘行走测试">
 <h2>四轮底盘试跑</h2><p id="chassis-info" class="note">等待底盘配置</p>

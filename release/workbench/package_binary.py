@@ -23,8 +23,16 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--variant', choices=('manipulation', 'quadruped'), default='manipulation')
     parser.add_argument('--version', default=VERSION)
+    parser.add_argument('--model-bundle', type=Path, help='Verified local RM75 model bundle to include in this single installer')
     parser.add_argument('--jobs', type=int, default=4)
     args = parser.parse_args()
+    bundle_info = None
+    if args.model_bundle is not None:
+        if args.variant != 'manipulation':
+            parser.error('RM75 model bundle is manipulation-only')
+        sys.path.insert(0, str(ROOT / 'scripts'))
+        from robot_model_bundle import register_bundle
+        bundle_info = register_bundle(args.model_bundle)
     output = args.output.resolve()
     if args.jobs < 1 or not __import__('re').fullmatch(r'[A-Za-z0-9][A-Za-z0-9.-]*', args.version):
         parser.error('invalid jobs or version')
@@ -43,6 +51,8 @@ def main():
                '--report=' + str(output / 'private-compilation-report.xml'),
                '--include-module=robot_workbench', '--include-module=robot_parameter_api',
                '--include-module=robot_kinematics', '--include-module=workbench_state',
+               '--include-module=robot_model_bundle', '--include-module=robot_collision_frames',
+               '--include-module=robot_kinematic_preview',
                '--include-module=robot_assets', '--include-module=robot_sequence',
                '--include-module=robot_connections', '--include-module=robot_runtime_client',
                '--include-module=robot_planning', '--include-module=dual_task_planner',
@@ -55,7 +65,7 @@ def main():
     subprocess.run(command, cwd=ROOT, env=env, check=True)
     package = output / (product + '-' + args.version + '-' + target)
     shutil.copytree(build / 'workbench_desktop.dist', package)
-    paths = ['web/robot-workbench/index.html', 'web/robot-workbench/workbench.css',
+    paths = ['web/robot-workbench/rm75-workbench.js', 'web/robot-workbench/index.html', 'web/robot-workbench/workbench.css',
              'web/robot-workbench/cad-panel.js', 'web/robot-workbench/cad-viewer.js',
              'web/robot-workbench/robot-scene.js', 'web/robot-workbench/runtime.js', 'web/robot-workbench/cooperative-demo.json',
              'web/robot-workbench/mda1-reference.webp', 'config/robot_profiles/workbench-demo.json',
@@ -70,6 +80,20 @@ def main():
         destination = package / name
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / name, destination)
+    if args.model_bundle is not None:
+        source = args.model_bundle.resolve()
+        bundle_manifest = json.loads((source/'manifest.json').read_text())
+        names = ['manifest.json', *bundle_manifest['assets'],
+                 *[r['profile'] for r in bundle_manifest['variants'].values()]]
+        if (source/'source-notices').is_dir():
+            names += [str(p.relative_to(source)) for p in (source/'source-notices').rglob('*') if p.is_file()]
+        for name in names:
+            path = (source/name).resolve(strict=True)
+            if not path.is_relative_to(source) or path.suffix.lower() in ('.py','.pyc','.cpp','.h','.map'):
+                raise ValueError('unsafe bundle delivery file')
+            destination = package/'config/robot_models/rm75-cad'/name
+            destination.parent.mkdir(parents=True,exist_ok=True)
+            shutil.copyfile(path,destination)
     if args.variant == 'quadruped':
         from quadruped_variant import prepare
         prepare(package, ROOT)
@@ -97,9 +121,9 @@ def main():
                 source = Path(distribution.locate_file(item))
                 if source.is_file():
                     shutil.copyfile(source, package/'LICENSES'/f'{dependency}-{index}-{item.name}')
-    manifest = {'version': args.version, 'variant': args.variant, 'platform': target, 'python_bundled': python_version,
+    manifest = {'customer_cad_bundle': bundle_info, 'version': args.version, 'variant': args.variant, 'platform': target, 'python_bundled': python_version,
                 'compiler': 'Nuitka ' + importlib.metadata.version('Nuitka'),
-                'source_commit': os.environ.get('GITHUB_SHA', subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()),
+                'source_commit': os.environ.get('GITHUB_SHA') or subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                 'release_stage': 'geometric-workbench', 'backend_source_included': False,
                 'planning_kernel_source': 'Omind-Robotics/OmindOS-Manipulation@cbe8caf13921002e463355c6a2982e900640c7e0',
                 'planning_kernel_sha256': hashlib.sha256((ROOT/'scripts/dual_task_planner.py').read_bytes()).hexdigest(),
@@ -134,6 +158,9 @@ def main():
         subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_navigation.py'),str(package/executable),
                         '--report',str(output/'navigation-binary-validation.json')],check=True)
     archive = output / (package.name + ('.zip' if windows else '.tar.gz'))
+    if args.model_bundle is not None:
+        subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_rm75.py'),str(package/executable),
+                        '--report',str(output/'rm75-binary-validation.json')],check=True)
     if windows:
         with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as handle:
             for path in sorted(package.rglob('*')):
@@ -160,6 +187,9 @@ def main():
                         str(extracted/package.name/executable),'--report',str(output/'planning-fresh-unpack-validation.json')],check=True)
         subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_navigation.py'),
                         str(extracted/package.name/executable),'--report',str(output/'navigation-fresh-unpack-validation.json')],check=True)
+    if args.model_bundle is not None:
+        subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_rm75.py'),str(extracted/package.name/executable),
+                        '--report',str(output/'rm75-fresh-unpack-validation.json')],check=True)
     print(json.dumps({'archive': str(archive), 'sha256': digest, 'bytes': archive.stat().st_size}), flush=True)
 
 

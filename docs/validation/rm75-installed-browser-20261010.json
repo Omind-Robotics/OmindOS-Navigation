@@ -1,0 +1,31 @@
+{
+  "scope": "actual_customer_CAD_browser_and_executable",
+  "checks": [
+    "all_20_actual_CAD_visual_instances_rendered",
+    "actual_joint_and_TCP_mapping",
+    "actual_TCP_focus_button",
+    "UI_apply_preserves_unknown_physical_parameters",
+    "UI_both_arms_and_waist_joint_path_playback",
+    "UI_coupled_two_TCP_object_translation",
+    "UI_stop_during_planned_playback_and_no_auto_resume",
+    "actual_CAD_mobile_layout_390px",
+    "saved_customer_profile_and_all_meshes_restore_after_restart"
+  ],
+  "hardware_validated": false,
+  "dynamics_validated": false,
+  "meshFailures": [],
+  "model": {
+    "links": 20,
+    "joints": 19,
+    "meshes": {
+      "requested": 20,
+      "loaded": 20,
+      "failed": 0
+    }
+  },
+  "robot_id": "originmind-rm75-b",
+  "status": "passed",
+  "check_count": 9,
+  "page_errors": [],
+  "renderer": "Google Chrome / SwiftShader; no GPU throughput claim"
+}

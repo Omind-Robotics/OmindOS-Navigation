@@ -1,0 +1,49 @@
+name: Verify RM75 workbench browser interactions
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/rm75-browser-check.yml'
+      - 'scripts/check_rm75_browser.py'
+      - 'scripts/robot*.py'
+      - 'scripts/workbench_state.py'
+      - 'tests/test_workbench*.py'
+      - 'tests/rm75_fixture_parts/**'
+      - 'web/robot-workbench/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: rm75-browser-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    env:
+      PYTHONPATH: scripts
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned browser-test dependencies
+        run: python -m pip install numpy==1.26.4 scipy==1.14.1 trimesh==4.11.1 playwright==1.55.0
+      - name: Install Chromium and system libraries
+        shell: bash
+        run: |
+          python -m playwright install --with-deps chromium > /tmp/browser-install.log 2>&1 || { tail -n 100 /tmp/browser-install.log; exit 1; }
+      - name: Test actual UI with kinematic geometry fixture
+        shell: bash
+        run: |
+          python scripts/check_rm75_browser.py --output build/rm75-browser || { cat build/rm75-browser/server.log; exit 1; }
+      - name: Preserve interaction evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rm75-browser-interaction-evidence
+          path: build/rm75-browser/
+          if-no-files-found: warn
+          retention-days: 14
