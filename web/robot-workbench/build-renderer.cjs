@@ -15,3 +15,5 @@ require('esbuild').buildSync({
 // Removing it leaves shader meaning unchanged and keeps repository diff checks clean.
 const output = path.join(__dirname, 'robot-scene.js');
 fs.writeFileSync(output, fs.readFileSync(output, 'utf8').replace(/[\t ]+$/gm, ''));
+
+require('esbuild').buildSync({absWorkingDir:__dirname,entryPoints:['cad-viewer.source.js'],bundle:true,format:'esm',minify:true,target:'es2020',outfile:'cad-viewer.js'});

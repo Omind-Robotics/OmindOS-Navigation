@@ -1,8 +1,33 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmindOS · 机器人调参工作台</title><link rel="stylesheet" href="/workbench.css"><script defer src="/workbench.js"></script><script defer src="/runtime.js"></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OmindOS · 机器人调参工作台</title><link rel="stylesheet" href="/workbench.css"><script defer src="/workbench.js"></script><script defer src="/runtime.js"></script><script defer src="/cad-panel.js"></script></head>
 <body>
 <header><div><b>OmindOS</b><span>机器人调参工作台</span></div><span class="badge">运动学 · 路径规划</span></header>
+<nav id="workbench-model-tabs" class="model-tabs" aria-label="工作台模式" hidden>
+<button id="cad-tab" aria-pressed="true">V1.1 CAD 装配</button>
+<button id="parameters-tab" aria-pressed="false">关节参数调试</button>
+<span id="workbench-mode-label">CAD 装配预览</span>
+</nav>
+<section id="cad-workspace" class="cad-workspace" hidden aria-label="V1.1 CAD 装配工作台">
+<aside class="cad-sidebar">
+<div class="cad-eyebrow">ORIGINMIND / ROBOTICS</div>
+<h2>四足机器狗 <span>V1.1</span></h2>
+<p class="cad-intro">查看自己的整机装配，检查外观与零件位置。</p>
+<div class="cad-card"><span class="cad-label">当前模型</span><strong>V1.1 总装 STEP</strong><span id="cad-count">正在读取零件…</span></div>
+<div class="cad-card"><span class="cad-label">当前姿态外廓 · 长 × 宽 × 高</span><strong id="cad-size">—</strong><span>网格测量值，非制造公差</span></div>
+<label>显示配色<select id="cad-palette"><option value="graphite">石墨灰 · 银色</option><option value="blue">蓝灰 · 银色</option><option value="cad">原预览配色</option></select></label>
+<div class="cad-card selected-card"><span class="cad-label">所选零件</span><strong id="cad-part-name">点击模型查看零件</strong><span id="cad-part-path">保留原始装配层级与零件名称</span></div>
+<button id="cad-to-parameters">打开关节参数调试 →</button>
+<p class="note">参数页使用当前 URDF 配置。此 CAD 尚未绑定运动关节；切换页面保留正在编辑的参数。</p>
+</aside>
+<section class="cad-stage-panel">
+<div class="cad-heading"><div><span class="cad-eyebrow">ASSEMBLY WORKBENCH</span><h1>整机装配预览</h1></div><span class="cad-static-badge">静态 CAD · 真机未连接</span></div>
+<div class="cad-canvas-wrap"><canvas id="cad-scene" aria-label="四足机器狗 V1.1 的真实 CAD 三维装配；拖动旋转、滚轮缩放、点击选择零件"></canvas><div class="cad-canvas-label">V1.1 <span>CAD / SAVED POSE</span></div></div>
+<div class="cad-toolbar" role="group" aria-label="CAD 视角"><button data-cad-view="iso">立体</button><button data-cad-view="front">前视</button><button data-cad-view="side">侧视</button><button data-cad-view="top">俯视</button><button id="cad-fit">适合窗口</button><span>拖动旋转 · 滚轮缩放 · 点击选件</span></div>
+<p id="cad-status" role="status">正在加载 CAD 装配…</p>
+<details class="cad-provenance"><summary>模型来源与显示范围</summary><p id="cad-exclusions"></p><p id="cad-source-details"></p></details>
+</section>
+</section>
 <main>
 <aside class="parameters">
 <div class="parameter-fields">
