@@ -12,18 +12,27 @@
 <aside class="cad-sidebar">
 <div class="cad-eyebrow">ORIGINMIND / ROBOTICS</div>
 <h2>四足机器狗 <span>V1.1</span></h2>
-<p class="cad-intro">查看自己的整机装配，检查外观与零件位置。</p>
+<p class="cad-intro">查看自己的整机装配，检查关节轴与连杆运动。</p>
 <div class="cad-card"><span class="cad-label">当前模型</span><strong>V1.1 总装 STEP</strong><span id="cad-count">正在读取零件…</span></div>
-<div class="cad-card"><span class="cad-label">当前姿态外廓 · 长 × 宽 × 高</span><strong id="cad-size">—</strong><span>网格测量值，非制造公差</span></div>
+<div class="cad-card"><span class="cad-label">CAD 零位外廓 · 长 × 宽 × 高</span><strong id="cad-size">—</strong><span>网格测量值，非制造公差</span></div>
 <label>显示配色<select id="cad-palette"><option value="graphite">石墨灰 · 银色</option><option value="blue">蓝灰 · 银色</option><option value="cad">原预览配色</option></select></label>
 <div class="cad-card selected-card"><span class="cad-label">所选零件</span><strong id="cad-part-name">点击模型查看零件</strong><span id="cad-part-path">保留原始装配层级与零件名称</span></div>
 <button id="cad-to-parameters">打开关节参数调试 →</button>
-<p class="note">参数页使用当前 URDF 配置。此 CAD 尚未绑定运动关节；切换页面保留正在编辑的参数。</p>
+<p class="note">参数页使用当前 URDF 配置。V1.1 在本页独立预览；切换页面保留正在编辑的参数。</p>
 </aside>
 <section class="cad-stage-panel">
-<div class="cad-heading"><div><span class="cad-eyebrow">ASSEMBLY WORKBENCH</span><h1>整机装配预览</h1></div><span class="cad-static-badge">静态 CAD · 真机未连接</span></div>
+<div class="cad-heading"><div><span class="cad-eyebrow">ASSEMBLY WORKBENCH</span><h1>关节与装配预览</h1></div><span class="cad-static-badge">CAD 运动学 · 真机未连接</span></div>
 <div class="cad-canvas-wrap"><canvas id="cad-scene" aria-label="四足机器狗 V1.1 的真实 CAD 三维装配；拖动旋转、滚轮缩放、点击选择零件"></canvas><div class="cad-canvas-label">V1.1 <span>CAD / SAVED POSE</span></div></div>
-<div class="cad-toolbar" role="group" aria-label="CAD 视角"><button data-cad-view="iso">立体</button><button data-cad-view="front">前视</button><button data-cad-view="side">侧视</button><button data-cad-view="top">俯视</button><button id="cad-fit">适合窗口</button><span>拖动旋转 · 滚轮缩放 · 点击选件</span></div>
+<div class="cad-toolbar" role="group" aria-label="CAD 视角"><button data-cad-view="iso">立体</button><button data-cad-view="front">前视</button><button data-cad-view="side">右侧</button><button data-cad-view="left">左侧</button><button data-cad-view="top">俯视</button><button id="cad-fit">适合窗口</button><span>拖动旋转 · 滚轮缩放 · 点击选件</span></div>
+<section class="cad-motion" aria-label="V1.1 关节运动预览">
+<div class="cad-motion-heading"><h2>12 关节轴线与运动</h2><button id="cad-reset" disabled>恢复 CAD 零位</button></div>
+<p class="cad-motion-note">已开放 4 条腿侧摆及左后腿完整联动。其余联动因源 CAD 缺件或错位锁定。角度相对 CAD 零位，范围不是机械限位。</p>
+<div class="cad-leg-tabs" role="group" aria-label="选择机器狗腿"><button data-cad-leg="FL" aria-pressed="true">左前腿</button><button data-cad-leg="FR" aria-pressed="false">右前腿</button><button data-cad-leg="RL" aria-pressed="false">左后腿</button><button data-cad-leg="RR" aria-pressed="false">右后腿</button></div>
+<div id="cad-joint-controls"></div>
+<div class="cad-motion-actions"><label class="cad-checkbox"><input id="cad-show-axes" type="checkbox" checked>显示当前腿转轴</label><button id="cad-demo" disabled>小幅运动 · 6 秒</button><button id="cad-motion-stop" disabled>停止预览</button></div>
+<p id="cad-motion-status" role="status">正在核对运动映射…</p>
+<details><summary>轴线、零位与映射依据</summary><p id="cad-axis-details"></p><p>侧摆 → 大腿 → 膝驱动；膝驱动经传动杆带动小腿。连杆使用闭合约束求解，当前为几何推导预览，尚未完成全行程干涉与真机验收。</p></details>
+</section>
 <p id="cad-status" role="status">正在加载 CAD 装配…</p>
 <details class="cad-provenance"><summary>模型来源与显示范围</summary><p id="cad-exclusions"></p><p id="cad-source-details"></p></details>
 </section>

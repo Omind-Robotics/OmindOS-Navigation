@@ -24,7 +24,7 @@ const {spawn}=require('node:child_process'),os=require('node:os');
   const manifest=await page.evaluate(async()=>await(await fetch('/cad/v11/manifest.json')).json());
   console.log(JSON.stringify({expected_bounds:manifest.bounds_m}));assert.equal(Number(metadata.parts),manifest.visible_instances);
   for(let r=0;r<2;r++)for(let c=0;c<3;c++)assert(Math.abs(metadata.bounds[r][c]-manifest.bounds_m[r][c])<1e-5,'CAD bounds must survive GLB load');
-  for(const v of ['front','side','top','iso'])await page.locator(`[data-cad-view=${v}]`).click();
+  for(const v of ['front','side','left','top','iso'])await page.locator(`[data-cad-view=${v}]`).click();
   await page.locator('#cad-palette').selectOption('blue');
   await page.locator('#cad-palette').selectOption('graphite');
   const box=await page.locator('#cad-scene').boundingBox();
@@ -37,7 +37,37 @@ const {spawn}=require('node:child_process'),os=require('node:os');
   }
   assert(picked,'CAD mesh picking');
   assert.equal(motionRequests.length,0,'CAD view must not issue motion requests');
-  await page.locator('#parameters-tab').click();
+  await page.waitForFunction(()=>document.getElementById('cad-scene').dataset.joints==='12');
+  for(const leg of ['FL','FR','RR']){
+   await page.locator(`[data-cad-leg=${leg}]`).click();
+   assert.equal(await page.locator('#cad-q0').isEnabled(),true);
+   assert.equal(await page.locator('#cad-q1').isDisabled(),true);
+   assert.equal(await page.locator('#cad-q2').isDisabled(),true);
+  }
+  await page.locator('[data-cad-leg=RL]').click();
+  for(const i of [0,1,2])assert(await page.locator('#cad-q'+i).isEnabled());
+  await page.locator('#cad-show-axes').uncheck();
+  await page.locator('[data-cad-view=left]').click();
+  const imageBefore=await page.locator('#cad-scene').screenshot();
+  for(const [i,value]of [[0,'5'],[1,'15'],[2,'-12']]){
+   await page.locator('#cad-q'+i+'-value').fill(value);await page.locator('#cad-q'+i+'-value').dispatchEvent('change');
+  }
+  assert.deepEqual(await page.evaluate(()=>JSON.parse(document.getElementById('cad-scene').dataset.jointAngles).RL),[5,15,-12]);
+  const imageAfter=await page.locator('#cad-scene').screenshot();
+  fs.writeFileSync(path.join(out,'CAD-Zero.png'),imageBefore);fs.writeFileSync(path.join(out,'CAD-Motion.png'),imageAfter);
+  const sharp=require('sharp');const rawA=await sharp(imageBefore).raw().toBuffer(),rawB=await sharp(imageAfter).raw().toBuffer();
+  assert.equal(rawA.length,rawB.length);let changed=0;for(let i=0;i<rawA.length;i++)if(Math.abs(rawA[i]-rawB[i])>15)changed++;
+  console.log('changed fraction',changed/rawA.length);assert(changed/rawA.length>.003,'moving actual CAD must change rendered pixels');
+  await page.locator('#cad-q0-value').fill('99');await page.locator('#cad-q0-value').dispatchEvent('change');
+  assert.equal(await page.locator('#cad-q0-value').inputValue(),'5.0');
+  await page.locator('#cad-demo').click();await page.locator('#cad-motion-stop').click();
+  const held=await page.locator('#cad-scene').getAttribute('data-joint-angles');
+  await page.waitForTimeout(120);assert.equal(await page.locator('#cad-scene').getAttribute('data-joint-angles'),held);
+  await page.locator('#cad-reset').click();
+  for(const q of Object.values(await page.evaluate(()=>JSON.parse(document.getElementById('cad-scene').dataset.jointAngles))))assert.deepEqual(q,[0,0,0]);
+  await page.locator('#cad-demo').click();await page.locator('#parameters-tab').click();
+  assert(await page.locator('#cad-motion-stop').isDisabled());
+
   await page.waitForFunction(()=>document.getElementById('model-name').textContent.includes('MEVIUS2'));
   await page.waitForFunction(()=>document.getElementById('scene').dataset.meshLoaded==='13');
   await page.locator('#robot-id').fill('cad-roundtrip-check');await page.locator('#robot-id').dispatchEvent('change');
@@ -51,17 +81,26 @@ const {spawn}=require('node:child_process'),os=require('node:os');
   const after=await page.evaluate(async()=>await(await fetch('/v1/workbench-active-profile')).json());
   assert.equal(after.active_profile_id,active.active_profile_id);
   await page.locator('#cad-fit').click();
-  await page.screenshot({path:path.join(out,'OriginMind-Quadruped-V11-Workbench.png')});
+  await page.locator('#cad-reset').click();
+  await page.locator('[data-cad-leg=RL]').click();
+  await page.locator('[data-cad-view=left]').click();
+  const clearBox=await page.locator('#cad-scene').boundingBox();await page.mouse.click(clearBox.x+15,clearBox.y+15);
+  await page.locator('#cad-q1-value').fill('12');await page.locator('#cad-q1-value').dispatchEvent('change');
+  await page.locator('#cad-q2-value').fill('-10');await page.locator('#cad-q2-value').dispatchEvent('change');
+  await page.locator('#cad-show-axes').check();
+  await page.screenshot({path:path.join(out,'OriginMind-Quadruped-V11-Joints.png'),fullPage:true});
   await page.setViewportSize({width:390,height:844});
   await page.locator('#cad-fit').click();
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'mobile overflow');
   await page.screenshot({path:path.join(out,'OriginMind-Quadruped-V11-Mobile.png'),fullPage:true});
-  assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);
+  assert.deepEqual(errors,[]);assert.deepEqual(failed,[]);assert.deepEqual(motionRequests,[]);
   const report={stage:'source-development-preview',hardware_validated:false,ubuntu_installer_updated:false,
-   browser:browser.version(),metadata,errors,failed,motionRequests,
-   checks:['cad_mesh_render','cad_bounds_preserved','four_camera_views','palette_change','orbit_zoom_fit','part_picking',
+   browser:browser.version(),metadata,errors,failed,motionRequests,rendered_motion_changed_fraction:changed/rawA.length,
+   checks:['cad_mesh_render','cad_bounds_preserved','five_camera_views','palette_change','orbit_zoom_fit','part_picking',
     'cad_no_motion_requests','parameter_reference_meshes','draft_survives_tab_roundtrip',
-    'parameter_apply','cad_does_not_replace_active_profile','390px_no_horizontal_overflow']};
+    'parameter_apply','cad_does_not_replace_active_profile','390px_no_horizontal_overflow',
+    'twelve_axes_loaded_six_enabled','incomplete_source_drives_locked','three_left_rear_controls_enabled',
+    'rendered_cad_moves','out_of_range_pose_rejected','preview_stop_holds_pose','cad_zero_reset','leave_cad_stops_animation']};
   fs.writeFileSync(path.join(out,'BROWSER_VALIDATION.json'),JSON.stringify(report,null,2)+'\n');
   console.log(JSON.stringify(report));
  }catch(error){

@@ -16,7 +16,8 @@ from robot_planning import PlanningJobs, default_mapping
 from robot_navigation import NavigationJobs, default_config as navigation_config
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSETS = {"/cad-panel.js": ("web/robot-workbench/cad-panel.js", "text/javascript; charset=utf-8"),
+ASSETS = {"/cad/v11/kinematics.json": ("config/robot_models/originmind_quadruped_v11/kinematics.json", "application/json; charset=utf-8"),
+          "/cad-panel.js": ("web/robot-workbench/cad-panel.js", "text/javascript; charset=utf-8"),
           "/cad-viewer.js": ("web/robot-workbench/cad-viewer.js", "text/javascript; charset=utf-8"),
           "/cad/v11/manifest.json": ("config/robot_models/originmind_quadruped_v11/manifest.json", "application/json; charset=utf-8"),
           "/cad/v11/assembly.glb": ("config/robot_models/originmind_quadruped_v11/assembly.glb", "model/gltf-binary"),

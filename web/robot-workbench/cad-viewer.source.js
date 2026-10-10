@@ -1,9 +1,10 @@
+import {mountMotion} from './cad-motion.js';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 
 // The assembly is deliberately independent of the active controller profile.
-// It contains saved CAD placements only, with no inferred movable joints.
+// Geometric joint offsets do not modify the active controller profile.
 export async function mountCAD(container) {
   const canvas=container.querySelector('canvas'), status=container.querySelector('#cad-status');
   const response=await fetch('/cad/v11/manifest.json');
@@ -44,7 +45,7 @@ export async function mountCAD(container) {
   new ResizeObserver(resize).observe(canvas);
   function fit(view='iso'){
     controls.target.copy(center);
-    const direction={iso:[1.35,-1.5,.95],front:[1,0,.12],side:[0,-1,.12],top:[.001,0,1]}[view];
+    const direction={iso:[1.35,-1.5,.95],front:[1,0,.12],side:[0,-1,.12],left:[0,1,.12],top:[.001,0,1]}[view];
     const aspect=Math.max(.3,canvas.clientWidth/canvas.clientHeight);
     const distance=Math.max(size.x,size.y,size.z)/Math.tan(THREE.MathUtils.degToRad(camera.fov/2))* .54/Math.min(1,aspect);
     camera.position.copy(center).add(new THREE.Vector3(...direction).normalize().multiplyScalar(distance));
@@ -97,8 +98,11 @@ export async function mountCAD(container) {
     '配色仅用于显示。此处外廓为当前装配姿态的网格测量。'+
     (manifest.excluded.length?' 排除项：'+manifest.excluded.map(x=>x.name).join('；'):'');
   palette('graphite');resize();fit();
+  let motion;
+  try{motion=await mountMotion(container,assembly,scene,render,manifest);}
+  catch(error){container.querySelector('#cad-motion-status').textContent='运动预览不可用：'+error.message;}
   status.textContent='装配加载完成 · 可旋转、缩放、选择零件';
   canvas.dataset.loaded='true';canvas.dataset.parts=String(meshes.length);
   canvas.dataset.bounds=JSON.stringify([bounds.min.toArray(),bounds.max.toArray()]);
-  return {resize,render,fit};
+  return {resize,render,fit,motion};
 }

@@ -1,0 +1,17 @@
+{
+  "checks": [
+    "revision_and_uncalibrated_state",
+    "unique_complete_leg_partition",
+    "saved_zero_preserves_all_group_transforms",
+    "source_mismatch_locks_affected_drives",
+    "nonfinite_and_out_of_range_rejected",
+    "physical_pivot_axes_remain_coincident_over_preview_sweep",
+    "rig_returns_to_original_and_keeps_body_fixed"
+  ],
+  "samples": 1332,
+  "max_pivot_axis_error_m": 1.0048376268770095e-11,
+  "enabled_axes": 6,
+  "identified_axes": 12,
+  "physical_limits_validated": false,
+  "hardware_validated": false
+}

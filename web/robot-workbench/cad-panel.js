@@ -19,7 +19,7 @@
     document.getElementById('parameters-tab').setAttribute('aria-pressed',String(!active));
     document.getElementById('workbench-mode-label').textContent=active?'CAD 装配预览':'关节参数调试';
     document.body.classList.toggle('cad-active',active);
-    if(!active){window.dispatchEvent(new Event('resize'));return;}
+    if(!active){window.dispatchEvent(new Event('workbench:leave-cad'));window.dispatchEvent(new Event('resize'));return;}
     try{
       pending ||= import('/cad-viewer.js').then(module=>module.mountCAD(cad));
       viewer ||= await pending;viewer.resize();

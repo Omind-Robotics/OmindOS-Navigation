@@ -1,0 +1,48 @@
+{
+  "stage": "source-development-preview",
+  "hardware_validated": false,
+  "ubuntu_installer_updated": false,
+  "browser": "153.0.8010.0",
+  "metadata": {
+    "parts": "954",
+    "bounds": [
+      [
+        -0.62761023920777,
+        -0.26360392489084117,
+        0.017698728892815485
+      ],
+      [
+        0.45964823265960103,
+        0.2637470030378441,
+        0.654550005219132
+      ]
+    ],
+    "size": "1087 × 527 × 637 mm"
+  },
+  "errors": [],
+  "failed": [],
+  "motionRequests": [],
+  "rendered_motion_changed_fraction": 0.025029948406571783,
+  "checks": [
+    "cad_mesh_render",
+    "cad_bounds_preserved",
+    "five_camera_views",
+    "palette_change",
+    "orbit_zoom_fit",
+    "part_picking",
+    "cad_no_motion_requests",
+    "parameter_reference_meshes",
+    "draft_survives_tab_roundtrip",
+    "parameter_apply",
+    "cad_does_not_replace_active_profile",
+    "390px_no_horizontal_overflow",
+    "twelve_axes_loaded_six_enabled",
+    "incomplete_source_drives_locked",
+    "three_left_rear_controls_enabled",
+    "rendered_cad_moves",
+    "out_of_range_pose_rejected",
+    "preview_stop_holds_pose",
+    "cad_zero_reset",
+    "leave_cad_stops_animation"
+  ]
+}

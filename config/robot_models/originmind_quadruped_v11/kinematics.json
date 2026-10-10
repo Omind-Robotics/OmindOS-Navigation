@@ -1,0 +1,2341 @@
+{
+  "schema_version": 1,
+  "status": "guarded_geometric_preview",
+  "source_sha256": "e655d503882cb58208b053457ed11bf7cdbc90d1f476141a0e9e8f02b1ac4d34",
+  "glb_sha256": "b363de39229819f5937ce7375e21aac57f99d2b4e8acaf1578f11c2cb68c3c1f",
+  "units": "m",
+  "frame": "X front (dog head), Y left, Z up; display XYZ=(-CAD Z,-CAD X,CAD Y)/1000",
+  "zero": "saved CAD pose; all displayed delta angles are zero; encoder zeros unknown",
+  "angle_mapping": "right-hand roll delta; thigh delta; crank absolute delta = thigh delta + knee drive delta; calf and rod by circle closure",
+  "calibration": {
+    "motor_direction": null,
+    "motor_zero_offset_rad": null,
+    "mechanical_limits_rad": null,
+    "hardware_validated": false,
+    "collision_validated": false
+  },
+  "legs": [
+    {
+      "id": "FL",
+      "label": "左前腿",
+      "roll": {
+        "origin": [
+          0.247,
+          0.09,
+          0.4137500052
+        ],
+        "axis": [
+          1.0,
+          -0.0,
+          -0.0
+        ],
+        "source_node": "part_761"
+      },
+      "pitch": {
+        "origin": [
+          0.342,
+          0.1221994921,
+          0.4145987633
+        ],
+        "axis": [
+          0.0,
+          0.9996527729,
+          0.0263502096
+        ],
+        "source_node": "part_903"
+      },
+      "knee": {
+        "origin": [
+          0.342,
+          0.1966736237,
+          0.4165618539
+        ],
+        "axis": [
+          0.0,
+          0.9996527729,
+          0.0263502096
+        ],
+        "source_node": "part_774"
+      },
+      "linkage": {
+        "a": [
+          0.3207771908,
+          0.2191886209,
+          0.4462445064
+        ],
+        "b": [
+          0.09060022,
+          0.2177706838,
+          0.2533596907
+        ],
+        "c": [
+          0.0693805432,
+          0.223502314,
+          0.2825951323
+        ],
+        "rod_node": "part_953",
+        "calf_node": "part_948",
+        "crank_node": null
+      },
+      "preview_ranges_deg": [
+        10,
+        20,
+        20
+      ],
+      "enabled": [
+        true,
+        false,
+        false
+      ],
+      "blocked_reason": "源 CAD 未找到此腿的 j5 膝驱动摇臂；大腿及膝联动待装配核对",
+      "source_axis_errors_mm": {},
+      "groups": {
+        "hip": [
+          "part_763",
+          "part_764",
+          "part_770",
+          "part_903",
+          "part_904",
+          "part_905",
+          "part_906",
+          "part_907",
+          "part_908",
+          "part_909",
+          "part_910",
+          "part_911",
+          "part_912",
+          "part_913",
+          "part_914",
+          "part_915",
+          "part_916",
+          "part_917",
+          "part_918",
+          "part_919",
+          "part_920",
+          "part_921",
+          "part_922",
+          "part_923",
+          "part_924",
+          "part_925",
+          "part_926",
+          "part_927",
+          "part_928",
+          "part_929",
+          "part_930",
+          "part_931",
+          "part_932",
+          "part_933",
+          "part_934",
+          "part_935",
+          "part_936",
+          "part_937",
+          "part_938",
+          "part_939",
+          "part_940",
+          "part_941",
+          "part_942",
+          "part_943",
+          "part_944",
+          "part_945"
+        ],
+        "thigh": [
+          "part_773",
+          "part_774",
+          "part_775",
+          "part_776",
+          "part_777",
+          "part_778",
+          "part_779",
+          "part_780",
+          "part_781",
+          "part_782",
+          "part_783",
+          "part_784",
+          "part_785",
+          "part_786",
+          "part_787",
+          "part_788",
+          "part_789",
+          "part_790",
+          "part_791",
+          "part_792",
+          "part_793",
+          "part_794",
+          "part_795",
+          "part_796",
+          "part_797",
+          "part_798",
+          "part_799",
+          "part_800",
+          "part_801",
+          "part_802",
+          "part_803",
+          "part_804",
+          "part_805",
+          "part_806",
+          "part_807",
+          "part_808",
+          "part_809",
+          "part_810",
+          "part_811",
+          "part_812",
+          "part_813",
+          "part_814",
+          "part_815",
+          "part_816",
+          "part_946",
+          "part_947"
+        ],
+        "crank": [],
+        "calf": [
+          "part_948",
+          "part_949"
+        ],
+        "rod": [
+          "part_953"
+        ]
+      }
+    },
+    {
+      "id": "FR",
+      "label": "右前腿",
+      "roll": {
+        "origin": [
+          0.247,
+          -0.09,
+          0.4137500052
+        ],
+        "axis": [
+          1.0,
+          -0.0,
+          -0.0
+        ],
+        "source_node": "part_769"
+      },
+      "pitch": {
+        "origin": [
+          0.342,
+          -0.1221994921,
+          0.4145987633
+        ],
+        "axis": [
+          -0.0,
+          0.9996527729,
+          -0.0263502096
+        ],
+        "source_node": "part_817"
+      },
+      "knee": {
+        "origin": [
+          0.342,
+          -0.1966736237,
+          0.4165618539
+        ],
+        "axis": [
+          -0.0,
+          0.9996527729,
+          -0.0263502096
+        ],
+        "source_node": "part_860"
+      },
+      "linkage": {
+        "a": [
+          0.3207771908,
+          -0.2071927876,
+          0.4459283039
+        ],
+        "b": [
+          0.09060022,
+          -0.2187703366,
+          0.2533860409
+        ],
+        "c": [
+          0.0693805432,
+          -0.2115064807,
+          0.2822789298
+        ],
+        "rod_node": "part_954",
+        "calf_node": "part_951",
+        "crank_node": null
+      },
+      "preview_ranges_deg": [
+        10,
+        20,
+        20
+      ],
+      "enabled": [
+        true,
+        false,
+        false
+      ],
+      "blocked_reason": "源 CAD 未找到此腿的 j5 膝驱动摇臂；大腿及膝联动待装配核对",
+      "source_axis_errors_mm": {},
+      "groups": {
+        "hip": [
+          "part_766",
+          "part_767",
+          "part_771",
+          "part_817",
+          "part_818",
+          "part_819",
+          "part_820",
+          "part_821",
+          "part_822",
+          "part_823",
+          "part_824",
+          "part_825",
+          "part_826",
+          "part_827",
+          "part_828",
+          "part_829",
+          "part_830",
+          "part_831",
+          "part_832",
+          "part_833",
+          "part_834",
+          "part_835",
+          "part_836",
+          "part_837",
+          "part_838",
+          "part_839",
+          "part_840",
+          "part_841",
+          "part_842",
+          "part_843",
+          "part_844",
+          "part_845",
+          "part_846",
+          "part_847",
+          "part_848",
+          "part_849",
+          "part_850",
+          "part_851",
+          "part_852",
+          "part_853",
+          "part_854",
+          "part_855",
+          "part_856",
+          "part_857",
+          "part_858",
+          "part_859"
+        ],
+        "thigh": [
+          "part_772",
+          "part_860",
+          "part_861",
+          "part_862",
+          "part_863",
+          "part_864",
+          "part_865",
+          "part_866",
+          "part_867",
+          "part_868",
+          "part_869",
+          "part_870",
+          "part_871",
+          "part_872",
+          "part_873",
+          "part_874",
+          "part_875",
+          "part_876",
+          "part_877",
+          "part_878",
+          "part_879",
+          "part_880",
+          "part_881",
+          "part_882",
+          "part_883",
+          "part_884",
+          "part_885",
+          "part_886",
+          "part_887",
+          "part_888",
+          "part_889",
+          "part_890",
+          "part_891",
+          "part_892",
+          "part_893",
+          "part_894",
+          "part_895",
+          "part_896",
+          "part_897",
+          "part_898",
+          "part_899",
+          "part_900",
+          "part_901",
+          "part_902",
+          "part_950",
+          "part_952"
+        ],
+        "crank": [],
+        "calf": [
+          "part_951",
+          "part_955"
+        ],
+        "rod": [
+          "part_954"
+        ]
+      }
+    },
+    {
+      "id": "RL",
+      "label": "左后腿",
+      "roll": {
+        "origin": [
+          -0.247,
+          0.09,
+          0.4137500052
+        ],
+        "axis": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "source_node": "part_192"
+      },
+      "pitch": {
+        "origin": [
+          -0.342,
+          0.1221994921,
+          0.4145987633
+        ],
+        "axis": [
+          0.0,
+          0.9996527729,
+          0.0263502096
+        ],
+        "source_node": "part_275"
+      },
+      "knee": {
+        "origin": [
+          -0.342,
+          0.1966736237,
+          0.4165618539
+        ],
+        "axis": [
+          0.0,
+          0.9996527729,
+          0.0263502096
+        ],
+        "source_node": "part_335"
+      },
+      "linkage": {
+        "a": [
+          -0.3632228092,
+          0.2191886209,
+          0.4462445064
+        ],
+        "b": [
+          -0.59339978,
+          0.2177706838,
+          0.2533596907
+        ],
+        "c": [
+          -0.6146194568,
+          0.223502314,
+          0.2825951323
+        ],
+        "rod_node": "part_614",
+        "calf_node": "part_606",
+        "crank_node": "part_607"
+      },
+      "preview_ranges_deg": [
+        10,
+        20,
+        20
+      ],
+      "enabled": [
+        true,
+        true,
+        true
+      ],
+      "blocked_reason": null,
+      "source_axis_errors_mm": {
+        "crank_motor_axis_mm": 2.214756589929978e-08,
+        "crank_rod_pin_axis_mm": 3.648023831799574e-08
+      },
+      "groups": {
+        "hip": [
+          "part_190",
+          "part_237",
+          "part_239",
+          "part_242",
+          "part_244",
+          "part_255",
+          "part_256",
+          "part_257",
+          "part_258",
+          "part_259",
+          "part_260",
+          "part_261",
+          "part_262",
+          "part_263",
+          "part_264",
+          "part_265",
+          "part_266",
+          "part_267",
+          "part_268",
+          "part_269",
+          "part_270",
+          "part_271",
+          "part_272",
+          "part_273",
+          "part_274",
+          "part_275",
+          "part_276",
+          "part_277",
+          "part_278",
+          "part_279",
+          "part_280",
+          "part_281",
+          "part_282",
+          "part_283",
+          "part_284",
+          "part_285",
+          "part_286",
+          "part_287",
+          "part_288",
+          "part_289",
+          "part_290",
+          "part_291",
+          "part_292",
+          "part_293",
+          "part_294",
+          "part_295",
+          "part_296",
+          "part_297",
+          "part_298",
+          "part_299",
+          "part_300",
+          "part_301",
+          "part_302",
+          "part_303",
+          "part_304",
+          "part_305",
+          "part_306",
+          "part_307",
+          "part_308",
+          "part_309",
+          "part_310",
+          "part_311",
+          "part_312",
+          "part_313",
+          "part_314",
+          "part_315",
+          "part_316",
+          "part_317",
+          "part_318",
+          "part_319",
+          "part_320",
+          "part_321",
+          "part_322",
+          "part_323",
+          "part_324",
+          "part_325",
+          "part_326",
+          "part_327",
+          "part_329",
+          "part_330",
+          "part_331"
+        ],
+        "thigh": [
+          "part_328",
+          "part_332",
+          "part_333",
+          "part_334",
+          "part_335",
+          "part_336",
+          "part_337",
+          "part_338",
+          "part_339",
+          "part_340",
+          "part_341",
+          "part_342",
+          "part_343",
+          "part_344",
+          "part_345",
+          "part_346",
+          "part_347",
+          "part_348",
+          "part_349",
+          "part_350",
+          "part_351",
+          "part_352",
+          "part_353",
+          "part_354",
+          "part_355",
+          "part_356",
+          "part_357",
+          "part_358",
+          "part_359",
+          "part_360",
+          "part_361",
+          "part_362",
+          "part_363",
+          "part_364",
+          "part_365",
+          "part_366",
+          "part_367",
+          "part_368",
+          "part_369",
+          "part_370",
+          "part_371",
+          "part_372",
+          "part_373",
+          "part_374",
+          "part_375",
+          "part_376",
+          "part_377",
+          "part_378",
+          "part_379",
+          "part_380",
+          "part_381",
+          "part_382",
+          "part_383",
+          "part_384",
+          "part_385",
+          "part_386",
+          "part_387",
+          "part_388",
+          "part_389",
+          "part_390",
+          "part_392",
+          "part_596",
+          "part_597",
+          "part_598",
+          "part_599",
+          "part_600",
+          "part_601",
+          "part_602",
+          "part_603",
+          "part_604",
+          "part_605",
+          "part_634"
+        ],
+        "crank": [
+          "part_607",
+          "part_608",
+          "part_609",
+          "part_610",
+          "part_611",
+          "part_612",
+          "part_613",
+          "part_615",
+          "part_616",
+          "part_617",
+          "part_618",
+          "part_619",
+          "part_620",
+          "part_621",
+          "part_629",
+          "part_630"
+        ],
+        "calf": [
+          "part_606",
+          "part_622",
+          "part_623",
+          "part_624",
+          "part_625",
+          "part_626",
+          "part_627",
+          "part_628",
+          "part_631",
+          "part_632",
+          "part_633",
+          "part_666",
+          "part_667",
+          "part_668",
+          "part_669",
+          "part_670"
+        ],
+        "rod": [
+          "part_391",
+          "part_614"
+        ]
+      }
+    },
+    {
+      "id": "RR",
+      "label": "右后腿",
+      "roll": {
+        "origin": [
+          -0.235,
+          -0.09,
+          0.4137500052
+        ],
+        "axis": [
+          1.0,
+          -0.0,
+          -0.0
+        ],
+        "source_node": "part_586"
+      },
+      "pitch": {
+        "origin": [
+          -0.342,
+          -0.1221994921,
+          0.4145987633
+        ],
+        "axis": [
+          -0.0,
+          0.9996527729,
+          -0.0263502096
+        ],
+        "source_node": "part_425"
+      },
+      "knee": {
+        "origin": [
+          -0.342,
+          -0.1966736237,
+          0.4165618539
+        ],
+        "axis": [
+          -0.0,
+          0.9996527729,
+          -0.0263502096
+        ],
+        "source_node": "part_479"
+      },
+      "linkage": {
+        "a": [
+          -0.3632228092,
+          -0.2071927876,
+          0.4459283039
+        ],
+        "b": [
+          -0.59339978,
+          -0.2187703366,
+          0.2533860409
+        ],
+        "c": [
+          -0.6146194568,
+          -0.2115064807,
+          0.2822789298
+        ],
+        "rod_node": "part_654",
+        "calf_node": "part_663",
+        "crank_node": "part_662"
+      },
+      "preview_ranges_deg": [
+        10,
+        20,
+        20
+      ],
+      "enabled": [
+        true,
+        false,
+        false
+      ],
+      "blocked_reason": "源 CAD 摇臂与电机/传动杆不同轴；大腿及膝联动待修正",
+      "source_axis_errors_mm": {
+        "crank_motor_axis_mm": 3.344101789113279,
+        "crank_rod_pin_axis_mm": 43.344101677763796
+      },
+      "groups": {
+        "hip": [
+          "part_402",
+          "part_403",
+          "part_404",
+          "part_405",
+          "part_406",
+          "part_407",
+          "part_408",
+          "part_409",
+          "part_410",
+          "part_411",
+          "part_412",
+          "part_413",
+          "part_414",
+          "part_415",
+          "part_416",
+          "part_417",
+          "part_418",
+          "part_419",
+          "part_421",
+          "part_422",
+          "part_423",
+          "part_424",
+          "part_425",
+          "part_426",
+          "part_427",
+          "part_428",
+          "part_429",
+          "part_430",
+          "part_431",
+          "part_432",
+          "part_433",
+          "part_434",
+          "part_435",
+          "part_436",
+          "part_437",
+          "part_438",
+          "part_439",
+          "part_440",
+          "part_441",
+          "part_442",
+          "part_443",
+          "part_444",
+          "part_445",
+          "part_446",
+          "part_447",
+          "part_448",
+          "part_449",
+          "part_450",
+          "part_451",
+          "part_452",
+          "part_453",
+          "part_454",
+          "part_455",
+          "part_456",
+          "part_457",
+          "part_458",
+          "part_459",
+          "part_460",
+          "part_461",
+          "part_462",
+          "part_463",
+          "part_464",
+          "part_465",
+          "part_466",
+          "part_467",
+          "part_475",
+          "part_477",
+          "part_522",
+          "part_523",
+          "part_569",
+          "part_575",
+          "part_576",
+          "part_577",
+          "part_578",
+          "part_579",
+          "part_580",
+          "part_581",
+          "part_583",
+          "part_584",
+          "part_593",
+          "part_595"
+        ],
+        "thigh": [
+          "part_393",
+          "part_394",
+          "part_395",
+          "part_396",
+          "part_397",
+          "part_398",
+          "part_399",
+          "part_401",
+          "part_420",
+          "part_468",
+          "part_469",
+          "part_470",
+          "part_471",
+          "part_472",
+          "part_473",
+          "part_474",
+          "part_476",
+          "part_478",
+          "part_479",
+          "part_480",
+          "part_481",
+          "part_482",
+          "part_483",
+          "part_484",
+          "part_485",
+          "part_486",
+          "part_487",
+          "part_488",
+          "part_489",
+          "part_490",
+          "part_491",
+          "part_492",
+          "part_493",
+          "part_494",
+          "part_495",
+          "part_496",
+          "part_497",
+          "part_498",
+          "part_499",
+          "part_500",
+          "part_501",
+          "part_502",
+          "part_503",
+          "part_504",
+          "part_505",
+          "part_506",
+          "part_507",
+          "part_508",
+          "part_509",
+          "part_510",
+          "part_511",
+          "part_512",
+          "part_513",
+          "part_514",
+          "part_515",
+          "part_516",
+          "part_517",
+          "part_518",
+          "part_519",
+          "part_520",
+          "part_521",
+          "part_635",
+          "part_664"
+        ],
+        "crank": [
+          "part_639",
+          "part_641",
+          "part_648",
+          "part_649",
+          "part_650",
+          "part_651",
+          "part_652",
+          "part_653",
+          "part_655",
+          "part_656",
+          "part_657",
+          "part_658",
+          "part_659",
+          "part_660",
+          "part_661",
+          "part_662"
+        ],
+        "calf": [
+          "part_636",
+          "part_637",
+          "part_638",
+          "part_640",
+          "part_642",
+          "part_643",
+          "part_644",
+          "part_645",
+          "part_646",
+          "part_647",
+          "part_663",
+          "part_665",
+          "part_671",
+          "part_672",
+          "part_673",
+          "part_674"
+        ],
+        "rod": [
+          "part_400",
+          "part_654"
+        ]
+      }
+    }
+  ],
+  "fixed_leg_nodes": [
+    "part_718",
+    "part_719",
+    "part_720",
+    "part_721",
+    "part_722",
+    "part_723",
+    "part_724",
+    "part_725",
+    "part_726",
+    "part_727",
+    "part_728",
+    "part_729",
+    "part_730",
+    "part_731",
+    "part_732",
+    "part_733",
+    "part_734",
+    "part_735",
+    "part_736",
+    "part_737",
+    "part_738",
+    "part_739",
+    "part_740",
+    "part_741",
+    "part_742",
+    "part_743",
+    "part_744",
+    "part_745",
+    "part_746",
+    "part_747",
+    "part_748",
+    "part_749",
+    "part_750",
+    "part_751",
+    "part_752",
+    "part_753",
+    "part_754",
+    "part_755",
+    "part_756",
+    "part_757",
+    "part_758",
+    "part_759",
+    "part_760",
+    "part_761",
+    "part_762",
+    "part_765",
+    "part_675",
+    "part_676",
+    "part_677",
+    "part_678",
+    "part_679",
+    "part_680",
+    "part_681",
+    "part_682",
+    "part_683",
+    "part_684",
+    "part_685",
+    "part_686",
+    "part_687",
+    "part_688",
+    "part_689",
+    "part_690",
+    "part_691",
+    "part_692",
+    "part_693",
+    "part_694",
+    "part_695",
+    "part_696",
+    "part_697",
+    "part_698",
+    "part_699",
+    "part_700",
+    "part_701",
+    "part_702",
+    "part_703",
+    "part_704",
+    "part_705",
+    "part_706",
+    "part_707",
+    "part_708",
+    "part_709",
+    "part_710",
+    "part_711",
+    "part_712",
+    "part_713",
+    "part_714",
+    "part_715",
+    "part_716",
+    "part_717",
+    "part_768",
+    "part_769",
+    "part_191",
+    "part_192",
+    "part_193",
+    "part_194",
+    "part_195",
+    "part_196",
+    "part_197",
+    "part_198",
+    "part_199",
+    "part_200",
+    "part_201",
+    "part_202",
+    "part_203",
+    "part_204",
+    "part_205",
+    "part_206",
+    "part_207",
+    "part_208",
+    "part_209",
+    "part_210",
+    "part_211",
+    "part_212",
+    "part_213",
+    "part_214",
+    "part_215",
+    "part_216",
+    "part_217",
+    "part_218",
+    "part_219",
+    "part_220",
+    "part_221",
+    "part_222",
+    "part_223",
+    "part_224",
+    "part_225",
+    "part_226",
+    "part_227",
+    "part_228",
+    "part_229",
+    "part_230",
+    "part_231",
+    "part_232",
+    "part_233",
+    "part_234",
+    "part_235",
+    "part_236",
+    "part_238",
+    "part_240",
+    "part_241",
+    "part_243",
+    "part_245",
+    "part_246",
+    "part_247",
+    "part_248",
+    "part_249",
+    "part_250",
+    "part_251",
+    "part_252",
+    "part_253",
+    "part_254",
+    "part_524",
+    "part_525",
+    "part_526",
+    "part_527",
+    "part_528",
+    "part_529",
+    "part_530",
+    "part_531",
+    "part_532",
+    "part_533",
+    "part_534",
+    "part_535",
+    "part_536",
+    "part_537",
+    "part_538",
+    "part_539",
+    "part_540",
+    "part_541",
+    "part_542",
+    "part_543",
+    "part_544",
+    "part_545",
+    "part_546",
+    "part_547",
+    "part_548",
+    "part_549",
+    "part_550",
+    "part_551",
+    "part_552",
+    "part_553",
+    "part_554",
+    "part_555",
+    "part_556",
+    "part_557",
+    "part_558",
+    "part_559",
+    "part_560",
+    "part_561",
+    "part_562",
+    "part_563",
+    "part_564",
+    "part_565",
+    "part_566",
+    "part_567",
+    "part_568",
+    "part_570",
+    "part_571",
+    "part_572",
+    "part_573",
+    "part_574",
+    "part_582",
+    "part_585",
+    "part_586",
+    "part_587",
+    "part_588",
+    "part_589",
+    "part_590",
+    "part_591",
+    "part_592",
+    "part_594"
+  ],
+  "provisional_fastener_attachments": [
+    {
+      "node": "part_237",
+      "group": "RL/hip",
+      "nearest_reference": "part_255",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_238",
+      "group": "RL/body",
+      "nearest_reference": "part_192",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_239",
+      "group": "RL/hip",
+      "nearest_reference": "part_255",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_240",
+      "group": "RL/body",
+      "nearest_reference": "part_192",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_241",
+      "group": "RL/body",
+      "nearest_reference": "part_192",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_242",
+      "group": "RL/hip",
+      "nearest_reference": "part_255",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_243",
+      "group": "RL/body",
+      "nearest_reference": "part_192",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_244",
+      "group": "RL/hip",
+      "nearest_reference": "part_255",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_245",
+      "group": "RL/body",
+      "nearest_reference": "part_192",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_246",
+      "group": "RL/body",
+      "nearest_reference": "part_192",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_247",
+      "group": "RL/body",
+      "nearest_reference": "part_236",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_248",
+      "group": "RL/body",
+      "nearest_reference": "part_192",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_249",
+      "group": "RL/body",
+      "nearest_reference": "part_192",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_250",
+      "group": "RL/body",
+      "nearest_reference": "part_236",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_251",
+      "group": "RL/body",
+      "nearest_reference": "part_236",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_252",
+      "group": "RL/body",
+      "nearest_reference": "part_192",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_253",
+      "group": "RL/body",
+      "nearest_reference": "part_192",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_254",
+      "group": "RL/body",
+      "nearest_reference": "part_236",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_257",
+      "group": "RL/hip",
+      "nearest_reference": "part_255",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_258",
+      "group": "RL/hip",
+      "nearest_reference": "part_255",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_259",
+      "group": "RL/hip",
+      "nearest_reference": "part_255",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_260",
+      "group": "RL/hip",
+      "nearest_reference": "part_255",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_261",
+      "group": "RL/hip",
+      "nearest_reference": "part_255",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_262",
+      "group": "RL/hip",
+      "nearest_reference": "part_255",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_263",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_264",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_265",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_266",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_267",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_268",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_269",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_270",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_271",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_272",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_273",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_274",
+      "group": "RL/hip",
+      "nearest_reference": "part_256",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_318",
+      "group": "RL/hip",
+      "nearest_reference": "part_190",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_319",
+      "group": "RL/hip",
+      "nearest_reference": "part_190",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_320",
+      "group": "RL/hip",
+      "nearest_reference": "part_285",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_321",
+      "group": "RL/hip",
+      "nearest_reference": "part_298",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_322",
+      "group": "RL/hip",
+      "nearest_reference": "part_285",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_323",
+      "group": "RL/hip",
+      "nearest_reference": "part_285",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_324",
+      "group": "RL/hip",
+      "nearest_reference": "part_285",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_325",
+      "group": "RL/hip",
+      "nearest_reference": "part_190",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_326",
+      "group": "RL/hip",
+      "nearest_reference": "part_190",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_327",
+      "group": "RL/hip",
+      "nearest_reference": "part_190",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_329",
+      "group": "RL/hip",
+      "nearest_reference": "part_284",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_330",
+      "group": "RL/hip",
+      "nearest_reference": "part_284",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_331",
+      "group": "RL/hip",
+      "nearest_reference": "part_284",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_332",
+      "group": "RL/thigh",
+      "nearest_reference": "part_328",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_333",
+      "group": "RL/thigh",
+      "nearest_reference": "part_328",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_334",
+      "group": "RL/thigh",
+      "nearest_reference": "part_328",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_378",
+      "group": "RL/thigh",
+      "nearest_reference": "part_358",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_379",
+      "group": "RL/thigh",
+      "nearest_reference": "part_345",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_380",
+      "group": "RL/thigh",
+      "nearest_reference": "part_345",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_381",
+      "group": "RL/thigh",
+      "nearest_reference": "part_328",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_382",
+      "group": "RL/thigh",
+      "nearest_reference": "part_328",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_383",
+      "group": "RL/thigh",
+      "nearest_reference": "part_345",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_386",
+      "group": "RL/thigh",
+      "nearest_reference": "part_384",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_387",
+      "group": "RL/thigh",
+      "nearest_reference": "part_384",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_388",
+      "group": "RL/thigh",
+      "nearest_reference": "part_384",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_389",
+      "group": "RL/thigh",
+      "nearest_reference": "part_384",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_390",
+      "group": "RL/thigh",
+      "nearest_reference": "part_384",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_391",
+      "group": "RL/rod",
+      "nearest_reference": "part_614",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_392",
+      "group": "RL/thigh",
+      "nearest_reference": "part_384",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_596",
+      "group": "RL/thigh",
+      "nearest_reference": "part_344",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_597",
+      "group": "RL/thigh",
+      "nearest_reference": "part_385",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_598",
+      "group": "RL/thigh",
+      "nearest_reference": "part_385",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_599",
+      "group": "RL/thigh",
+      "nearest_reference": "part_385",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_600",
+      "group": "RL/thigh",
+      "nearest_reference": "part_385",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_601",
+      "group": "RL/thigh",
+      "nearest_reference": "part_344",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_602",
+      "group": "RL/thigh",
+      "nearest_reference": "part_344",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_603",
+      "group": "RL/thigh",
+      "nearest_reference": "part_344",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_604",
+      "group": "RL/thigh",
+      "nearest_reference": "part_344",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_605",
+      "group": "RL/thigh",
+      "nearest_reference": "part_344",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_608",
+      "group": "RL/crank",
+      "nearest_reference": "part_607",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_609",
+      "group": "RL/crank",
+      "nearest_reference": "part_607",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_610",
+      "group": "RL/crank",
+      "nearest_reference": "part_607",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_611",
+      "group": "RL/crank",
+      "nearest_reference": "part_607",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_612",
+      "group": "RL/crank",
+      "nearest_reference": "part_607",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_613",
+      "group": "RL/crank",
+      "nearest_reference": "part_607",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_615",
+      "group": "RL/crank",
+      "nearest_reference": "part_616",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_617",
+      "group": "RL/crank",
+      "nearest_reference": "part_607",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_618",
+      "group": "RL/crank",
+      "nearest_reference": "part_607",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_619",
+      "group": "RL/crank",
+      "nearest_reference": "part_607",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_620",
+      "group": "RL/crank",
+      "nearest_reference": "part_616",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_621",
+      "group": "RL/crank",
+      "nearest_reference": "part_616",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_622",
+      "group": "RL/calf",
+      "nearest_reference": "part_606",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_623",
+      "group": "RL/calf",
+      "nearest_reference": "part_606",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_624",
+      "group": "RL/calf",
+      "nearest_reference": "part_606",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_625",
+      "group": "RL/calf",
+      "nearest_reference": "part_606",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_626",
+      "group": "RL/calf",
+      "nearest_reference": "part_606",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_627",
+      "group": "RL/calf",
+      "nearest_reference": "part_606",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_628",
+      "group": "RL/calf",
+      "nearest_reference": "part_606",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_629",
+      "group": "RL/crank",
+      "nearest_reference": "part_616",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_630",
+      "group": "RL/crank",
+      "nearest_reference": "part_616",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_631",
+      "group": "RL/calf",
+      "nearest_reference": "part_606",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_632",
+      "group": "RL/calf",
+      "nearest_reference": "part_606",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_633",
+      "group": "RL/calf",
+      "nearest_reference": "part_606",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_634",
+      "group": "RL/thigh",
+      "nearest_reference": "part_384",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_667",
+      "group": "RL/calf",
+      "nearest_reference": "part_666",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_668",
+      "group": "RL/calf",
+      "nearest_reference": "part_666",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_669",
+      "group": "RL/calf",
+      "nearest_reference": "part_666",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_670",
+      "group": "RL/calf",
+      "nearest_reference": "part_666",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_395",
+      "group": "RR/thigh",
+      "nearest_reference": "part_394",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_396",
+      "group": "RR/thigh",
+      "nearest_reference": "part_394",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_397",
+      "group": "RR/thigh",
+      "nearest_reference": "part_394",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_398",
+      "group": "RR/thigh",
+      "nearest_reference": "part_394",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_399",
+      "group": "RR/thigh",
+      "nearest_reference": "part_394",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_400",
+      "group": "RR/rod",
+      "nearest_reference": "part_654",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_401",
+      "group": "RR/thigh",
+      "nearest_reference": "part_394",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_402",
+      "group": "RR/hip",
+      "nearest_reference": "part_435",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_403",
+      "group": "RR/hip",
+      "nearest_reference": "part_584",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_404",
+      "group": "RR/hip",
+      "nearest_reference": "part_584",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_405",
+      "group": "RR/hip",
+      "nearest_reference": "part_435",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_406",
+      "group": "RR/hip",
+      "nearest_reference": "part_448",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_407",
+      "group": "RR/hip",
+      "nearest_reference": "part_584",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_408",
+      "group": "RR/hip",
+      "nearest_reference": "part_435",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_409",
+      "group": "RR/hip",
+      "nearest_reference": "part_584",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_410",
+      "group": "RR/hip",
+      "nearest_reference": "part_435",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_411",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_412",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_413",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_414",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_415",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_416",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_417",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_418",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_419",
+      "group": "RR/hip",
+      "nearest_reference": "part_584",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_421",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_422",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_423",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_424",
+      "group": "RR/hip",
+      "nearest_reference": "part_581",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_468",
+      "group": "RR/thigh",
+      "nearest_reference": "part_420",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_469",
+      "group": "RR/thigh",
+      "nearest_reference": "part_489",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_470",
+      "group": "RR/thigh",
+      "nearest_reference": "part_489",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_471",
+      "group": "RR/thigh",
+      "nearest_reference": "part_502",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_472",
+      "group": "RR/thigh",
+      "nearest_reference": "part_489",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_473",
+      "group": "RR/thigh",
+      "nearest_reference": "part_489",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_474",
+      "group": "RR/thigh",
+      "nearest_reference": "part_420",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_475",
+      "group": "RR/hip",
+      "nearest_reference": "part_434",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_476",
+      "group": "RR/thigh",
+      "nearest_reference": "part_420",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_477",
+      "group": "RR/hip",
+      "nearest_reference": "part_434",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_478",
+      "group": "RR/thigh",
+      "nearest_reference": "part_420",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_522",
+      "group": "RR/hip",
+      "nearest_reference": "part_434",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_523",
+      "group": "RR/hip",
+      "nearest_reference": "part_580",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_568",
+      "group": "RR/body",
+      "nearest_reference": "part_586",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_569",
+      "group": "RR/hip",
+      "nearest_reference": "part_580",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_570",
+      "group": "RR/body",
+      "nearest_reference": "part_586",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_571",
+      "group": "RR/body",
+      "nearest_reference": "part_586",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_572",
+      "group": "RR/body",
+      "nearest_reference": "part_586",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_573",
+      "group": "RR/body",
+      "nearest_reference": "part_586",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_574",
+      "group": "RR/body",
+      "nearest_reference": "part_586",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_575",
+      "group": "RR/hip",
+      "nearest_reference": "part_580",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_576",
+      "group": "RR/hip",
+      "nearest_reference": "part_580",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_577",
+      "group": "RR/hip",
+      "nearest_reference": "part_580",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_578",
+      "group": "RR/hip",
+      "nearest_reference": "part_580",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_579",
+      "group": "RR/hip",
+      "nearest_reference": "part_580",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_583",
+      "group": "RR/hip",
+      "nearest_reference": "part_580",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_585",
+      "group": "RR/body",
+      "nearest_reference": "part_567",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_587",
+      "group": "RR/body",
+      "nearest_reference": "part_567",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_588",
+      "group": "RR/body",
+      "nearest_reference": "part_586",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_589",
+      "group": "RR/body",
+      "nearest_reference": "part_586",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_590",
+      "group": "RR/body",
+      "nearest_reference": "part_586",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_591",
+      "group": "RR/body",
+      "nearest_reference": "part_567",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_592",
+      "group": "RR/body",
+      "nearest_reference": "part_586",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_593",
+      "group": "RR/hip",
+      "nearest_reference": "part_580",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_594",
+      "group": "RR/body",
+      "nearest_reference": "part_567",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_595",
+      "group": "RR/hip",
+      "nearest_reference": "part_580",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_635",
+      "group": "RR/thigh",
+      "nearest_reference": "part_394",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_636",
+      "group": "RR/calf",
+      "nearest_reference": "part_663",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_637",
+      "group": "RR/calf",
+      "nearest_reference": "part_663",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_638",
+      "group": "RR/calf",
+      "nearest_reference": "part_663",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_639",
+      "group": "RR/crank",
+      "nearest_reference": "part_656",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_640",
+      "group": "RR/calf",
+      "nearest_reference": "part_663",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_641",
+      "group": "RR/crank",
+      "nearest_reference": "part_656",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_642",
+      "group": "RR/calf",
+      "nearest_reference": "part_663",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_643",
+      "group": "RR/calf",
+      "nearest_reference": "part_663",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_644",
+      "group": "RR/calf",
+      "nearest_reference": "part_663",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_645",
+      "group": "RR/calf",
+      "nearest_reference": "part_663",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_646",
+      "group": "RR/calf",
+      "nearest_reference": "part_663",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_647",
+      "group": "RR/calf",
+      "nearest_reference": "part_663",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_648",
+      "group": "RR/crank",
+      "nearest_reference": "part_656",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_649",
+      "group": "RR/crank",
+      "nearest_reference": "part_656",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_650",
+      "group": "RR/crank",
+      "nearest_reference": "part_662",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_651",
+      "group": "RR/crank",
+      "nearest_reference": "part_662",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_652",
+      "group": "RR/crank",
+      "nearest_reference": "part_662",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_653",
+      "group": "RR/crank",
+      "nearest_reference": "part_662",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_655",
+      "group": "RR/crank",
+      "nearest_reference": "part_656",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_657",
+      "group": "RR/crank",
+      "nearest_reference": "part_662",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_658",
+      "group": "RR/crank",
+      "nearest_reference": "part_662",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_659",
+      "group": "RR/crank",
+      "nearest_reference": "part_662",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_660",
+      "group": "RR/crank",
+      "nearest_reference": "part_662",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_661",
+      "group": "RR/crank",
+      "nearest_reference": "part_662",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_664",
+      "group": "RR/thigh",
+      "nearest_reference": "part_488",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_671",
+      "group": "RR/calf",
+      "nearest_reference": "part_665",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_672",
+      "group": "RR/calf",
+      "nearest_reference": "part_665",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_673",
+      "group": "RR/calf",
+      "nearest_reference": "part_665",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    },
+    {
+      "node": "part_674",
+      "group": "RR/calf",
+      "nearest_reference": "part_665",
+      "method": "nearest CAD bounds; fastening ownership provisional"
+    }
+  ],
+  "notes": [
+    "Motor internals are carried with their housing, without simulating gears or rotor internals.",
+    "Front crank parts are absent by named-instance review; they are not synthesized.",
+    "Right rear source crank is misaligned; blocked axes cannot be enabled from the preview UI.",
+    "Fastener ownership is provisional; this is not a complete CAD mate reconstruction."
+  ]
+}
