@@ -5,6 +5,7 @@ on:
       - '.github/workflows/workbench-source-check.yml'
       - 'scripts/robot*.py'
       - 'scripts/workbench_state.py'
+      - 'scripts/prepare_rm75_workbench.py'
       - 'scripts/dual_task_planner.py'
       - 'scripts/navigation*.py'
       - 'tests/test_robot*.py'
@@ -32,9 +33,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install pinned planning dependencies
-        run: python -m pip install numpy==1.26.4 scipy==1.14.1
+      - name: Install pinned planning and CAD preparation dependencies
+        run: python -m pip install numpy==1.26.4 scipy==1.14.1 trimesh==4.11.1
       - name: Existing robot source regressions
         run: python -m unittest discover -s tests -p 'test_robot*.py' -v
-      - name: Explicit kinematic profile persistence regressions
-        run: python -m unittest discover -s tests -p 'test_workbench_kinematic_profiles.py' -v
+      - name: Workbench persistence and CAD conversion regressions
+        run: python -m unittest discover -s tests -p 'test_workbench*.py' -v
