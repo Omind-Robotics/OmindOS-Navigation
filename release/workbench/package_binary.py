@@ -123,7 +123,7 @@ def main():
                     shutil.copyfile(source, package/'LICENSES'/f'{dependency}-{index}-{item.name}')
     manifest = {'customer_cad_bundle': bundle_info, 'version': args.version, 'variant': args.variant, 'platform': target, 'python_bundled': python_version,
                 'compiler': 'Nuitka ' + importlib.metadata.version('Nuitka'),
-                'source_commit': os.environ.get('GITHUB_SHA', subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()),
+                'source_commit': os.environ.get('GITHUB_SHA') or subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                 'release_stage': 'geometric-workbench', 'backend_source_included': False,
                 'planning_kernel_source': 'Omind-Robotics/OmindOS-Manipulation@cbe8caf13921002e463355c6a2982e900640c7e0',
                 'planning_kernel_sha256': hashlib.sha256((ROOT/'scripts/dual_task_planner.py').read_bytes()).hexdigest(),
