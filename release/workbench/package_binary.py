@@ -158,6 +158,9 @@ def main():
         subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_navigation.py'),str(package/executable),
                         '--report',str(output/'navigation-binary-validation.json')],check=True)
     archive = output / (package.name + ('.zip' if windows else '.tar.gz'))
+    if args.model_bundle is not None:
+        subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_rm75.py'),str(package/executable),
+                        '--report',str(output/'rm75-binary-validation.json')],check=True)
     if windows:
         with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as handle:
             for path in sorted(package.rglob('*')):
@@ -184,6 +187,9 @@ def main():
                         str(extracted/package.name/executable),'--report',str(output/'planning-fresh-unpack-validation.json')],check=True)
         subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_navigation.py'),
                         str(extracted/package.name/executable),'--report',str(output/'navigation-fresh-unpack-validation.json')],check=True)
+    if args.model_bundle is not None:
+        subprocess.run([sys.executable,str(ROOT/'release/workbench/smoke_rm75.py'),str(extracted/package.name/executable),
+                        '--report',str(output/'rm75-fresh-unpack-validation.json')],check=True)
     print(json.dumps({'archive': str(archive), 'sha256': digest, 'bytes': archive.stat().st_size}), flush=True)
 
 

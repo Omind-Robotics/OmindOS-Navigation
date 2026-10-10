@@ -69,6 +69,16 @@ async function refreshModel(fit = false) {
 function missingDrives(doc) {
   return Object.fromEntries([...doc.documentElement.children].filter(n => n.tagName === 'joint' && n.getAttribute('type') !== 'fixed').map(n => [n.getAttribute('name'), {motor_model:'', reduction_ratio:null, direction:null, zero_offset_rad:null, torque_limit_nm:null, velocity_limit_rad_s:null}]));
 }
+function updateCooperativeDemo() {
+  const kinematic = profile?.profile_mode === 'kinematic_preview';
+  $('cooperative-demo').textContent = kinematic ? '规划并播放双臂协同预览' : '播放连续演示 · 35 秒';
+  $('cooperative-description').textContent = kinematic
+    ? '使用当前双臂与腰部模型，碰撞规划通过后播放。'
+    : '接近 → 对齐 → 夹爪开合 → 抬升 → 连续行进';
+  $('cooperative-note').textContent = kinematic
+    ? '共同位移采用上方 X / Y / Z 设置；底盘固定，不计算抓取接触力。'
+    : '参考轨迹 · 内置双指夹爪与四轮底盘参数可按硬件配置。未计算抓取接触力。';
+}
 async function importProfile(data, fromUrdf = false) {
   const candidate = fromUrdf ? {profile_mode:'kinematic_preview', robot_id:$('robot-id').value || 'robot-a', kinematics:{urdf_xml:data}, dynamics:{joints:{}}} : structuredClone(data);
   if (!candidate || !candidate.kinematics || typeof candidate.kinematics.urdf_xml !== 'string') throw Error('需要 robot_id 与 kinematics.urdf_xml。');
@@ -79,6 +89,7 @@ async function importProfile(data, fromUrdf = false) {
   if (fromUrdf) candidate.dynamics.joints = missingDrives(doc);
   stop(); clearTimeout(timer); revision++; readyRevision = revision; latestTrial = null;
   profile = candidate; $('profile-mode').value = candidate.profile_mode || 'full'; xml = doc; model = result.model; currentPose = result.pose; targets = {...result.pose.positions};
+  updateCooperativeDemo();
   planningStart=null;
   connectionInvalid.clear();connectionDraft=structuredClone(candidate.connections||{schema_version:1,devices:{}});renderConnections();
   baseTarget = {...result.pose.base_pose};
@@ -445,6 +456,7 @@ async function executeMotion(path,data,label,validatedResult=null){
   };animation=requestAnimationFrame(tick);
 }
 $('cooperative-demo').onclick=()=>guarded(async()=>{
+  if(profile?.profile_mode==='kinematic_preview')return runPlanning('object');
   await motionReady(); const demo=await api('/cooperative-demo.json');
   await executeMotion('/v1/robot-sequence',{profile:payload(),start:currentPose.positions,base_pose:currentPose.base_pose,
     segments:demo.segments,reference_signature:demo.reference_signature},'双臂协同演示');
@@ -589,7 +601,8 @@ $('stage-stop').onclick=engageStop;
 $('follow-base').onclick=()=>{view.follow=!view.follow;view.followOffset=[view.center[0]-currentPose.base_pose.x_m,view.center[1]-currentPose.base_pose.y_m];$('follow-base').setAttribute('aria-pressed',String(view.follow));draw();};
 $('tool-trails').onclick=()=>{if(sceneEngine){sceneEngine.showTrails=!sceneEngine.showTrails;$('tool-trails').setAttribute('aria-pressed',String(sceneEngine.showTrails));draw();}};
 document.querySelectorAll('[data-focus]').forEach(button=>button.onclick=()=>{
-  const t=currentPose?.link_transforms[button.dataset.focus+'_hand'];if(!t)return;
+  const transforms=currentPose?.link_transforms;
+  const t=transforms?.[button.dataset.focus+'_hand'] || transforms?.[button.dataset.focus+'_tool0'] || transforms?.[button.dataset.focus+'_tip'];if(!t)return;
   view.follow=false;$('follow-base').setAttribute('aria-pressed','false');view.center=t.slice(0,3).map(r=>r[3]);view.span=.65;view.zoom=1;draw();
 });
 $('solid-view').onclick=()=>{if(sceneEngine)sceneEngine.wireframe=false;$('solid-view').setAttribute('aria-pressed','true');$('wireframe-view').setAttribute('aria-pressed','false');draw();};

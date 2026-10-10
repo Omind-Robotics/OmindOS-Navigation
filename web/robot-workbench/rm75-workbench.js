@@ -5,6 +5,7 @@ $('profile-mode').onchange = () => guarded(async () => {
   stop(); freezePose();
   if ($('profile-mode').value === 'kinematic_preview') profile.profile_mode = 'kinematic_preview';
   else delete profile.profile_mode;
+  updateCooperativeDemo();
   edited({refresh:false});
   $('profile-mode-note').textContent = profile.profile_mode === 'kinematic_preview'
     ? '仅运动学：未知物理参数可留空；不计算电机目标、力矩或动力学。'
