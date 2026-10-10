@@ -1,5 +1,5 @@
 {
-  "checkpoint_status": "pending_actual_CAD_installed_browser_then_merge",
+  "checkpoint_status": "actual_CAD_installed_browser_passed_ready_for_merge",
   "product_source_commit": "fdb6813a3d1877be7965a182022cbb1e5c7acb96",
   "reports": {
     "compiled-final/FINAL_ARTIFACT.json": {
@@ -128,5 +128,7 @@
       "check_count": 7,
       "model_manifest_sha256": "cb38efe909587f762e7ad66e408f6de933dfdc87addfdbc0653c36fbf1294cf1"
     }
-  }
+  },
+  "installed_browser_evidence": "rm75-installed-browser-20261010.json",
+  "final_acceptance_record": "rm75-installed-20261010.md"
 }
