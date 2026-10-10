@@ -173,7 +173,7 @@ printf '安装完成。启动命令："%s/omindos" workbench\\n浏览器地址�
 
 解压后，在该目录执行 `./install.sh`，随后按输出的启动命令运行工作台。在本机浏览器打开 http://127.0.0.1:8085/ ，无需登录。也可直接运行 `./omindos workbench`。
 
-参数保存于 `~/.local/share/omindos-navigation/data`，后续升级沿用。旧版本包内 `data/` 可保留原处，并通过环境变量 `OMINDOS_DATA_DIR` 指定已有数据目录。新目录默认加载完整 MEVIUS2 四足参考模型；旧配置不会被覆盖。
+参数保存于 `~/.local/share/omindos-navigation/data`，后续升级沿用。旧版本包内 `data/` 可保留原处，并通过环境变量 `OMINDOS_DATA_DIR` 指定已有数据目录。打开后默认显示 OriginMind V1.1 装配 R1 与 12 轴几何联动；“关节参数调试”页在新数据目录加载 MEVIUS2 参考配置，旧配置不会被覆盖。CAD 轴线面板可导出逐轴标定表，电机方向、编码器零位及机械限位仍待真机回读。
 
 `./omindos validate-dynamics` 执行四组四足动力学仿真；`./omindos ros-preview` 启动 ROS 2 预览；`./omindos verify` 校验运行镜像。
 

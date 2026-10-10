@@ -17,7 +17,7 @@ const {chromium} = require('playwright');
     page.on('response',r=>{if(r.url().includes('/meshes/')&&!r.ok())meshFailures.push(r.url());});
     await page.goto('http://127.0.0.1:8085/',{waitUntil:'domcontentloaded'});
     await page.locator('#parameters-tab').click();
-    await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('四足参考模型已载入'));
+    await page.waitForFunction(()=>document.querySelector('#model-name').textContent.includes('MEVIUS2'));
     await page.waitForFunction(()=>document.querySelector('#scene').dataset.meshLoaded==='13',null,{timeout:30000});
     assert.equal(await page.locator('#scene').getAttribute('data-renderer'),'webgl');
     assert.equal(await page.locator('#scene').getAttribute('data-mesh-failed'),'0');
