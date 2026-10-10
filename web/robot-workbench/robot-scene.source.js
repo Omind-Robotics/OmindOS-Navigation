@@ -213,7 +213,7 @@ export class RobotScene {
 
   loadMesh(g, name, group, meshes) {
     // Server URL is an allowlisted same-origin asset, never a filename from an imported file.
-    if (!/^\/meshes\/(rm75\/(base_link|link_[1-7])|mevius2\/(base_link|[FB][LR]_(scapula|thigh|calf)_link))\.STL$/.test(g.url)) return;
+    if (!/^\/meshes\/(rm75\/(base_link|link_[1-7])|mevius2\/(base_link|[FB][LR]_(scapula|thigh|calf)_link))\.STL$/.test(g.url) && !/^\/meshes\/rm75-cad\/[0-9a-f]{64}\.stl$/.test(g.url)) return;
     const generation = this.generation; this.meshStats.requested++;
     if (!this.meshCache.has(g.url)) {
       this.meshCache.set(g.url, this.meshLoader.loadAsync(g.url).then(geometry => {
@@ -261,7 +261,7 @@ export class RobotScene {
   }
   updateToolPaths(pose) {
     for(const [side,path] of this.toolPaths) {
-      const t=pose.link_transforms[side+'_tip']; path.visible=this.showTrails && !!t;
+      const t=pose.link_transforms[side+'_tip'] || pose.link_transforms[side+'_tool0']; path.visible=this.showTrails && !!t;
       if(!t || !this.showTrails) continue;
       const point=new THREE.Vector3(t[0][3],t[1][3],t[2][3]),points=path.userData.points;
       if(!points.length || points.at(-1).distanceTo(point)>.004) {
