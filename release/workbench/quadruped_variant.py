@@ -53,6 +53,7 @@ def prepare(package: Path, root: Path):
         json.dumps(demo_profile(root), ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     path = package / 'web/robot-workbench/index.html'
     html = path.read_text(encoding='utf-8')
+    html = html.replace('<body>', '<body data-product="quadruped">')
     replacements = {
         '加载双七轴移动机器人': '加载四足参考模型',
         '双臂各7轴 + 腰部pitch = 15个主体关节<br>RM75-B关节结构；可按客户硬件设置模型与参数。':
@@ -70,9 +71,19 @@ def prepare(package: Path, root: Path):
             raise ValueError('Workbench template changed; review quadruped UI: ' + old)
         html = html.replace(old, new)
     path.write_text(html, encoding='utf-8')
+    for name in ('cad-panel.js', 'cad-viewer.js'):
+        src = root / 'web/robot-workbench' / name
+        dst = package / 'web/robot-workbench' / name
+        if src.resolve() != dst.resolve():
+            shutil.copyfile(src, dst)
+    src = root / 'config/robot_models/originmind_quadruped_v11'
+    dst = package / 'config/robot_models/originmind_quadruped_v11'
+    if src.resolve() != dst.resolve():
+        shutil.copytree(src, dst, dirs_exist_ok=True)
     # Preserve common DOM IDs and backend behavior; expose only quadruped controls.
     with (package / 'web/robot-workbench/workbench.css').open('a', encoding='utf-8') as stream:
         stream.write('\n#connections-panel,.chassis-controls,.navigation-controls,.planning-controls,'
                      '.cooperative-controls,.reference-photo,#pose-details,[data-sine="left"],'
                      '[data-sine="right"],[data-sine="both"],[data-focus],#tool-trails,#follow-base'
                      '{display:none}\n')
+

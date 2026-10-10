@@ -56,6 +56,7 @@ def main():
     package = output / (product + '-' + args.version + '-' + target)
     shutil.copytree(build / 'workbench_desktop.dist', package)
     paths = ['web/robot-workbench/index.html', 'web/robot-workbench/workbench.css',
+             'web/robot-workbench/cad-panel.js', 'web/robot-workbench/cad-viewer.js',
              'web/robot-workbench/robot-scene.js', 'web/robot-workbench/runtime.js', 'web/robot-workbench/cooperative-demo.json',
              'web/robot-workbench/mda1-reference.webp', 'config/robot_profiles/workbench-demo.json',
              'LICENSES/Three-MIT.txt', 'LICENSES/OpenSSL-3-Apache-2.0.txt',
@@ -164,6 +165,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 

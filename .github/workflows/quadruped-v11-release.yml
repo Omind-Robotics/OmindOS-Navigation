@@ -1,0 +1,80 @@
+name: Validate V1.1 corrected assembly Ubuntu installer
+on:
+  push:
+    branches: [codex/quadruped-v11-cad-20261010]
+    paths:
+      - '.github/workflows/quadruped-v11-release.yml'
+      - 'web/robot-workbench/**'
+      - 'config/robot_models/originmind_quadruped_v11/**'
+      - 'release/control-preview/**'
+      - 'scripts/check_quadruped*.cjs'
+      - 'scripts/capture_installed_quadruped.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: quadruped-v11-installer-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and validate all twelve geometric axes
+        run: |
+          npm ci --prefix web/robot-workbench
+          node web/robot-workbench/build-renderer.cjs
+          git diff --exit-code -- web/robot-workbench/cad-viewer.js
+          node scripts/check_quadruped_kinematics.cjs docs/validation/quadruped-v11-motion/KINEMATICS_VALIDATION.json
+      - name: Install browser verification dependencies
+        run: |
+          npm install --prefix build/capture --no-save playwright@1.58.0 sharp@0.34.5
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-noto-cjk
+      - name: Compile backend and run compiled regressions
+        run: python release/control-preview/build_reference_update.py
+      - name: Build and test the actual Ubuntu installation
+        env:
+          NODE_PATH: ${{ github.workspace }}/build/capture/node_modules
+          CHROMIUM_EXECUTABLE: /usr/bin/google-chrome
+        run: |
+          mkdir -p build/ubuntu-full-installer
+          cp build/ubuntu-reference-update/omindos-control-preview-0.2.0-preview.5-size-candidate.1-linux-amd64.tar build/ubuntu-full-installer/
+          python release/control-preview/finish_ubuntu_installer.py
+      - name: Prepare verified publication transfer
+        run: |
+          mkdir -p build/publication-a build/publication-b
+          split -b 360M -d build/ubuntu-full-installer/distribution/omindos-navigation-0.2.0-preview.8-ubuntu-amd64.tar build/package.part
+          mv build/package.part00 build/publication-a/
+          mv build/package.part01 build/publication-b/
+          cp build/ubuntu-full-installer/distribution/*.json build/ubuntu-full-installer/distribution/*.png build/ubuntu-full-installer/distribution/SHA256SUMS-release.txt build/publication-a/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-navigation-preview8-part-a
+          path: build/publication-a/*
+          compression-level: 0
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-navigation-preview8-part-b
+          path: build/publication-b/*
+          compression-level: 0
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ubuntu-navigation-preview8-diagnostics
+          path: |
+            build/ubuntu-reference-update/*.json
+            build/ubuntu-reference-update/*.log
+            build/ubuntu-full-installer/*.json
+            build/ubuntu-full-installer/*.log
+            build/ubuntu-full-installer/cad-browser/*
+            build/ubuntu-full-installer/browser/*

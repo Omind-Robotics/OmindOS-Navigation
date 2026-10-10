@@ -352,6 +352,7 @@ function fitView(poses=[currentPose]){
   view.center=lo.map((x,i)=>(x+hi[i])/2);view.span=Math.max(.15,...lo.map((x,i)=>hi[i]-x))*1.45;view.zoom=1;
 }
 function draw(){
+  if(document.querySelector('main').hidden)return;
   $('scene-phase').textContent=currentPose?.phase||'交互预览';
   if(currentPose)$('scene-base').textContent=`底盘 X ${currentPose.base_pose.x_m.toFixed(2)} m · Y ${currentPose.base_pose.y_m.toFixed(2)} m · 转向 ${(currentPose.base_pose.yaw_rad*180/Math.PI).toFixed(1)}° · 参考运动学`;
   $('selected-kind').textContent = mode === 'joint' ? '当前关节' : '当前连杆';
@@ -595,6 +596,7 @@ let drag;const canvas=$('scene');canvas.addEventListener('pointerdown',e=>{drag=
 canvas.addEventListener('pointermove',e=>{if(!drag)return;view.yaw+=(e.clientX-drag.x)*.008;view.pitch=Math.max(-1.3,Math.min(1.3,view.pitch+(e.clientY-drag.y)*.006));drag.x=e.clientX;drag.y=e.clientY;draw();});
 canvas.addEventListener('pointerup',e=>{if(drag&&Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<5){const r=canvas.getBoundingClientRect(),p=[e.clientX-r.left,e.clientY-r.top];const hit=sceneEngine?.pick(...p);const nearest=hit||projected.map(item=>({...item,d:Math.hypot(item.p[0]-p[0],item.p[1]-p[1])})).sort((a,b)=>a.d-b.d)[0];if(nearest&&(hit||nearest.d<18)){mode=nearest.type;rebuildParts(nearest.name);draw();}}drag=null;});canvas.addEventListener('pointercancel',()=>drag=null);canvas.addEventListener('wheel',e=>{e.preventDefault();view.zoom=Math.max(.3,Math.min(5,view.zoom*Math.exp(-e.deltaY*.001)));draw();},{passive:false});
 updateMotionControls();
+window.addEventListener('workbench:leave-parameters',()=>{stop();if(currentPose)freezePose();});
 guarded(async()=>{
   connectionOptions=await api('/v1/connection-options');
   for(const [key,spec] of Object.entries(connectionOptions.devices)){

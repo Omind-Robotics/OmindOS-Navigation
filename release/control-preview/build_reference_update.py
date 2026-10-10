@@ -13,7 +13,7 @@ from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/ubuntu-reference-update'
-VERSION = '0.2.0-preview.7'
+VERSION = '0.2.0-preview.8'
 BASE_NAME = 'omindos-control-preview-0.2.0-preview.5-size-candidate.1-linux-amd64.tar'
 BASE_SHA = 'af2cc32308c0ffc0a14b26cd71f454b8b9566096573ee09fb09f191ec7eedbd8'
 BASE_URL = 'https://github.com/maganrobotics-boop/OmindOS-Navigation-Release/releases/download/v0.2.0-preview.6/' + BASE_NAME
@@ -159,3 +159,4 @@ RUN /opt/omindos-runtime/bin/python -m unittest discover -s /build/native-app/te
 
 if __name__ == '__main__':
     main()
+

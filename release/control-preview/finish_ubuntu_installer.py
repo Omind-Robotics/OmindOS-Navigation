@@ -13,10 +13,10 @@ from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / 'build/ubuntu-full-installer'
-VERSION = '0.2.0-preview.7'
+VERSION = '0.2.0-preview.8'
 BASE_NAME = 'omindos-control-preview-0.2.0-preview.5-size-candidate.1-linux-amd64.tar'
 BASE_SHA = 'af2cc32308c0ffc0a14b26cd71f454b8b9566096573ee09fb09f191ec7eedbd8'
-UPDATE_SHA = '4a4f32b4e595fae89b87f3f6140e1f17ee7d44783ce15108df5993b8b09fdf00'
+UPDATE_SHA = None  # Pinned to the same-commit build summary below.
 IMAGE = 'omindos/navigation:' + VERSION
 PYTHON = '/opt/omindos-runtime/bin/python'
 IDENTITY_FORMAT = '{{json .RootFS.Layers}}|{{.Architecture}}|{{.Os}}|{{json .Config.Env}}|{{json .Config.Entrypoint}}|{{json .Config.Cmd}}|{{.Config.WorkingDir}}|{{.Config.User}}'
@@ -50,6 +50,10 @@ def request(path, payload=None):
 
 
 def main():
+    global UPDATE_SHA
+    summary=json.loads((ROOT/'build/ubuntu-reference-update/UPDATE_SUMMARY.json').read_text())
+    assert summary['status']=='PASS' and summary['source_commit']==os.environ['GITHUB_SHA']
+    UPDATE_SHA=summary['sha256']
     OUT.mkdir(parents=True, exist_ok=True)
     archive = OUT / BASE_NAME
     if not archive.exists() or sha(archive) != BASE_SHA:
@@ -63,13 +67,14 @@ def main():
     base_image = re.search(r"^image='([^']+)'", (base / 'omindos').read_text(), re.M).group(1)
     run('sha256sum', '-c', 'SHA256SUMS-image.txt', cwd=base)
     run('docker', 'load', '-i', base / 'runtime.image.tar.gz')
-    update = ROOT / 'release/compiled-update/omindos-workbench-reference-update.tar.gz'
+    update = ROOT / 'build/ubuntu-reference-update/omindos-workbench-reference-update.tar.gz'
     assert sha(update) == UPDATE_SHA
     context = OUT / 'context'
     context.mkdir(exist_ok=True)
     with tarfile.open(update) as tar:
         tar.extractall(context, filter='data')
     metadata = json.loads((context / 'update/WORKBENCH_UPDATE.json').read_text())
+    assert metadata['source_commit']==os.environ['GITHUB_SHA'] and metadata['version']==VERSION
     assert metadata['compiled_regression_tests'] == 79 and metadata['reference_asset_tests'] == 3
     for name, digest in metadata['files'].items():
         assert sha(context / 'update' / name) == digest, name
@@ -168,7 +173,7 @@ printf '安装完成。启动命令："%s/omindos" workbench\\n浏览器地址�
 
 解压后，在该目录执行 `./install.sh`，随后按输出的启动命令运行工作台。在本机浏览器打开 http://127.0.0.1:8085/ ，无需登录。也可直接运行 `./omindos workbench`。
 
-参数保存于 `~/.local/share/omindos-navigation/data`，后续升级沿用。旧版本包内 `data/` 可保留原处，并通过环境变量 `OMINDOS_DATA_DIR` 指定已有数据目录。新目录默认加载完整 MEVIUS2 四足参考模型；旧配置不会被覆盖。
+参数保存于 `~/.local/share/omindos-navigation/data`，后续升级沿用。旧版本包内 `data/` 可保留原处，并通过环境变量 `OMINDOS_DATA_DIR` 指定已有数据目录。打开后默认显示 OriginMind V1.1 装配 R1 与 12 轴几何联动；“关节参数调试”页在新数据目录加载 MEVIUS2 参考配置，旧配置不会被覆盖。CAD 轴线面板可导出逐轴标定表，电机方向、编码器零位及机械限位仍待真机回读。
 
 `./omindos validate-dynamics` 执行四组四足动力学仿真；`./omindos ros-preview` 启动 ROS 2 预览；`./omindos verify` 校验运行镜像。
 
@@ -205,6 +210,8 @@ printf '安装完成。启动命令："%s/omindos" workbench\\n浏览器地址�
         for path in ['/workbench.js','/robot-scene.js','/workbench.css','/example.json','/v1/workbench-state']:
             assert request(path)
             checks.append(path)
+        run('node',ROOT / 'scripts/check_quadruped_cad.cjs',OUT / 'cad-browser',env={**env,'WORKBENCH_URL':'http://127.0.0.1:8085/','INSTALLED_PACKAGE':'1'})
+        checks.append('installed_v11_corrected_assembly_twelve_axis_motion')
         run('node',ROOT / 'scripts/capture_installed_quadruped.cjs',OUT / 'browser',env=env)
         checks.append('browser_13_meshes_12_joints_apply_jog_stop')
     finally:
@@ -222,8 +229,10 @@ printf '安装完成。启动命令："%s/omindos" workbench\\n浏览器地址�
         'numpy':'1.26.4','scipy':'1.14.1','backend_source_included':False}
     dump(distribution / 'VALIDATION.json',report)
     dump(distribution / 'DYNAMICS_VALIDATION.json',dynamics)
-    shutil.copy2(OUT / 'browser/CAPTURE.json',distribution / 'BROWSER_VALIDATION.json')
-    shutil.copy2(OUT / 'browser/workbench.png',distribution / 'workbench.png')
+    shutil.copy2(OUT / 'cad-browser/BROWSER_VALIDATION.json',distribution / 'BROWSER_VALIDATION.json')
+    shutil.copy2(OUT / 'browser/CAPTURE.json',distribution / 'REFERENCE_BROWSER_VALIDATION.json')
+    shutil.copy2(OUT / 'cad-browser/OriginMind-Quadruped-V11-Joints.png',distribution / 'workbench.png')
+    shutil.copy2(ROOT / 'docs/validation/quadruped-v11-motion/KINEMATICS_VALIDATION.json',distribution / 'KINEMATICS_VALIDATION.json')
     summary = {'filename':archive.name,'bytes':archive.stat().st_size,'sha256':sha(archive),
         'version':VERSION,'source_commit':os.environ.get('GITHUB_SHA'),
         'compiled_update_sha256':UPDATE_SHA,'status':'PASS','hardware_validated':False}
@@ -234,3 +243,4 @@ printf '安装完成。启动命令："%s/omindos" workbench\\n浏览器地址�
 
 if __name__ == '__main__':
     main()
+
