@@ -1,0 +1,132 @@
+{
+  "checkpoint_status": "pending_actual_CAD_installed_browser_then_merge",
+  "product_source_commit": "fdb6813a3d1877be7965a182022cbb1e5c7acb96",
+  "reports": {
+    "compiled-final/FINAL_ARTIFACT.json": {
+      "status": "passed",
+      "archive": "omindos-workbench-0.3.1-rc.1-linux-x64.tar.gz",
+      "sha256": "f51612e2717e7a9c1fe7cc316ac0b924127fb438a92364beac4a2eacfd666b9f",
+      "bytes": 87982793,
+      "source_commit": "fdb6813a3d1877be7965a182022cbb1e5c7acb96",
+      "native_compile_started_at_commit": "3e3323b97421040cf4b8978359fca0949d033327",
+      "source_identity": {
+        "source_commit": "fdb6813a3d1877be7965a182022cbb1e5c7acb96",
+        "verified_file_count": 139,
+        "mismatches": [],
+        "status": "passed"
+      },
+      "customer_model_manifest_sha256": "cb38efe909587f762e7ad66e408f6de933dfdc87addfdbc0653c36fbf1294cf1"
+    },
+    "compiled-final/binary-fresh-unpack-validation.json": {
+      "status": "PASS",
+      "system": "Linux",
+      "machine": "x86_64",
+      "checks": [
+        "manifest_verification",
+        "compiled_executable_without_python_command",
+        "all_local_assets_served",
+        "unconfigured_runtime_reported_without_blocking_local_preview",
+        "connection_options_and_independent_drafts_saved_without_connecting",
+        "eight_packaged_manufacturer_stls_and_sixteen_model_instances",
+        "35_second_dual_arm_gripper_and_base_sequence_without_contact_physics",
+        "four_wheel_forward_reverse_left_right",
+        "saving_connection_selection_preserves_emergency_stop",
+        "estop_rejects_cooperative_sequence",
+        "estop_rejects_motion_and_manual_reset",
+        "saved_configuration_survives_executable_restart",
+        "all_connection_drafts_and_selected_protocol_survive_restart",
+        "desktop_cli_runtime_url_load_run_heartbeat_and_pose_feedback",
+        "estop_forwards_to_ros_preview_and_reset_never_resumes",
+        "missing_runtime_reported_while_local_assets_remain_available",
+        "desktop_rejects_non_loopback_runtime_url"
+      ],
+      "hardware_validated": false,
+      "ros_required": false,
+      "ros_runtime_bundled": false,
+      "native_ros_validation": false,
+      "runtime_bridge_test": "localhost_protocol_fixture",
+      "compiled_executable": true,
+      "variant": "manipulation"
+    },
+    "compiled-final/planning-fresh-unpack-validation.json": {
+      "status": "passed",
+      "source_mode": false,
+      "checks": [
+        "actual_coupled_solver",
+        "both_tcp_and_relative_constraints",
+        "fixed_base",
+        "sampled_collision_scope",
+        "obstacle_blocks_path_without_partial_success",
+        "joint_path_planning",
+        "parameter_write_invalidates_completed_path",
+        "calculation_cancel",
+        "software_stop_invalidates_planning"
+      ],
+      "hardware_executed": false,
+      "dynamics_validated": false,
+      "windows_validated": false
+    },
+    "compiled-final/navigation-fresh-unpack-validation.json": {
+      "status": "passed",
+      "source_mode": false,
+      "checks": [
+        "two_drive_types_exposed",
+        "differential_arrival_parking_then_actual_runtime2",
+        "omnidirectional_arrival_parking_then_actual_runtime2",
+        "concurrent_arm_and_jog_blocked",
+        "zero_command_and_observed_stop",
+        "fixed_base_during_arm_planning",
+        "imported_map_guard_present_in_arm_planning",
+        "parameter_epoch_invalidates_completed_task",
+        "blocked_goal_no_partial_success",
+        "unknown_map_fail_closed",
+        "cancel_prevents_automatic_arm_task",
+        "estop_cancels_navigation_and_locks_restart",
+        "reset_does_not_resume_task"
+      ],
+      "measurements": [
+        {
+          "drive_type": "differential",
+          "base_pose": {
+            "x_m": 0.10710770679076738,
+            "y_m": 0.06861603030489195,
+            "yaw_rad": 0.13300982443738654
+          },
+          "stable_stop_s": 0.6,
+          "arm_samples": 3,
+          "max_tcp_error_m": 4.710277376051325e-16
+        },
+        {
+          "drive_type": "omnidirectional",
+          "base_pose": {
+            "x_m": 0.10874519581652381,
+            "y_m": 0.06883184154808537,
+            "yaw_rad": 0.09113706188034752
+          },
+          "stable_stop_s": 0.6,
+          "arm_samples": 3,
+          "max_tcp_error_m": 3.3306690738754696e-16
+        }
+      ],
+      "hardware_executed": false,
+      "localization_source": "geometric_simulator"
+    },
+    "compiled-final/rm75-fresh-unpack-validation.json": {
+      "scope": "compiled_RM75_bundle_API",
+      "checks": [
+        "three_customer_models_auto_registered_without_external_bundle",
+        "all_actual_visual_meshes_served_with_matching_SHA256",
+        "b_both_arms_waist_and_coupled_TCP_planning",
+        "6fb_both_arms_waist_and_coupled_TCP_planning",
+        "6f_both_arms_waist_and_coupled_TCP_planning",
+        "software_stop_rejects_motion_423",
+        "customer_configuration_survives_process_restart"
+      ],
+      "hardware_validated": false,
+      "dynamics_validated": false,
+      "status": "passed",
+      "check_count": 7,
+      "model_manifest_sha256": "cb38efe909587f762e7ad66e408f6de933dfdc87addfdbc0653c36fbf1294cf1"
+    }
+  }
+}

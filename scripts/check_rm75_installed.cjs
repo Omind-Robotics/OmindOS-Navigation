@@ -44,7 +44,11 @@ try{
   browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE||'/usr/bin/google-chrome',headless:true,
     args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   page=await browser.newPage({viewport:{width:1600,height:1000}});
+  // Full CAD on software rendering is an interaction gate, not a GPU benchmark.
+  page.setDefaultTimeout(120000);
   page.on('pageerror',e=>errors.push(String(e)));
+  page.on('crash',()=>errors.push('Browser page crashed'));
+  const rendererAlive=()=>page.evaluate(() => {const c=document.getElementById('scene'),gl=c.getContext('webgl2')||c.getContext('webgl');return !!gl&&!gl.isContextLost()&&c.width>0&&c.height>0;});
   page.on('response',r=>{if(r.url().includes('/meshes/')&&!r.ok())meshFailures.push(r.url()+':'+r.status());});
   await page.goto(base,{waitUntil:'domcontentloaded'});
   await wait('!operation && readyRevision===revision && !!profile');
@@ -52,6 +56,7 @@ try{
   await page.selectOption('#cad-model','b');await page.click('#load-cad-model');
   await wait("!operation && profile.profile_mode==='kinematic_preview' && readyRevision===revision");
   await wait('sceneEngine && sceneEngine.meshStats.requested===20 && sceneEngine.meshStats.loaded===20 && sceneEngine.meshStats.failed===0',180);
+  assert(await rendererAlive());
   check('all_20_actual_CAD_visual_instances_rendered');
   assert.deepEqual(JSON.parse(await page.inputValue('#planning-mapping')).tcp_links,['left_tool0','right_tool0']);
   const tree=await page.evaluate('({links:model.links.length,joints:model.joints.length,meshes:sceneEngine.meshStats})');
@@ -94,6 +99,7 @@ try{
   check('UI_stop_during_planned_playback_and_no_auto_resume');
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(300);
   assert(await page.evaluate('document.documentElement.scrollWidth<=window.innerWidth+1'));
+  await page.locator('#scene').scrollIntoViewIfNeeded();
   await page.screenshot({path:path.join(output,'actual-rm75-mobile.png')});
   check('actual_CAD_mobile_layout_390px');
   await stop();base=await start();await page.goto(base,{waitUntil:'domcontentloaded'});
@@ -101,6 +107,7 @@ try{
   assert.equal(await page.inputValue('#profile-id'),saved);
   await wait('sceneEngine && sceneEngine.meshStats.loaded===20 && sceneEngine.meshStats.failed===0',180);
   check('saved_customer_profile_and_all_meshes_restore_after_restart');
+  assert(await rendererAlive());
   assert.deepEqual(errors,[]);assert.deepEqual(meshFailures,[]);
   report.status='passed';report.check_count=checks.length;report.page_errors=errors;
   report.renderer='Google Chrome / SwiftShader; no GPU throughput claim';
