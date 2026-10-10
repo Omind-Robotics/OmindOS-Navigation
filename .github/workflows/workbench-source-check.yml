@@ -1,0 +1,40 @@
+name: Verify workbench source on Ubuntu
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/workbench-source-check.yml'
+      - 'scripts/robot*.py'
+      - 'scripts/workbench_state.py'
+      - 'scripts/dual_task_planner.py'
+      - 'scripts/navigation*.py'
+      - 'tests/test_robot*.py'
+      - 'tests/test_workbench*.py'
+      - 'config/robot_models/**'
+      - 'config/robot_profiles/**'
+      - 'web/robot-workbench/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: workbench-source-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  source:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    env:
+      PYTHONUTF8: '1'
+      PYTHONPATH: scripts
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned planning dependencies
+        run: python -m pip install numpy==1.26.4 scipy==1.14.1
+      - name: Existing robot source regressions
+        run: python -m unittest discover -s tests -p 'test_robot*.py' -v
+      - name: Explicit kinematic profile persistence regressions
+        run: python -m unittest discover -s tests -p 'test_workbench_kinematic_profiles.py' -v
