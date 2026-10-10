@@ -48,6 +48,18 @@ jobs:
           PY
       - name: Install pinned source-test dependencies
         run: python -m pip install numpy==1.26.4 scipy==1.14.1 trimesh==4.11.1
+      - name: Pin reviewed current-main UI baseline
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tools/apply_rm75_integration.py');s=p.read_text()
+          old='73b8e811ec7b176f00d1569b0111edc567470c95'
+          new='c04c89eeaeacc968b594a4f8c1fdc0753892f1fd'
+          # PR22 only adds a hidden-main draw guard and leave-parameters stop hook.
+          # Retain those two independently inspected changes; do not loosen hashes.
+          if s.count(old)!=1:raise SystemExit('Expected original UI baseline marker')
+          p.write_text(s.replace(old,new))
+          PY
       - name: Apply exact reviewed source edits
         run: python tools/apply_rm75_integration.py
       - name: Check JavaScript syntax
@@ -67,7 +79,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add scripts/robot_kinematic_preview.py scripts/robot_model_bundle.py scripts/robot_assets.py scripts/robot_kinematics.py scripts/robot_planning.py scripts/robot_workbench.py scripts/workbench_desktop.py web/robot-workbench/index.html web/robot-workbench/workbench.js release/workbench/package_binary.py
+          git add tools/apply_rm75_integration.py scripts/robot_kinematic_preview.py scripts/robot_model_bundle.py scripts/robot_assets.py scripts/robot_kinematics.py scripts/robot_planning.py scripts/robot_workbench.py scripts/workbench_desktop.py web/robot-workbench/index.html web/robot-workbench/workbench.js release/workbench/package_binary.py
           git commit -m 'feat: integrate verified RM75 model catalogue and kinematic motion in the workbench'
           git push origin HEAD:refs/heads/codex/rm75-cad-workbench-20261010
           git rev-parse HEAD
