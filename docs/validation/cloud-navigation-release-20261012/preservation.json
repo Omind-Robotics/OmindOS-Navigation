@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "verified_at_utc": "2026-10-11T21:53:50.232601+00:00",
+  "container_started_utc": "2026-10-11T21:46:50.03998133Z",
+  "production_commit": "99a6d6984204537d9fac7c8ca8d91055184a724f",
+  "root_sha256": "ccdff9bbfeb3c452a25ded83d9356a237e36bdf359f876962778dba471a10a3f",
+  "other_app_files_unchanged": 30,
+  "mounts_unchanged": true,
+  "readonly_root": true,
+  "adapter_only_guest_heartbeat_allowlist_changed": true,
+  "nginx_unchanged_for_public_release": true,
+  "nginx_sha256": "1e708f94d0846d803f728a8c733ea9730a77a797cd31729a7e396af66852aac9",
+  "rollback_backup": "/opt/omindos-cloud-preview/releases/navigation-20261012-0548",
+  "protected_preview_unauthenticated_api_status": 401
+}
+

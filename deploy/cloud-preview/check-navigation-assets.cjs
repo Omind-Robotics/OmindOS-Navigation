@@ -2,7 +2,7 @@
 const fs=require('fs'),assert=require('assert');
 const {chromium}=require(process.env.OMINDOS_PLAYWRIGHT||'playwright');
 const base=process.env.CHECK_PREVIEW_URL,out=process.env.CHECK_OUTPUT;
-const creds=JSON.parse(fs.readFileSync(process.env.CHECK_AUTH_FILE));
+const creds=process.env.CHECK_AUTH_FILE?JSON.parse(fs.readFileSync(process.env.CHECK_AUTH_FILE)):undefined;
 fs.mkdirSync(out,{recursive:true});
 const report={checks:[],page_errors:[]};let browser,page,release;
 async function initialized(){await page.waitForFunction(()=>!!profile&&!operation&&readyRevision===revision,null,{timeout:60000});}
@@ -10,7 +10,7 @@ async function navigate(){await page.fill('#navigation-x','.55');await page.fill
 (async()=>{try{
  browser=await chromium.launch({executablePath:'/usr/bin/google-chrome',headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader',...(new URL(base).port==='19443'?['--host-resolver-rules=MAP cloud.omindos.cn 127.0.0.1']:[])]});
  for(const kind of ['cancel','timeout','failed']){
-  const context=await browser.newContext({viewport:{width:1440,height:1000},extraHTTPHeaders:{Authorization:'Basic '+Buffer.from(creds.username+':'+creds.password).toString('base64')}});
+  const context=await browser.newContext({viewport:{width:1440,height:1000},...(creds?{extraHTTPHeaders:{Authorization:'Basic '+Buffer.from(creds.username+':'+creds.password).toString('base64')}}:{})});
   page=await context.newPage();page.setDefaultTimeout(15000);
   page.on('pageerror',e=>report.page_errors.push(String(e)));
   let intercepted=false,starts=0;

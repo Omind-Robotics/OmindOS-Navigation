@@ -1,0 +1,54 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "bytes": 20634
+    },
+    {
+      "path": "/login",
+      "status": 200,
+      "bytes": 1958
+    },
+    {
+      "path": "/register",
+      "status": 200,
+      "bytes": 1957
+    },
+    {
+      "path": "/preview-layout.css",
+      "status": 200,
+      "bytes": 14636
+    },
+    {
+      "path": "/preview-bootstrap.js",
+      "status": 200,
+      "bytes": 14581
+    },
+    {
+      "path": "/preview-experience.js",
+      "status": 200,
+      "bytes": 9664
+    },
+    {
+      "path": "/workbench.js",
+      "status": 200,
+      "bytes": 91979
+    },
+    {
+      "path": "/preview-sw.js",
+      "status": 200,
+      "bytes": 1106
+    },
+    {
+      "path": "/workbench.js",
+      "authorized": true,
+      "status": 200,
+      "customer_configuration_script_present": true
+    }
+  ],
+  "served_js_syntax": "passed",
+  "nginx_config": "passed"
+}
+

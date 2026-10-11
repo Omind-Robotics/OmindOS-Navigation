@@ -1,0 +1,63 @@
+{
+  "commit": "99a6d6984204537d9fac7c8ca8d91055184a724f",
+  "root_sha256": "ccdff9bbfeb3c452a25ded83d9356a237e36bdf359f876962778dba471a10a3f",
+  "app_before": {
+    "preview-icon-192.png": "1cfd6f84fd9eb2cef8d8a21992dd996f12eac850cf86a16bdd86ede02e3fd601",
+    "default-robot.js": "90e010d936ae3a00ef28becb275e8d9ea394bc662d2fe3d3895f52abbc69798d",
+    "preview-experience.js": "94950b933f466045e80784c25cb6b8c884fc370a4ede1c4bf1cc18e09a3247c9",
+    "preview-scene.js": "67072ea6c49ecc65bb29cacd971464a0155684616f41ce9b65ee90a947d9bc8f",
+    "robot-scene.js": "8c848d147a772ba47b464edd3df4f00f16e0149b29469a1df76c610685dcc617",
+    "cloud-logo.webp": "f3e8002f1d55cd472344670cf8f370cef7aa4cdde312865538a8e0ca05462500",
+    "preview-sw.js": "c8b3c183bbc61857bd1eee78af47825c60135e3f7ab74f64825b1be3a07350fd",
+    "cloud_preview.py": "5c89e1890877c59982223fbd98954504486f5630a218d644d40ea681bb428671",
+    "scene-data.json": "3fa5361b0d1e244fa3d1c600fcb4441006c169c1df9fdf547802393de6ca6997",
+    "preview-customer.js": "e504e63eb3843f26af4df4dc5ac9412cc88e90009bb9bcbb8192e571ad4f7e0f",
+    "nginx.conf": "6b66963a30afe98fba3e96fde455a0f4a0e664ebe840d42f97f37a8c67902c95",
+    "cloud_video.py": "4c123acf48dd05053dc3c0330a76fe454bb0c906c9ce18c75ba59b6055ff8900",
+    "legacy-preview-sw.js": "839a227a21dc7e9198d13f379ece1365c80fa69127980b578920129b0b280b6f",
+    "cloud-video-watermark.png": "e6362b77d359b83ee1b592f379222329835461b7c42a4317bbbb991a4e5d3144",
+    "preview-login.html": "ec37b68876420f19de8d97a493abb2890f8ef7408e792ff6ed29ed3d7664a974",
+    "preview-offline.html": "427e745570bdb139ebf5944bd6d09ebfe1519c03bfab879b4999317c7ceb407e",
+    "preview-login.css": "03ceb85099653733c544edfa3046d1eeb70b8c4509378a464133bc41e61aa316",
+    "preview-pwa.js": "05eeee26299ad8f34bd5228fb10cce4f277b43e48f29a506777d871462cffe4b",
+    "video-frame.source.js": "912cff58bf04bed4c260573c0356f24a372754ae3721c51941fa51a66849642d",
+    "cloud_services.py": "1f88df032da335bfdec3db32f9912895c95e4d47c5d6abae83537b964a07b322",
+    "robot-scene.source.js": "5fef098200d303f97c3f118dc51d3188f43b4e81d54248fe526bc641d0465b66",
+    "preview-icon-512.png": "bba56f443fe17327b1bdd866cd8cc3cafc1a8d8545b72baf209f6f329124ebf8",
+    "cloud_customer.py": "836ff36a66691102985175e40332016f08d2837e9408823d0ae0c380f6c5f9bb",
+    "check-preview.cjs": "0ea4c2ec202d16f01006ee94c163fc7f9896fdf490e6260e6762fb2d6122a9cd",
+    "navigation-ready.js": "56364baa048b9dddaf1c268d547eb83ad711cf7d2aefc7288618c12833e93eb4",
+    "preview-layout.css": "7cff1abf044f50b7489228534cd4871be9c909596e742b9057df49cb77807869",
+    "packed-models.generated.js": "b2a435d9dde790a4f1080a0c8c3fa76800bf910c0bbc64d1acbbd6ba2fa7ae5a",
+    "preview-manifest.webmanifest": "67f8b3624f937747b14be03ef7ea65fd281db1c6f6bf2e062694ab668eb8e100",
+    "preview-icon-180.png": "3a27950a589db09f72c3998afe35c5127bbffd2d938253c97165bf10d0bd0bf1",
+    "preview-bootstrap.js": "5ab8913e3be2895a19f54230544e2ae2aa5635dff26cae25b1be5247c539a76e",
+    "experience-data.json": "404228406ed5d549c4bf423ea2c494144485d2e8580de8c5c969d7aa5769e4c0",
+    "navigation-map.js": "cbfbb19df1f2ce05b940fa28a52dbedea438e2bd07130afcd622eacc5cca63b9"
+  },
+  "files": {
+    "scripts/robot_navigation.py": {
+      "before": "0d42a61650f754e97b4169a3526b59333b72d5d44f198580be2d0c0fcee04c2a",
+      "after": "9aab61183d503c7293995718f5a32120fc9d1449f84db349ed71cf0a1b7e2b47"
+    },
+    "scripts/robot_workbench.py": {
+      "before": "7ef8dc22387ce127f1c287c31a6624f74771a8a5b158b4b4cbd7599ee4635f80",
+      "after": "f4d6d388a097a8cd5c28d80a338898682dbec88c882a5f84d16db6a1dcfcf48e"
+    },
+    "web/robot-workbench/workbench.js": {
+      "before": "fe61b41e58315009edd7095767a7971e1bf2d33de053b8d0ba069d9766de4df2",
+      "after": "404aca0c71235ab9feee38f7a9664098db1a3adb502504bd7439d74423fb68d7"
+    },
+    "app/navigation-ready.js": {
+      "before": "56364baa048b9dddaf1c268d547eb83ad711cf7d2aefc7288618c12833e93eb4",
+      "after": "6bfd052704ba4916a68d7e357fcbe1f61e3c1c547e01bef0fccd47c66fd3811b"
+    },
+    "app/cloud_preview.py": {
+      "before": "5c89e1890877c59982223fbd98954504486f5630a218d644d40ea681bb428671",
+      "after": "4c841c1b62e9200d097d5054da96985b069fbdd7e103ac4f700e9ae41f6404a5"
+    }
+  },
+  "status": "released",
+  "updated_utc": "2026-10-11T21:46:51Z"
+}
+
