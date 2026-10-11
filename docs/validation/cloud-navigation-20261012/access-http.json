@@ -1,0 +1,42 @@
+{
+  "base": "https://cloud.omindos.cn/_navigation-preview/",
+  "status": "passed",
+  "checks": [
+    {
+      "case": "unauthenticated v1/workbench-state",
+      "status": 401
+    },
+    {
+      "case": "unauthenticated workbench.js",
+      "status": 401
+    },
+    {
+      "case": "unauthenticated v1/navigation-heartbeat/unknown",
+      "status": 401
+    },
+    {
+      "case": "unauthenticated preview-meshes-v2/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bin",
+      "status": 401
+    },
+    {
+      "case": "filesystem path not exposed",
+      "status": 400
+    },
+    {
+      "case": "authorized existing operator can read state",
+      "status": 200
+    },
+    {
+      "case": "foreign Origin remains rejected",
+      "status": 403
+    },
+    {
+      "case": "existing form login works with Secure HttpOnly path-scoped session",
+      "status": 200
+    },
+    {
+      "case": "existing public root unchanged",
+      "sha256": "ccdff9bbfeb3c452a25ded83d9356a237e36bdf359f876962778dba471a10a3f"
+    }
+  ]
+}

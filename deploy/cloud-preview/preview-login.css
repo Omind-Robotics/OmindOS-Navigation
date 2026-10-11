@@ -1,0 +1,20 @@
+:root{color-scheme:light;font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#102c40;background:#eef4f7}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;min-height:100svh;display:grid;place-items:center;padding:32px 20px;background:radial-gradient(ellipse at top left,#dae9ee,transparent 65%),#eef4f7}
+.login-card{width:100%;max-width:460px;background:#fff;border:1px solid #d5e3e9;border-radius:24px;padding:36px;box-shadow:0 20px 70px #13394f0d}
+.brand{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;color:#102c40;text-decoration:none;font-size:22px;font-weight:700;letter-spacing:-.7px}
+.brand span{font-size:11px;letter-spacing:1.5px;font-weight:600;color:#44748b}
+.eyebrow{margin:36px 0 8px;color:#3c7189;font-size:13px;font-weight:600;letter-spacing:1.2px}
+h1{margin:0;font-size:29px;line-height:1.35;font-weight:650;letter-spacing:-.7px}
+.intro{font-size:16px;line-height:1.75;color:#526776;margin:14px 0 28px}
+label{display:block;margin:18px 0 8px;font-size:15px;font-weight:600}
+input{width:100%;min-width:0;padding:13px 14px;border:1px solid #bacdd8;border-radius:10px;font:inherit;font-size:16px;background:#f9fbfc;color:#102c40;min-height:48px}
+input:focus-visible,button:focus-visible,.brand:focus-visible{outline:3px solid #4f98bb;outline-offset:3px}
+input::placeholder{font-size:14px;color:#657c8a}
+.message{font-size:14px;line-height:1.65;color:#a73c2e;margin:12px 0 0;overflow-wrap:anywhere}
+.message:empty{display:none}
+button{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:24px;min-height:50px;padding:13px 17px;background:#113f58;border:1px solid #113f58;border-radius:10px;color:#fff;font:inherit;font-size:16px;font-weight:600;cursor:pointer}
+button:hover{background:#0c344a}
+.help{color:#526776;font-size:14px;line-height:1.75;margin:22px 0 0}
+footer{margin-top:26px;padding-top:18px;border-top:1px solid #e5edf1;color:#5c7888;font-size:13px}
+@media(max-width:480px){body{padding:20px 16px}.login-card{padding:28px 24px;border-radius:20px}.brand{font-size:21px}.eyebrow{margin-top:30px}h1{font-size:27px}}
