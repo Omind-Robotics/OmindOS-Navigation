@@ -156,6 +156,21 @@ class KinematicsTests(unittest.TestCase):
 
 
 class WorkbenchHTTPTests(unittest.TestCase):
+    def test_navigation_heartbeat_http_endpoint_rejects_unknown_task_and_origin(self):
+        with tempfile.TemporaryDirectory() as folder:
+            server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(folder))
+            runner=threading.Thread(target=server.serve_forever,daemon=True);runner.start()
+            try:
+                url=f'http://127.0.0.1:{server.server_port}/v1/navigation-heartbeat/unknown'
+                with self.assertRaises(urllib.error.HTTPError) as caught:
+                    urllib.request.urlopen(url,timeout=5)
+                self.assertEqual(caught.exception.code,404)
+                with self.assertRaises(urllib.error.HTTPError) as caught:
+                    urllib.request.urlopen(urllib.request.Request(url,headers={'Origin':'https://untrusted.example'}),timeout=5)
+                self.assertEqual(caught.exception.code,403)
+            finally:
+                server.shutdown();runner.join(timeout=5);server.server_close()
+
     def test_real_http_model_trial_version_save_reload_and_origin_controls(self):
         with tempfile.TemporaryDirectory() as store:
             server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(store)); thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()

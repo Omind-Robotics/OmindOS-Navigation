@@ -357,14 +357,35 @@ class NavigationJobs:
                         sim.v=sim.vy=sim.w=0.; sim.parking_confirmed=False
                     job.update(status='canceled' if job['cancel'].is_set() or self.state.epoch!=epoch else 'failed',result=None,error=str(e),updated_at=time.monotonic())
         threading.Thread(target=run,daemon=True).start()
-        return self.snapshot(job['task_id'])
+        # Starting a task must not wait for FK/large pose serialization. The
+        # client receives its lease identifier before polling the full result.
+        return {key: job[key] for key in ('task_id', 'status', 'motion_epoch', 'error', 'result')}
+
+    def heartbeat(self, task_id):
+        """Renew the existing three-second lease without calculating a pose.
+
+        A late request cannot revive an expired lease; only the explicit start
+        operation creates a new task. Heartbeats belong to this runtime's task.
+        """
+        with self.lock:
+            if not self.job or task_id != self.job['task_id']:
+                raise ValueError('Unknown navigation task')
+            job = self.job
+            now = time.monotonic()
+            if self.active() and now - job['client_seen_at'] > 3:
+                self.cancel(task_id)
+                job['error'] = '工作台连接中断，导航已停止；未继续双臂操作。'
+            if self.active():
+                job['client_seen_at'] = now
+            return {key: job[key] for key in ('task_id', 'status', 'motion_epoch', 'error')}
 
     def snapshot(self, task_id):
         with self.lock:
             if not self.job or task_id != self.job['task_id']:
                 raise ValueError('Unknown navigation task')
             job=self.job
-            job['client_seen_at']=time.monotonic()
+            # Preserve legacy polling clients, but never revive an expired task.
+            self.heartbeat(task_id)
             if self.active() and (self.state.epoch != job['motion_epoch'] or time.monotonic()-job['updated_at'] > (10 if job['status']=='planning' else 1) and job['status']!='manipulation_planning'):
                 self.cancel(task_id)
             result={k:v for k,v in job.items() if k not in {'cancel','simulation','updated_at','client_seen_at'}}

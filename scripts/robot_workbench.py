@@ -82,6 +82,11 @@ def make_handler(store_dir, runtime_url=None):
                 return self.respond(200, runtime.snapshot())
             if self.path == '/v1/navigation-config':
                 return self.respond(200, {'config':navigation_config(), 'drive_types':['differential','omnidirectional'], 'simulation_only':True})
+            if self.path.startswith('/v1/navigation-heartbeat/'):
+                try:
+                    return self.respond(200, navigation.heartbeat(self.path.rsplit('/',1)[-1]))
+                except ValueError as e:
+                    return self.respond(404, {'error':str(e)})
             if self.path.startswith('/v1/navigation-task/'):
                 try:
                     return self.respond(200, navigation.snapshot(self.path.rsplit('/',1)[-1]))

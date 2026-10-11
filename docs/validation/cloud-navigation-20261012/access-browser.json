@@ -1,0 +1,10 @@
+{
+  "base": "https://cloud.omindos.cn/_navigation-preview/",
+  "checks": [
+    "form login uses separate Secure HttpOnly Strict cookie; inherited public cookie unchanged",
+    "authenticated browser session accesses real backend",
+    "real configuration import writes only preview storage; public setting unchanged",
+    "preview service worker activates in its subpath without deleting public offline cache"
+  ],
+  "status": "passed"
+}
