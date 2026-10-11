@@ -6,6 +6,7 @@ let projected = [], operation = false;
 let sceneEngine = null;
 let planningJob = null, planningStart = null;
 let navigationJob = null, navigationData = null;
+let navigationConnection = null;
 let baseTarget = {x_m:0, y_m:0, yaw_rad:0};
 let emergencyStop = false, safetyPending = false, safetyRequest = 0, motionEpoch = -1, motionTicket = 0;
 let connectionOptions, connectionDraft = {schema_version:1,devices:{}};
@@ -32,12 +33,71 @@ function ensure(node, tag) {
   const set = n.setAttribute.bind(n); n.setAttribute = (...args) => { attach(n); return set(...args); }; return n;
 }
 function payload() { if (!profile || !xml) throw Error('请先导入模型。'); if (connectionInvalid.size||document.querySelector('#editor [aria-invalid="true"]')) throw Error('请先修正标记为无效的参数。'); profile.robot_id = $('robot-id').value; profile.kinematics.urdf_xml = serializer.serializeToString(xml); return structuredClone(profile); }
-async function api(path, data) {
-  const response = await fetch(path, data === undefined ? {} : {method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)});
-  const body = await response.json(); if (!response.ok) throw Error(body.error || `请求失败 ${response.status}`); return body;
+async function api(path, data, options = {}) {
+  const ticket=motionTicket,rev=revision;
+  const taskRead=path.startsWith('/v1/navigation-task/');
+  const signal=options.signal || (taskRead&&navigationConnection?.taskId===path.split('/').pop()?navigationConnection.controller.signal:undefined);
+  const timeout=options.timeout || (path==='/v1/workbench-state'?1500:path.startsWith('/v1/navigation-')?10000:65000);
+  const retries=data===undefined&&(taskRead||path.startsWith('/v1/navigation-heartbeat/')||path==='/v1/workbench-state')?1:0;
+  // Retry only navigation/safety reads. Never replay a state-changing POST or
+  // an intentionally unavailable ROS runtime request.
+  for(let attempt=0;;attempt++){
+    const controller=new AbortController();
+    const abort=()=>controller.abort(signal.reason);
+    if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});
+    const deadline=setTimeout(()=>controller.abort(new DOMException('请求超时，请检查连接后重试。','TimeoutError')),timeout);
+    try{
+      const response=await fetch(path,{...(data===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}),signal:controller.signal});
+      // Reverse proxies may return HTML for a transient 502/503/504. Keep the
+      // HTTP status for retry; never hide malformed successful JSON or a timeout.
+      const body=await response.json().catch(error=>{
+        if(response.ok||error.name!=='SyntaxError')throw error;
+        return {};
+      });
+      if(!response.ok){const error=Error(body.error || `请求失败 ${response.status}`);error.httpStatus=response.status;throw error;}
+      if(path==='/v1/navigation-start'&&ticket===motionTicket&&rev===revision&&!emergencyStop&&!safetyPending)watchNavigation(body.task_id,ticket,rev);
+      if(taskRead&&['parked','succeeded','failed','canceled'].includes(body.status))clearNavigationConnection(body.task_id,false);
+      return body;
+    }catch(error){
+      if(signal?.aborted)throw signal.reason || error;
+      const transient=error instanceof TypeError||error.name==='TimeoutError'||[502,503,504].includes(error.httpStatus);
+      if(attempt>=retries||!transient)throw error;
+      await new Promise(resolve=>setTimeout(resolve,150));
+    }finally{clearTimeout(deadline);signal?.removeEventListener('abort',abort);}
+  }
+}
+function clearNavigationConnection(taskId,abortRead=true){
+  const connection=navigationConnection;
+  if(!connection || taskId&&connection.taskId!==taskId)return;
+  navigationConnection=null;clearTimeout(connection.timer);
+  if(abortRead)connection.controller.abort(new DOMException('导航已取消。','AbortError'));
+}
+function watchNavigation(taskId,ticket,rev){
+  clearNavigationConnection();
+  const connection={taskId,ticket,rev,controller:new AbortController(),timer:null};
+  navigationConnection=connection;
+  async function heartbeat(){
+    if(navigationConnection!==connection)return;
+    try{
+      const state=await api('/v1/navigation-heartbeat/'+taskId,undefined,{timeout:1000,signal:connection.controller.signal});
+      if(navigationConnection!==connection)return;
+      if(ticket!==motionTicket||rev!==revision||emergencyStop||safetyPending){clearNavigationConnection(taskId);return;}
+      // Keep the abort controller until the full result arrives: a user may
+      // still cancel while the server is parked and its response is in flight.
+      if(['parked','succeeded','failed','canceled'].includes(state.status))return;
+    }catch(error){
+      if(navigationConnection!==connection)return;
+      await engageStop();
+      status('导航连接中断 · 已停止，恢复后请手动复位并重新启动。',true);
+      return;
+    }
+    connection.timer=setTimeout(heartbeat,500);
+  }
+  heartbeat();
 }
 function stop(message) {
   motionTicket++;
+  clearNavigationConnection();
   if(navigationJob){const id=navigationJob;navigationJob=null;api('/v1/navigation-cancel',{task_id:id}).catch(()=>{});$('navigation-stop').disabled=true;updateMotionControls();}
   if(planningJob){const id=planningJob;planningJob=null;api('/v1/planning-cancel',{task_id:id}).catch(()=>{});$('planning-cancel').disabled=true;}
   cancelAnimationFrame(animation); animation = null; $('stop').disabled = true;
@@ -549,7 +609,7 @@ async function runNavigation(thenArm=false){
       }
       await new Promise(resolve=>setTimeout(resolve,100));
     }
-  }catch(e){$('navigation-status').textContent=e.message;throw e;}
+  }catch(e){if(ticket!==motionTicket||rev!==revision)return;$('navigation-status').textContent=e.message;throw e;}
   finally{if(navigationJob===task.task_id)stop();$('navigation-stop').disabled=true;updateMotionControls();}
 }
 $('navigation-run').onclick=()=>guarded(()=>runNavigation());

@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "checks": [
+    "/v1/workbench-state unauthenticated 401",
+    "/preview-layout.css unauthenticated 401",
+    "/v1/navigation-heartbeat/unknown unauthenticated 401",
+    "candidate rejects foreign Origin 403",
+    "candidate denies filesystem secret path 404",
+    "live: one fresh guest stop does not affect another guest; test guest reset",
+    "live: configuration write still requires login 401"
+  ]
+}

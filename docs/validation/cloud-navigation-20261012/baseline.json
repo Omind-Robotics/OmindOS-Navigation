@@ -1,0 +1,49 @@
+{
+  "base": "https://cloud.omindos.cn/",
+  "checks": [],
+  "runs": [
+    {
+      "case": "slow_task_response",
+      "status": "工作台连接中断，导航已停止；未继续双臂操作。",
+      "ui": "工作台连接中断，导航已停止；未继续双臂操作。",
+      "stopped": false,
+      "epoch": 0,
+      "ticket": 5,
+      "base": {
+        "x_m": 0.7533652403619361,
+        "y_m": 0.05741579789656635,
+        "yaw_rad": 0.16047265034288485
+      },
+      "parked": false
+    }
+  ],
+  "page_errors": [],
+  "model": {
+    "parts": {
+      "requested": 20,
+      "loaded": 1,
+      "failed": 0
+    },
+    "webgl": true,
+    "profile": "kinematic_preview"
+  },
+  "status": "observed",
+  "requests": [
+    {"path":"/v1/navigation-config","code":200,"ms":60},
+    {"path":"/v1/workbench-state","code":200,"ms":3},
+    {"path":"/v1/workbench-state","code":200,"ms":746},
+    {"path":"/v1/workbench-state","code":200,"ms":8},
+    {"path":"/v1/workbench-state","code":200,"ms":10},
+    {"path":"/v1/navigation-start","code":200,"ms":19},
+    {"path":"/v1/workbench-state","code":200,"ms":8},
+    {"path":"/v1/workbench-state","code":200,"ms":10},
+    {"path":"/v1/workbench-state","code":200,"ms":5},
+    {"path":"/v1/workbench-state","code":200,"ms":6},
+    {"path":"/v1/workbench-state","code":200,"ms":4},
+    {"path":"/v1/workbench-state","code":200,"ms":6},
+    {"path":"/v1/navigation-task/d4ade361fb2f4c878a15300b2e54569a","code":200,"ms":4324},
+    {"path":"/v1/navigation-task/d4ade361fb2f4c878a15300b2e54569a","code":200,"ms":20},
+    {"path":"/v1/workbench-state","code":200,"ms":6},
+    {"path":"/v1/workbench-state","code":200,"ms":8}
+  ]
+}

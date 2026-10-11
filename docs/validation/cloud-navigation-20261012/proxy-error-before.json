@@ -1,0 +1,6 @@
+{
+  "probe": "one HTTP503 HTML task-result response",
+  "task_reads": 1,
+  "ui": "Unexpected token '<', \"<html>upst\"... is not valid JSON",
+  "parked": false
+}

@@ -1,0 +1,12 @@
+{
+  "checks": [
+    "cancel during model preparation creates no navigation task",
+    "cancel recovers only after model ready and explicit new start",
+    "timeout during model preparation creates no navigation task",
+    "timeout recovers only after model ready and explicit new start",
+    "failed during model preparation creates no navigation task",
+    "failed recovers only after model ready and explicit new start"
+  ],
+  "page_errors": [],
+  "status": "passed"
+}

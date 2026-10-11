@@ -1,0 +1,31 @@
+{
+  "protected_preview": "https://cloud.omindos.cn/_navigation-preview/",
+  "public_root_unchanged": true,
+  "public_root_sha256": "ccdff9bbfeb3c452a25ded83d9356a237e36bdf359f876962778dba471a10a3f",
+  "adapter_original_sha256": "5c89e1890877c59982223fbd98954504486f5630a218d644d40ea681bb428671",
+  "adapter_candidate_sha256": "2e068815f0d9f8dd5f410da8dc786df437157b83a65ccdc28981939e4cdb0446",
+  "nginx_before_sha256": "292bf095e875cf0d8d815ef29fea5ae88827066b93d8ce2be52c4f0dcfa74034",
+  "nginx_after_sha256": "1e708f94d0846d803f728a8c733ea9730a77a797cd31729a7e396af66852aac9",
+  "browser_state_isolated": true,
+  "candidate_app_hashes": {
+    "cloud_preview.py": "2e068815f0d9f8dd5f410da8dc786df437157b83a65ccdc28981939e4cdb0446",
+    "preview-bootstrap.js": "9748730da71815813ac1b414e12b82f6d421933b6e23c8901200613ed493c5d9",
+    "preview-sw.js": "f1b36e5a557151a310ab51f4abd79748813d66f879ed40684e6a0ded4d22369e",
+    "preview-login.html": "9008bdb6c7ddf69d3b42532b9eb897fa3884318717817093abffdf1987add06b",
+    "navigation-ready.js": "6bfd052704ba4916a68d7e357fcbe1f61e3c1c547e01bef0fccd47c66fd3811b"
+  },
+  "source_sha256": {
+    "scripts/robot_navigation.py": "9aab61183d503c7293995718f5a32120fc9d1449f84db349ed71cf0a1b7e2b47",
+    "scripts/robot_workbench.py": "f4d6d388a097a8cd5c28d80a338898682dbec88c882a5f84d16db6a1dcfcf48e",
+    "web/robot-workbench/workbench.js": "404aca0c71235ab9feee38f7a9664098db1a3adb502504bd7439d74423fb68d7"
+  },
+  "original_public_app_unchanged": true,
+  "original_public_source_unchanged": true,
+  "runtime_limits": {
+    "cpu": 1,
+    "memory_mib": 768,
+    "readonly_source": true,
+    "separate_candidate_data": true
+  },
+  "validated_at_utc": "2026-10-11T21:10:03.087320+00:00"
+}

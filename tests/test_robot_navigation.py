@@ -177,5 +177,44 @@ class NavigationTests(unittest.TestCase):
             result=jobs.snapshot(task['task_id'])
             self.assertEqual(result['status'],'failed');self.assertIn('连接中断',result['error'])
 
+    def test_heartbeat_is_lightweight_and_does_not_compute_pose(self):
+        with tempfile.TemporaryDirectory() as folder:
+            jobs=NavigationJobs(WorkbenchState(folder),PlanningJobs(WorkbenchState(folder)))
+            class NoSnapshot:
+                def snapshot(self):
+                    raise AssertionError('heartbeat must not calculate a pose')
+            jobs.job={'task_id':'test','status':'navigating','motion_epoch':0,
+                      'error':None,'client_seen_at':time.monotonic(),'simulation':NoSnapshot()}
+            seen=jobs.job['client_seen_at']
+            self.assertEqual(jobs.heartbeat('test')['status'],'navigating')
+            self.assertGreaterEqual(jobs.job['client_seen_at'],seen)
+            with self.assertRaises(ValueError):jobs.heartbeat('other')
+
+    def test_independent_heartbeat_keeps_task_alive_without_pose_polling(self):
+        with tempfile.TemporaryDirectory() as folder:
+            state=WorkbenchState(folder);planning=PlanningJobs(state);jobs=NavigationJobs(state,planning)
+            task=jobs.submit(self.payload(goal={'x_m':1.,'y_m':0.,'yaw_rad':0.}))
+            deadline=time.monotonic()+3.6
+            while time.monotonic()<deadline:
+                result=jobs.heartbeat(task['task_id'])
+                self.assertNotIn(result['status'],{'failed','canceled'},result)
+                time.sleep(.2)
+            jobs.cancel(task['task_id'])
+            result=jobs.snapshot(task['task_id'])
+            self.assertEqual(result['status'],'canceled')
+            self.assertIsNone(planning.job)
+
+    def test_late_heartbeat_cannot_revive_expired_task(self):
+        with tempfile.TemporaryDirectory() as folder:
+            state=WorkbenchState(folder);planning=PlanningJobs(state);jobs=NavigationJobs(state,planning)
+            task=jobs.submit(self.payload())
+            with jobs.lock:
+                jobs.job['client_seen_at']=time.monotonic()-3.1
+                result=jobs.heartbeat(task['task_id'])
+                self.assertEqual(result['status'],'canceled')
+                self.assertIn('连接中断',result['error'])
+            self.assertEqual(jobs.heartbeat(task['task_id'])['status'],'canceled')
+            self.assertIsNone(planning.job)
+
 
 if __name__=='__main__':unittest.main()
