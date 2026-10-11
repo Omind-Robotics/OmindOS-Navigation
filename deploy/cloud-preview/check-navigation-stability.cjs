@@ -1,5 +1,5 @@
 'use strict';
-// Runs real navigation in an isolated backend. Faults delay/drop responses, never poses/results.
+// Runs real navigation in an isolated backend runtime. Faults delay/drop responses, never poses/results.
 const fs = require('fs'), assert = require('assert');
 const {chromium} = require(process.env.OMINDOS_PLAYWRIGHT || 'playwright');
 const base = process.env.CHECK_PREVIEW_URL || 'https://cloud.omindos.cn/';

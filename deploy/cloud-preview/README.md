@@ -108,3 +108,31 @@ test whose Chrome host mapping does not apply to Node's `route.fetch`.
 
 See `docs/validation/cloud-navigation-stability-20261012.md` for actual results,
 deployment hashes, limitations and conditions for a multi-user Cloud release.
+
+## Public navigation release, 2026-10-12 Beijing time
+
+PR #25 and its dependency PR #24 are merged. The navigation fix is now live at
+`https://cloud.omindos.cn/`; the protected candidate remains separate. Production
+keeps its newer guest/user adapter. Only the three navigation core files,
+`navigation-ready.js`, and a one-line guest heartbeat allowlist are promoted.
+The older adapter snapshot above must not replace the current public app.
+
+`release-navigation.py` is pinned to the verified source hashes and current
+server paths. `--prepare` checks drift and creates before/after backups;
+`--apply` rechecks hashes, stops the container, atomically replaces the scoped
+files, starts it and verifies the existing root and guest heartbeat route.
+An apply failure restores the original files. `--rollback` requires the same
+manifest and refuses to overwrite later changes. Authentication, user data,
+layout, model/media bundles, nginx and domains are outside its write scope.
+
+Public acceptance uses fresh anonymous guest contexts. Unset CHECK_AUTH_FILE
+for the navigation, fault and asset suites. `check-navigation-public-access.cjs`
+uses separate guests plus the existing form login to verify task visibility,
+estop isolation, origin checks and configuration authentication; supply the
+existing runtime-only CHECK_AUTH_FILE to this access suite. The private-only
+`check-navigation-access.cjs` checks different cookie/storage/cache names and
+must not be run against the public root.
+
+The public deployment, actual request evidence, screenshots, backup and remaining
+multi-customer requirements are recorded in
+`docs/validation/cloud-navigation-release-20261012.md`.

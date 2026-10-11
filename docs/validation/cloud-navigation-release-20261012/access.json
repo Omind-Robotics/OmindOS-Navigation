@@ -1,0 +1,15 @@
+{
+  "base": "https://cloud.omindos.cn/",
+  "checks": [
+    "guest cookies remain distinct, Secure, HttpOnly, Lax and root scoped",
+    "own task heartbeat succeeds; another guest cannot read heartbeat or full task",
+    "another guest cannot cancel the completed task or change its parked result",
+    "guest A estop does not stop guest B; A reset succeeds",
+    "guest configuration write still requires login and foreign-origin heartbeat is rejected",
+    "protected navigation candidate remains inaccessible to a public guest",
+    "existing form login and Secure HttpOnly Strict session access remain available"
+  ],
+  "page_errors": [],
+  "status": "passed"
+}
+
