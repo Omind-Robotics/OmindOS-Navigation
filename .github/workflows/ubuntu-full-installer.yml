@@ -35,6 +35,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu-navigation-preview7-verified
+          retention-days: 7
           path: |
             build/ubuntu-full-installer/distribution/*.tar
             build/ubuntu-full-installer/distribution/*.json
@@ -47,6 +48,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu-navigation-preview7-diagnostics
+          retention-days: 14
           path: |
             build/ubuntu-full-installer/STARTUP_DIAGNOSIS.json
             build/ubuntu-full-installer/workbench.log
