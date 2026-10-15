@@ -64,6 +64,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu-quadruped-reference-ui
+          retention-days: 14
           path: docs/media/quadruped-reference/
           if-no-files-found: error
       - name: Save screenshots to the private review branch
