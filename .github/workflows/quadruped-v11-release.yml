@@ -58,12 +58,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ubuntu-navigation-preview8-part-a
+          retention-days: 7
           path: build/publication-a/*
           compression-level: 0
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
           name: ubuntu-navigation-preview8-part-b
+          retention-days: 7
           path: build/publication-b/*
           compression-level: 0
           if-no-files-found: error
@@ -71,6 +73,7 @@ jobs:
         if: always()
         with:
           name: ubuntu-navigation-preview8-diagnostics
+          retention-days: 14
           path: |
             build/ubuntu-reference-update/*.json
             build/ubuntu-reference-update/*.log
