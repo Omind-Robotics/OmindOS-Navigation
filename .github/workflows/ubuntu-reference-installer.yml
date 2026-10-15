@@ -21,6 +21,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu-reference-compiled-update
+          retention-days: 7
           path: |
             build/ubuntu-reference-update/omindos-workbench-reference-update.tar.gz
             build/ubuntu-reference-update/UPDATE_SUMMARY.json
