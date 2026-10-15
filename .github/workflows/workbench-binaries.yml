@@ -75,7 +75,7 @@ jobs:
             build/workbench-release/planning-*-validation.json
             build/workbench-release/navigation-*-validation.json
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
 
 
 
